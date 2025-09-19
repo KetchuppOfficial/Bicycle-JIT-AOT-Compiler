@@ -1,0 +1,106 @@
+// NOTE: NO INCLUDE GUARD DESIRED!
+
+// Binary operations ===============================================================================
+#ifndef FIRST_BINARY_INSTR
+#define FIRST_BINARY_INSTR(N)
+#endif // FIRST_BINARY_INSTR
+
+#ifndef HANDLE_BINARY_INSTR
+#define HANDLE_BINARY_INSTR(N, Opcode, Class)
+#endif // HANDLE_BINARY_INSTR
+
+#ifndef LAST_BINARY_INSTR
+#define LAST_BINARY_INSTR(N)
+#endif // LAST_BINARY_INSTR
+
+FIRST_BINARY_INSTR(1)
+// Arithmetic
+HANDLE_BINARY_INSTR(1, Add, BinaryOperator)
+HANDLE_BINARY_INSTR(2, Sub, BinaryOperator)
+HANDLE_BINARY_INSTR(3, Mul, BinaryOperator)
+HANDLE_BINARY_INSTR(4, UDiv, BinaryOperator)
+HANDLE_BINARY_INSTR(5, SDiv, BinaryOperator)
+HANDLE_BINARY_INSTR(6, URem, BinaryOperator)
+HANDLE_BINARY_INSTR(7, SRem, BinaryOperator)
+// Bitwise
+HANDLE_BINARY_INSTR(8, Shl, BinaryOperator)
+HANDLE_BINARY_INSTR(9, ShrA, BinaryOperator)
+HANDLE_BINARY_INSTR(10, ShrL, BinaryOperator)
+HANDLE_BINARY_INSTR(11, And, BinaryOperator)
+HANDLE_BINARY_INSTR(12, Or, BinaryOperator)
+HANDLE_BINARY_INSTR(13, Xor, BinaryOperator)
+LAST_BINARY_INSTR(13)
+
+#undef FIRST_BINARY_INSTR
+#undef HANDLE_BINARY_INSTR
+#undef LAST_BINARY_INSTR
+// =================================================================================================
+
+// Terminator instructions =========================================================================
+#ifndef FIRST_TERMINATOR_INSTR
+#define FIRST_TERMINATOR_INSTR(N)
+#endif // FIRST_TERMINATOR_INSTR
+
+#ifndef HANDLE_TERMINATOR_INSTR
+#define HANDLE_TERMINATOR_INSTR(N, Opcode, Class)
+#endif // HANDLE_TERMINATOR_INSTR
+
+#ifndef LAST_TERMINATOR_INSTR
+#define LAST_TERMINATOR_INSTR(N)
+#endif // LAST_TERMINATOR_INSTR
+
+FIRST_TERMINATOR_INSTR(14)
+HANDLE_TERMINATOR_INSTR(14, Ret, ReturnInstruction)
+HANDLE_TERMINATOR_INSTR(15, Br, BranchInstruction)
+LAST_TERMINATOR_INSTR(15)
+
+#undef FIRST_TERMINATOR_INSTR
+#undef HANDLE_TERMINATOR_INSTR
+#undef LAST_TERMINATOR_INSTR
+// =================================================================================================
+
+// Cast instructions ===============================================================================
+#ifndef FIRST_CAST_INSTR
+#define FIRST_CAST_INSTR(N)
+#endif // FIRST_CAST_INSTR
+
+#ifndef HANDLE_CAST_INSTR
+#define HANDLE_CAST_INSTR(N, Opcode, Class)
+#endif // HANDLE_CAST_INSTR
+
+#ifndef LAST_CAST_INSTR
+#define LAST_CAST_INSTR(N)
+#endif // LAST_CAST_INSTR
+
+FIRST_CAST_INSTR(15)
+HANDLE_CAST_INSTR(15, ZExt, ZeroExtendInstruction)
+HANDLE_CAST_INSTR(16, SExt, SignExtendInstruction)
+LAST_CAST_INSTR(16)
+
+#undef FIRST_CAST_INSTR
+#undef HANDLE_CAST_INSTR
+#undef LAST_CAST_INSTR
+// =================================================================================================
+
+// Other instructions ==============================================================================
+#ifndef FIRST_OTHER_INSTR
+#define FIRST_OTHER_INSTR(N)
+#endif // FIRST_OTHER_INSTR
+
+#ifndef HANDLE_OTHER_INSTR
+#define HANDLE_OTHER_INSTR(N, Opcode, Class)
+#endif // HANDLE_OTHER_INSTR
+
+#ifndef LAST_OTHER_INSTR
+#define LAST_OTHER_INSTR(N)
+#endif // LAST_OTHER_INSTR
+
+FIRST_OTHER_INSTR(16)
+HANDLE_OTHER_INSTR(16, Call, CallInstructions)
+HANDLE_OTHER_INSTR(17, PHI, PHIInstruction)
+LAST_OTHER_INSTR(17)
+
+#undef FIRST_OTHER_INSTR
+#undef HANDLE_OTHER_INSTR
+#undef LAST_OTHER_INSTR
+// =================================================================================================
