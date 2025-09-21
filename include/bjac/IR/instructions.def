@@ -6,7 +6,11 @@
 #endif // FIRST_BINARY_INSTR
 
 #ifndef HANDLE_BINARY_INSTR
-#define HANDLE_BINARY_INSTR(N, Opcode, Class)
+  #ifndef HANDLE_INSTR
+    #define HANDLE_BINARY_INSTR(N, Opcode, Class, Name)
+  #else
+    #define HANDLE_BINARY_INSTR(N, Opcode, Class, Name) HANDLE_INSTR(N, Opcode, Class, Name)
+  #endif // HANDLE_INSTR
 #endif // HANDLE_BINARY_INSTR
 
 #ifndef LAST_BINARY_INSTR
@@ -15,20 +19,20 @@
 
 FIRST_BINARY_INSTR(1)
 // Arithmetic
-HANDLE_BINARY_INSTR(1, Add, BinaryOperator)
-HANDLE_BINARY_INSTR(2, Sub, BinaryOperator)
-HANDLE_BINARY_INSTR(3, Mul, BinaryOperator)
-HANDLE_BINARY_INSTR(4, UDiv, BinaryOperator)
-HANDLE_BINARY_INSTR(5, SDiv, BinaryOperator)
-HANDLE_BINARY_INSTR(6, URem, BinaryOperator)
-HANDLE_BINARY_INSTR(7, SRem, BinaryOperator)
+HANDLE_BINARY_INSTR(1, Add, BinaryOperator, add)
+HANDLE_BINARY_INSTR(2, Sub, BinaryOperator, sub)
+HANDLE_BINARY_INSTR(3, Mul, BinaryOperator, mul)
+HANDLE_BINARY_INSTR(4, UDiv, BinaryOperator, udiv)
+HANDLE_BINARY_INSTR(5, SDiv, BinaryOperator, sdiv)
+HANDLE_BINARY_INSTR(6, URem, BinaryOperator, urem)
+HANDLE_BINARY_INSTR(7, SRem, BinaryOperator, srem)
 // Bitwise
-HANDLE_BINARY_INSTR(8, Shl, BinaryOperator)
-HANDLE_BINARY_INSTR(9, ShrA, BinaryOperator)
-HANDLE_BINARY_INSTR(10, ShrL, BinaryOperator)
-HANDLE_BINARY_INSTR(11, And, BinaryOperator)
-HANDLE_BINARY_INSTR(12, Or, BinaryOperator)
-HANDLE_BINARY_INSTR(13, Xor, BinaryOperator)
+HANDLE_BINARY_INSTR(8, Shl, BinaryOperator, shl)
+HANDLE_BINARY_INSTR(9, ShrA, BinaryOperator, shra)
+HANDLE_BINARY_INSTR(10, ShrL, BinaryOperator, shrl)
+HANDLE_BINARY_INSTR(11, And, BinaryOperator, and)
+HANDLE_BINARY_INSTR(12, Or, BinaryOperator, or)
+HANDLE_BINARY_INSTR(13, Xor, BinaryOperator, xor)
 LAST_BINARY_INSTR(13)
 
 #undef FIRST_BINARY_INSTR
@@ -42,7 +46,11 @@ LAST_BINARY_INSTR(13)
 #endif // FIRST_TERMINATOR_INSTR
 
 #ifndef HANDLE_TERMINATOR_INSTR
-#define HANDLE_TERMINATOR_INSTR(N, Opcode, Class)
+  #ifndef HANDLE_INSTR
+    #define HANDLE_TERMINATOR_INSTR(N, Opcode, Class, Name)
+  #else
+    #define HANDLE_TERMINATOR_INSTR(N, Opcode, Class, Name) HANDLE_INSTR(N, Opcode, Class, Name)
+  #endif // HANDLE_INSTR
 #endif // HANDLE_TERMINATOR_INSTR
 
 #ifndef LAST_TERMINATOR_INSTR
@@ -50,8 +58,8 @@ LAST_BINARY_INSTR(13)
 #endif // LAST_TERMINATOR_INSTR
 
 FIRST_TERMINATOR_INSTR(14)
-HANDLE_TERMINATOR_INSTR(14, Ret, ReturnInstruction)
-HANDLE_TERMINATOR_INSTR(15, Br, BranchInstruction)
+HANDLE_TERMINATOR_INSTR(14, Ret, ReturnInstruction, ret)
+HANDLE_TERMINATOR_INSTR(15, Br, BranchInstruction, br)
 LAST_TERMINATOR_INSTR(15)
 
 #undef FIRST_TERMINATOR_INSTR
@@ -65,17 +73,21 @@ LAST_TERMINATOR_INSTR(15)
 #endif // FIRST_CAST_INSTR
 
 #ifndef HANDLE_CAST_INSTR
-#define HANDLE_CAST_INSTR(N, Opcode, Class)
+  #ifndef HANDLE_INSTR
+    #define HANDLE_CAST_INSTR(N, Opcode, Class, Name)
+  #else
+    #define HANDLE_CAST_INSTR(N, Opcode, Class, Name) HANDLE_INSTR(N, Opcode, Class, Name)
+  #endif // HANDLE_INSTR
 #endif // HANDLE_CAST_INSTR
 
 #ifndef LAST_CAST_INSTR
 #define LAST_CAST_INSTR(N)
 #endif // LAST_CAST_INSTR
 
-FIRST_CAST_INSTR(15)
-HANDLE_CAST_INSTR(15, ZExt, ZeroExtendInstruction)
-HANDLE_CAST_INSTR(16, SExt, SignExtendInstruction)
-LAST_CAST_INSTR(16)
+FIRST_CAST_INSTR(16)
+HANDLE_CAST_INSTR(16, ZExt, ZeroExtendInstruction, zext)
+HANDLE_CAST_INSTR(17, SExt, SignExtendInstruction, sext)
+LAST_CAST_INSTR(17)
 
 #undef FIRST_CAST_INSTR
 #undef HANDLE_CAST_INSTR
@@ -88,19 +100,25 @@ LAST_CAST_INSTR(16)
 #endif // FIRST_OTHER_INSTR
 
 #ifndef HANDLE_OTHER_INSTR
-#define HANDLE_OTHER_INSTR(N, Opcode, Class)
+  #ifndef HANDLE_INSTR
+    #define HANDLE_OTHER_INSTR(N, Opcode, Class, Name)
+  #else
+    #define HANDLE_OTHER_INSTR(N, Opcode, Class, Name) HANDLE_INSTR(N, Opcode, Class, Name)
+  #endif // HANDLE_INSTR
 #endif // HANDLE_OTHER_INSTR
 
 #ifndef LAST_OTHER_INSTR
 #define LAST_OTHER_INSTR(N)
 #endif // LAST_OTHER_INSTR
 
-FIRST_OTHER_INSTR(16)
-HANDLE_OTHER_INSTR(16, Call, CallInstructions)
-HANDLE_OTHER_INSTR(17, PHI, PHIInstruction)
-LAST_OTHER_INSTR(17)
+FIRST_OTHER_INSTR(18)
+HANDLE_OTHER_INSTR(18, Call, CallInstructions, call)
+HANDLE_OTHER_INSTR(19, PHI, PHIInstruction, phi)
+LAST_OTHER_INSTR(19)
 
 #undef FIRST_OTHER_INSTR
 #undef HANDLE_OTHER_INSTR
 #undef LAST_OTHER_INSTR
 // =================================================================================================
+
+#undef HANDLE_INSTR

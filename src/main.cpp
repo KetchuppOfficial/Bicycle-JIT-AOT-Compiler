@@ -1,6 +1,8 @@
+#include <print>
+
 #include "bjac/IR/instruction.hpp"
 
 int main() {
-    bjac::Instruction instr{bjac::Instruction::OtherOps::kCall};
-    return instr.is_terminator();
+    bjac::Instruction instr{bjac::Instruction::Opcode::kCall};
+    std::println("{}", instr.get_name());
 }

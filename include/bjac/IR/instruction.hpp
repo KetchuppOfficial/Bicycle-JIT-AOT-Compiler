@@ -1,77 +1,85 @@
 #ifndef INCLUDE_BJAC_IR_INSTRUCTION_HPP
 #define INCLUDE_BJAC_IR_INSTRUCTION_HPP
 
-#include <type_traits>
+#include <string_view>
 #include <utility>
 
 namespace bjac {
 
-namespace detail {
-
-template <typename E>
-concept InstructionEnum = std::is_scoped_enum_v<E> && requires {
-    E::kBegin;
-    E::kEnd;
-};
-
-} // namespace detail
-
 class Instruction final {
   public:
-    using opcode_type = unsigned char;
+    enum class Opcode : unsigned char {
+#define FIRST_BINARY_INSTR(N) kBinaryBegin = N,
+#define HANDLE_BINARY_INSTR(N, Opcode, Class, Name) k##Opcode = N,
+#define LAST_BINARY_INSTR(N) kBinaryEnd = N + 1,
 
-    enum class BinaryOps : opcode_type {
-#define FIRST_BINARY_INSTR(N) kBegin = N,
-#define HANDLE_BINARY_INSTR(N, Opcode, Class) k##Opcode = N,
-#define LAST_BINARY_INSTR(N) kEnd = N + 1
+#define FIRST_TERMINATOR_INSTR(N) kTerminatorsBegin = N,
+#define HANDLE_TERMINATOR_INSTR(N, Opcode, Class, Name) k##Opcode = N,
+#define LAST_TERMINATOR_INSTR(N) kTerminatorsEnd = N + 1,
+
+#define FIRST_CAST_INSTR(N) kCastsBegin = N,
+#define HANDLE_CAST_INSTR(N, Opcode, Class, Name) k##Opcode = N,
+#define LAST_CAST_INSTR(N) kCastsEnd = N + 1,
+
+#define FIRST_OTHER_INSTR(N) kOtherBegin = N,
+#define HANDLE_OTHER_INSTR(N, Opcode, Class, Name) k##Opcode = N,
+#define LAST_OTHER_INSTR(N) kOtherEnd = N + 1,
+
 #include "bjac/IR/instructions.def"
     };
 
-    enum class TerminatorOps : opcode_type {
-#define FIRST_TERMINATOR_INSTR(N) kBegin = N,
-#define HANDLE_TERMINATOR_INSTR(N, Opcode, Class) k##Opcode = N,
-#define LAST_TERMINATOR_INSTR(N) kEnd = N + 1
-#include "bjac/IR/instructions.def"
-    };
+    explicit Instruction(Opcode opcode) : opcode_{opcode} {}
 
-    enum class CastOps : opcode_type {
-#define FIRST_CAST_INSTR(N) kBegin = N,
-#define HANDLE_CAST_INSTR(N, Opcode, Class) k##Opcode = N,
-#define LAST_CAST_INSTR(N) kEnd = N + 1
-#include "bjac/IR/instructions.def"
-    };
+    Opcode get_opcode() const noexcept { return opcode_; }
 
-    enum class OtherOps : opcode_type {
-#define FIRST_OTHER_INSTR(N) kBegin = N,
-#define HANDLE_OTHER_INSTR(N, Opcode, Class) k##Opcode = N,
-#define LAST_OTHER_INSTR(N) kEnd = N + 1
-#include "bjac/IR/instructions.def"
-    };
-
-    template <detail::InstructionEnum E>
-    explicit Instruction(E opcode) : opcode_{std::to_underlying(opcode)} {}
-
-    opcode_type get_opcode() const noexcept { return opcode_; }
-
-    static bool is_binary_op(opcode_type opcode) noexcept {
-        return is_in_category<BinaryOps>(opcode);
+    static constexpr bool is_binary_op(Opcode opcode) noexcept {
+        return is_in_category<Opcode::kBinaryBegin, Opcode::kBinaryEnd>(opcode);
     }
 
-    bool is_binary_op() const noexcept { return Instruction::is_binary_op(get_opcode()); }
+    bool is_binary_op() const noexcept { return Instruction::is_binary_op(opcode_); }
 
-    static bool is_terminator(opcode_type opcode) noexcept {
-        return is_in_category<TerminatorOps>(opcode);
+    static constexpr bool is_terminator(Opcode opcode) noexcept {
+        return is_in_category<Opcode::kTerminatorsBegin, Opcode::kTerminatorsEnd>(opcode);
     }
 
-    bool is_terminator() const noexcept { return Instruction::is_terminator(get_opcode()); }
+    bool is_terminator() const noexcept { return Instruction::is_terminator(opcode_); }
+
+    static constexpr bool is_cast(Opcode opcode) noexcept {
+        return is_in_category<Opcode::kCastsBegin, Opcode::kCastsEnd>(opcode);
+    }
+
+    bool is_cast() const noexcept { return Instruction::is_cast(opcode_); }
+
+    static constexpr bool is_other_op(Opcode opcode) noexcept {
+        return is_in_category<Opcode::kOtherBegin, Opcode::kOtherEnd>(opcode);
+    }
+
+    bool is_other_op() const noexcept { return Instruction::is_other_op(opcode_); }
+
+    static std::string_view get_name(Opcode opcode) noexcept {
+        using enum Opcode;
+        using namespace std::string_view_literals;
+        switch (opcode) {
+#define HANDLE_INSTR(N, Opcode, Class, Name)                                                       \
+    case k##Opcode:                                                                                \
+        return #Name##sv;
+#include "bjac/IR/instructions.def"
+
+        default:
+            std::unreachable();
+        }
+    }
+
+    std::string_view get_name() const noexcept { return Instruction::get_name(opcode_); }
 
   private:
-    template <detail::InstructionEnum E>
-    static bool is_in_category(opcode_type opcode) noexcept {
-        return std::to_underlying(E::kBegin) <= opcode && opcode < std::to_underlying(E::kEnd);
+    template <Opcode kBegin, Opcode kEnd>
+    static constexpr bool is_in_category(Opcode opcode) noexcept {
+        auto opc = std::to_underlying(opcode);
+        return std::to_underlying(kBegin) <= opc && opc < std::to_underlying(kEnd);
     }
 
-    opcode_type opcode_;
+    Opcode opcode_;
 };
 
 } // namespace bjac
