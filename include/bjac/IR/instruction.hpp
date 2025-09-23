@@ -4,9 +4,11 @@
 #include <string_view>
 #include <utility>
 
+#include "bjac/utils/ilist_node.hpp"
+
 namespace bjac {
 
-class Instruction final {
+class Instruction final : public ilist_node<Instruction> {
   public:
     enum class Opcode : unsigned char {
 #define FIRST_BINARY_INSTR(N) kBinaryBegin = N,
@@ -29,6 +31,8 @@ class Instruction final {
     };
 
     explicit Instruction(Opcode opcode) : opcode_{opcode} {}
+
+    ~Instruction() override = default;
 
     Opcode get_opcode() const noexcept { return opcode_; }
 
