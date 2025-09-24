@@ -32,6 +32,8 @@ class Instruction final : public ilist_node<Instruction> {
 
     explicit Instruction(Opcode opcode) : opcode_{opcode} {}
 
+    ~Instruction() override = default;
+
     Opcode get_opcode() const noexcept { return opcode_; }
 
     static constexpr bool is_binary_op(Opcode opcode) noexcept {

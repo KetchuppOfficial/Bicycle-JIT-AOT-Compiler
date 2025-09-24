@@ -13,20 +13,21 @@ class ilist_node {
 
     static_assert(std::is_object_v<value_type>);
 
-    ilist_node() = default;
+    ilist_node() noexcept : next_{this}, prev_{this} {}
+    ilist_node(ilist_node *next, ilist_node *prev) noexcept : next_{next}, prev_{prev} {}
 
     ilist_node(const ilist_node &) = delete;
     ilist_node &operator=(const ilist_node &) = delete;
 
-    ilist_node(ilist_node &&rhs) noexcept
-        : next_{std::exchange(rhs.next_, nullptr)}, prev_{std::exchange(rhs.prev_, nullptr)} {}
+    ilist_node(ilist_node &&rhs) = delete;
+    ilist_node &operator=(ilist_node &&rhs) = delete;
 
-    ilist_node &operator=(ilist_node &&rhs) noexcept {
-        if (this != std::addressof(rhs)) {
-            next_ = std::exchange(rhs.next_, nullptr);
-            prev_ = std::exchange(rhs.prev_, nullptr);
-        }
-        return *this;
+    virtual ~ilist_node() = default;
+
+    void reset() noexcept { next_ = prev_ = this; }
+    void swap(ilist_node &other) noexcept {
+        std::swap(next_, other.next_);
+        std::swap(prev_, other.prev_);
     }
 
     ilist_node *next() noexcept { return next_; }
@@ -42,8 +43,8 @@ class ilist_node {
     const auto &value() const noexcept { return *static_cast<const value_type *>(this); }
 
   private:
-    ilist_node *next_ = nullptr;
-    ilist_node *prev_ = nullptr;
+    ilist_node *next_;
+    ilist_node *prev_;
 };
 
 } // namespace bjac
