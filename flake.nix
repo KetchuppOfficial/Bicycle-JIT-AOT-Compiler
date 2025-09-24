@@ -18,7 +18,6 @@
         in (pkgs.mkShell.override { stdenv = pkgs.gcc15Stdenv; }) {
             nativeBuildInputs = with pkgs; [
                 cmake
-                python3
             ];
         };
     };
