@@ -17,6 +17,11 @@ class BasicBlock final : public ilist_node<BasicBlock>, private ilist<Instructio
     using instructions = ilist<Instruction>;
 
   public:
+    using instructions::const_iterator;
+    using instructions::difference_type;
+    using instructions::iterator;
+    using instructions::size_type;
+
     BasicBlock() = default;
     BasicBlock(Function *parent) noexcept : parent_{parent} {}
 
@@ -37,11 +42,6 @@ class BasicBlock final : public ilist_node<BasicBlock>, private ilist<Instructio
     }
 
     std::optional<unsigned> get_id() const { return parent_ ? std::optional{id_} : std::nullopt; }
-
-    using instructions::const_iterator;
-    using instructions::difference_type;
-    using instructions::iterator;
-    using instructions::size_type;
 
     using instructions::empty;
     using instructions::size;
