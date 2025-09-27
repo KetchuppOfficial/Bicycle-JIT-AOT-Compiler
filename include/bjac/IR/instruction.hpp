@@ -8,6 +8,8 @@
 
 namespace bjac {
 
+class BasicBlock;
+
 class Instruction final : public ilist_node<Instruction> {
   public:
     enum class Opcode : unsigned char {
@@ -84,6 +86,7 @@ class Instruction final : public ilist_node<Instruction> {
     }
 
     Opcode opcode_;
+    BasicBlock *parent_ = nullptr;
 };
 
 } // namespace bjac
