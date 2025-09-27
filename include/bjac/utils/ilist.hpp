@@ -64,22 +64,16 @@ class ilist {
         std::swap(size_, other.size_);
     }
 
-    reference front() {
-        assert(!empty());
-        return head()->value();
-    }
-    const_reference front() const {
-        assert(!empty());
-        return head()->value();
+    template <typename Self>
+    auto &front(this Self &&self) {
+        assert(!self.empty());
+        return self.head()->value();
     }
 
-    reference back() {
-        assert(!empty());
-        return tail()->value();
-    }
-    const_reference back() const {
-        assert(!empty());
-        return tail()->value();
+    template <typename Self>
+    auto &back(this Self &&self) {
+        assert(!self.empty());
+        return self.tail()->value();
     }
 
     iterator begin() noexcept { return {head()}; }
@@ -169,11 +163,15 @@ class ilist {
         return {next};
     }
 
-    auto *head() noexcept { return sentinel_.next(); }
-    auto *head() const noexcept { return sentinel_.next(); }
+    template <typename Self>
+    auto *head(this Self &&self) noexcept {
+        return self.sentinel_.next();
+    }
 
-    auto *tail() noexcept { return sentinel_.prev(); }
-    auto *tail() const noexcept { return sentinel_.prev(); }
+    template <typename Self>
+    auto *tail(this Self &&self) noexcept {
+        return self.sentinel_.prev();
+    }
 
     node_type sentinel_;
     size_type size_ = 0;
