@@ -2,7 +2,9 @@
 #define INCLUDE_BJAC_UTILS_ILIST_HPP
 
 #include <cassert>
+#include <cstddef>
 #include <iterator>
+#include <type_traits>
 #include <utility>
 
 #include "bjac/utils/ilist_iterator.hpp"
@@ -94,48 +96,6 @@ class ilist {
 
     template <typename... Args>
     iterator emplace(const_iterator pos, Args &&...args) {
-        return do_emplace(pos, std::forward<Args>(args)...);
-    }
-
-    iterator insert(const_iterator pos, const value_type &value) { return do_emplace(pos, value); }
-    iterator insert(const_iterator pos, value_type &&value) {
-        return do_emplace(pos, std::move(value));
-    }
-
-    template <typename... Args>
-    reference emplace_back(Args &&...args) {
-        return *do_emplace(end(), std::forward<Args>(args)...);
-    }
-
-    void push_back(const value_type &value) { do_emplace(end(), value); }
-    void push_back(value_type &&value) { do_emplace(end(), std::move(value)); }
-
-    template <typename... Args>
-    reference emplace_front(Args &&...args) {
-        return *do_emplace(begin(), std::forward<Args>(args)...);
-    }
-
-    void push_front(const value_type &value) { do_emplace(begin(), value); }
-    void push_front(value_type &&value) { do_emplace(begin(), std::move(value)); }
-
-    iterator erase(iterator pos) { return do_erase(pos); }
-    iterator erase(const_iterator pos) { return do_erase(pos); }
-
-    void pop_front() { do_erase(begin()); }
-    void pop_back() { do_erase(iterator{tail()}); }
-
-  private:
-    void swap_sentinels_one_of_which_is_empty(ilist &other) {
-        assert(empty());
-        assert(!other.empty());
-
-        sentinel_.set_next(other.sentinel_->next());
-        sentinel_.set_prev(other.sentinel_->prev());
-        other.sentinel_.reset();
-    }
-
-    template <typename... Args>
-    iterator do_emplace(const_iterator pos, Args &&...args) {
         node_type *new_node = new value_type(std::forward<Args>(args)...);
 
         auto *next = const_cast<node_type *>(pos.node_);
@@ -149,7 +109,28 @@ class ilist {
         return iterator{new_node};
     }
 
-    iterator do_erase(std::bidirectional_iterator auto pos) {
+    iterator insert(const_iterator pos, const value_type &value) { return emplace(pos, value); }
+    iterator insert(const_iterator pos, value_type &&value) {
+        return emplace(pos, std::move(value));
+    }
+
+    template <typename... Args>
+    reference emplace_back(Args &&...args) {
+        return *emplace(end(), std::forward<Args>(args)...);
+    }
+
+    void push_back(const value_type &value) { emplace(end(), value); }
+    void push_back(value_type &&value) { emplace(end(), std::move(value)); }
+
+    template <typename... Args>
+    reference emplace_front(Args &&...args) {
+        return *emplace(begin(), std::forward<Args>(args)...);
+    }
+
+    void push_front(const value_type &value) { emplace(begin(), value); }
+    void push_front(value_type &&value) { emplace(begin(), std::move(value)); }
+
+    iterator erase(const_iterator pos) {
         assert(pos != end());
 
         auto *to_erase = const_cast<node_type *>(pos.node_);
@@ -161,6 +142,24 @@ class ilist {
         delete to_erase;
 
         return {next};
+    }
+
+    iterator erase(iterator pos) {
+        static_assert(!std::is_same_v<iterator, const_iterator>);
+        return erase(const_iterator{pos});
+    }
+
+    void pop_front() { erase(begin()); }
+    void pop_back() { erase(const_iterator{tail()}); }
+
+  private:
+    void swap_sentinels_one_of_which_is_empty(ilist &other) {
+        assert(empty());
+        assert(!other.empty());
+
+        sentinel_.set_next(other.sentinel_->next());
+        sentinel_.set_prev(other.sentinel_->prev());
+        other.sentinel_.reset();
     }
 
     template <typename Self>
