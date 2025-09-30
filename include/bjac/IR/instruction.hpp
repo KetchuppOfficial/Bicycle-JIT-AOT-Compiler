@@ -310,17 +310,11 @@ class PHIInstruction : public Instruction {
 
     void add(BasicBlock &bb, Value &value) { records_.emplace(&bb, &value); }
 
-    // TODO: consider using deducing this
-    Value *get(BasicBlock &bb) {
-        if (auto it = records_.find(&bb); it == records_.end()) {
-            return it->second;
-        }
-        return nullptr;
-    }
-
-    // TODO: consider using deducing this
-    const Value *get(BasicBlock &bb) const {
-        if (auto it = records_.find(&bb); it == records_.end()) {
+    template <typename Self>
+    auto get(this Self &&self, BasicBlock &bb)
+        -> std::conditional_t<std::is_const_v<std::remove_reference_t<Self>>, const Value *,
+                              Value *> {
+        if (auto it = self.records_.find(&bb); it != self.records_.end()) {
             return it->second;
         }
         return nullptr;
