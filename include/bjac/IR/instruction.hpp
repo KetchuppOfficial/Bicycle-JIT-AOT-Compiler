@@ -3,11 +3,11 @@
 
 #include <cstdint>
 #include <format>
+#include <map>
 #include <memory>
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <utility>
 
 #include "bjac/IR/type.hpp"
@@ -326,7 +326,7 @@ class PHIInstruction : public Instruction {
     PHIInstruction() : Instruction(Opcode::kPHI) {}
 
   private:
-    std::unordered_map<BasicBlock *, Value *> records_;
+    std::map<BasicBlock *, Value *> records_;
 };
 
 class ArgumentInstruction : public Instruction {
