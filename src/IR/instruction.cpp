@@ -1,6 +1,5 @@
 #include <cassert>
 #include <format>
-#include <sstream>
 
 #include "bjac/IR/basic_block.hpp"
 #include "bjac/IR/instruction.hpp"
@@ -18,17 +17,18 @@ std::string BranchInstruction::to_string() const {
 }
 
 std::string PHIInstruction::to_string() const {
-    assert(records_.size() >= 2);
-
-    std::ostringstream phi_list;
-    for (const auto &[bb, value] : records_) {
-        phi_list << std::format("[%{}, %bb{}], ", Value::to_void_ptr(value), bb->get_id().value());
+    if (records_.size() < 2) {
+        throw std::invalid_argument{"phi instruction does not have enough records"};
     }
 
-    auto phi_list_sv = phi_list.view();
-    phi_list_sv.remove_suffix(2);
+    std::string phi_list;
+    for (const auto &[bb, value] : std::views::take(records_, records_.size() - 1)) {
+        phi_list += std::format("[%{}, %bb{}], ", Value::to_void_ptr(value), bb->get_id().value());
+    }
+    const auto &[bb, value] = *std::ranges::prev(records_.end());
+    phi_list += std::format("[%{}, %bb{}]", Value::to_void_ptr(value), bb->get_id().value());
 
-    return std::format("%{} = {} {}", Value::to_void_ptr(this), get_name(), phi_list_sv);
+    return std::format("%{} = {} {}", Value::to_void_ptr(this), get_name(), phi_list);
 }
 
 } // namespace bjac
