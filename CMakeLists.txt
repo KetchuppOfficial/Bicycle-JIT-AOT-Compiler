@@ -12,15 +12,12 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-find_package(fmt REQUIRED)
-
 add_library(bjac-ir
     src/IR/basic_block.cpp
     src/IR/function.cpp
     src/IR/instruction.cpp
 )
 target_include_directories(bjac-ir PUBLIC include)
-target_link_libraries(bjac-ir PRIVATE fmt::fmt)
 target_compile_options(bjac-ir
 PUBLIC
     $<$<CXX_COMPILER_ID:MSVC>:/Wall>
