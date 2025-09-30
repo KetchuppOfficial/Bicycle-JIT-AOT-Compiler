@@ -113,8 +113,11 @@ LAST_CAST_INSTR(17)
 
 FIRST_OTHER_INSTR(18)
 HANDLE_OTHER_INSTR(18, Call, CallInstructions, call)
-HANDLE_OTHER_INSTR(19, PHI, PHIInstruction, phi)
-LAST_OTHER_INSTR(19)
+HANDLE_OTHER_INSTR(19, ICmp, ICmpInstruction, icmp)
+HANDLE_OTHER_INSTR(20, PHI, PHIInstruction, phi)
+HANDLE_OTHER_INSTR(21, Arg, ArgumentInstruction, arg)
+HANDLE_OTHER_INSTR(22, Const, ConstInstruction, constant)
+LAST_OTHER_INSTR(22)
 
 #undef FIRST_OTHER_INSTR
 #undef HANDLE_OTHER_INSTR
