@@ -12,10 +12,20 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-add_executable(dummy-test src/main.cpp)
-target_include_directories(dummy-test PRIVATE include)
-target_compile_options(dummy-test
-PRIVATE
-    $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
+find_package(fmt REQUIRED)
+
+add_library(bjac-ir
+    src/IR/basic_block.cpp
+    src/IR/function.cpp
+    src/IR/instruction.cpp
+)
+target_include_directories(bjac-ir PUBLIC include)
+target_link_libraries(bjac-ir PRIVATE fmt::fmt)
+target_compile_options(bjac-ir
+PUBLIC
+    $<$<CXX_COMPILER_ID:MSVC>:/Wall>
     $<$<CXX_COMPILER_ID:GNU,Clang>: -Wall -Wextra -pedantic>
 )
+
+add_executable(fibonacci-test src/main.cpp)
+target_link_libraries(fibonacci-test PRIVATE bjac-ir)

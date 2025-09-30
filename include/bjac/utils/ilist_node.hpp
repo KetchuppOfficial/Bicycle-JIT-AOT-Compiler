@@ -13,7 +13,7 @@ class ilist_node {
 
     static_assert(std::is_object_v<value_type>);
 
-    ilist_node() noexcept : next_{this}, prev_{this} {}
+    ilist_node() noexcept : ilist_node{nullptr, nullptr} {}
     ilist_node(ilist_node *next, ilist_node *prev) noexcept : next_{next}, prev_{prev} {}
 
     ilist_node(const ilist_node &) = delete;

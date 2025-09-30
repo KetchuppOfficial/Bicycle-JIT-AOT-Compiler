@@ -1,21 +1,75 @@
-#include <print>
+#include <iostream>
 
 #include "bjac/IR/basic_block.hpp"
+#include "bjac/IR/function.hpp"
+#include "bjac/IR/type.hpp"
 
+/*
+ * i64 fibonacci(i64) {
+ * %bb1:
+ *     %arg = arg 0
+ *     %two = const i64 2
+ *     %1 = icmp ult i64 %arg, %two
+ *     br %1, label %bb4, label %bb2
+ * %bb2:
+ *     %zero = const i64 0
+ *     %one = const i64 1
+ *     br %bb3
+ * %bb3:
+ *     %i = phi [%two, %bb2], [%next_i, %bb3]
+ *     %second = phi [%one, %bb2], [%third, %bb3]
+ *     %first = phi [%zero, %bb2], [%second, %bb3]
+ *     %third = add i64 %first, %second
+ *     %next_i = add i64 %i, %one
+ *     %2 = icmp ule i64 %i, %arg
+ *     br %2, label %bb3, label %bb4
+ * %bb4:
+ *     %ret_val = phi [%arg, %bb1], [%second, %bb3]
+ *     ret i64 %ret_val
+ * }
+ */
 int main() {
-    bjac::BasicBlock bb;
+    bjac::Function fibonacci{"fibonacci", bjac::Type::kI64, {bjac::Type::kI64}};
 
-    bb.emplace_back(bjac::Instruction::Opcode::kCall);
-    bb.emplace_back(bjac::Instruction::Opcode::kAdd);
-    bb.emplace_back(bjac::Instruction::Opcode::kBr);
-    bb.emplace_back(bjac::Instruction::Opcode::kPHI);
-    bb.emplace_back(bjac::Instruction::Opcode::kRet);
+    auto &bb1 = fibonacci.emplace_back();
+    auto &bb2 = fibonacci.emplace_back();
+    auto &bb3 = fibonacci.emplace_back();
+    auto &bb4 = fibonacci.emplace_back();
 
-    bb.erase(std::next(bb.cbegin(), 2)); // remove br
-    bb.pop_front(); // remove call
-    bb.pop_back(); // remove ret
+    auto &arg = bb1.push_back(bjac::ArgumentInstruction::create(0));
+    auto &two = bb1.push_back(bjac::ConstInstruction::create(bjac::Type::kI64, 2));
+    auto &bb1_cmp =
+        bb1.push_back(bjac::ICmpInstruction::create(bjac::ICmpInstruction::Kind::ult, arg, two));
+    bb1.push_back(bjac::BranchInstruction::create(bb1_cmp, bb4, bb2));
 
-    for (auto &instr : std::as_const(bb)) { // add, phi
-        std::println("{}", instr.get_name());
-    }
+    auto &zero = bb2.push_back(bjac::ConstInstruction::create(bjac::Type::kI64, 0));
+    auto &one = bb2.push_back(bjac::ConstInstruction::create(bjac::Type::kI64, 1));
+    bb2.push_back(bjac::BranchInstruction::create(bb3));
+
+    auto &i = static_cast<bjac::PHIInstruction &>(bb3.push_back(bjac::PHIInstruction::create()));
+    auto &second =
+        static_cast<bjac::PHIInstruction &>(bb3.push_back(bjac::PHIInstruction::create()));
+    auto &first =
+        static_cast<bjac::PHIInstruction &>(bb3.push_back(bjac::PHIInstruction::create()));
+    auto &third =
+        bb3.push_back(bjac::BinaryOperator::create(bjac::Instruction::Opcode::kAdd, first, second));
+    auto &next_i =
+        bb3.push_back(bjac::BinaryOperator::create(bjac::Instruction::Opcode::kAdd, i, one));
+    auto &bb3_cmp =
+        bb3.push_back(bjac::ICmpInstruction::create(bjac::ICmpInstruction::Kind::ule, i, arg));
+    bb3.push_back(bjac::BranchInstruction::create(bb3_cmp, bb3, bb4));
+    i.add(bb2, two);
+    i.add(bb3, next_i);
+    second.add(bb2, one);
+    second.add(bb3, third);
+    first.add(bb2, zero);
+    first.add(bb3, second);
+
+    auto &ret_val =
+        static_cast<bjac::PHIInstruction &>(bb4.push_back(bjac::PHIInstruction::create()));
+    bb4.push_back(bjac::ReturnInstruction::create(ret_val));
+    ret_val.add(bb1, arg);
+    ret_val.add(bb3, second);
+
+    fibonacci.print(std::cout);
 }

@@ -4,6 +4,7 @@
 #include <cassert>
 #include <cstddef>
 #include <iterator>
+#include <memory>
 #include <type_traits>
 #include <utility>
 
@@ -27,14 +28,16 @@ class ilist {
     using size_type = std::size_t;
     using difference_type = iterator::difference_type;
 
-    ilist() = default;
+    ilist() noexcept : sentinel_{&sentinel_, &sentinel_}, size_{0} {}
 
     ilist(const ilist &) = delete;
     ilist &operator=(const ilist &) = delete;
 
     ilist(ilist &&rhs) noexcept
-        : sentinel_{rhs.empty() ? this : rhs.head(), rhs.empty() ? this : rhs.tail()},
-          size_{std::exchange(rhs.size_, 0)} {}
+        : sentinel_{rhs.empty() ? &sentinel_ : rhs.head(), rhs.empty() ? &sentinel_ : rhs.tail()},
+          size_{std::exchange(rhs.size_, 0)} {
+        fixup_head_and_tail();
+    }
 
     ilist &operator=(ilist &&rhs) noexcept {
         swap(rhs);
@@ -54,16 +57,22 @@ class ilist {
 
     void swap(ilist &other) noexcept {
         if (empty()) {
-            if (!other.empty()) {
-                swap_sentinels_one_of_which_is_empty(other);
+            if (other.empty()) {
+                return;
             }
+            swap_sentinels_one_of_which_is_empty(other);
+            fixup_head_and_tail();
+            size_ = std::exchange(other.size_, 0);
         } else if (other.empty()) {
             other.swap_sentinels_one_of_which_is_empty(*this);
+            other.fixup_head_and_tail();
+            other.size_ = std::exchange(size_, 0);
         } else {
             sentinel_.swap(other.sentinel_);
+            fixup_head_and_tail();
+            other.fixup_head_and_tail();
+            std::swap(size_, other.size_);
         }
-
-        std::swap(size_, other.size_);
     }
 
     template <typename Self>
@@ -94,41 +103,32 @@ class ilist {
     const_reverse_iterator rend() const noexcept { return {begin()}; }
     const_reverse_iterator crend() const noexcept { return rend(); }
 
-    template <typename... Args>
+    template <typename T, typename... Args>
     iterator emplace(const_iterator pos, Args &&...args) {
-        node_type *new_node = new value_type(std::forward<Args>(args)...);
-
-        auto *next = const_cast<node_type *>(pos.node_);
-        auto *prev = next->prev();
-
-        prev->set_next(new_node);
-        next->set_prev(new_node);
-        new_node->set_next(next);
-        new_node->set_prev(prev);
-
-        return iterator{new_node};
+        static_assert(std::is_base_of_v<value_type, T>);
+        node_type *new_node = new T(std::forward<Args>(args)...);
+        return insert_node(pos, new_node);
     }
 
-    iterator insert(const_iterator pos, const value_type &value) { return emplace(pos, value); }
-    iterator insert(const_iterator pos, value_type &&value) {
-        return emplace(pos, std::move(value));
-    }
-
-    template <typename... Args>
+    template <typename T, typename... Args>
     reference emplace_back(Args &&...args) {
-        return *emplace(end(), std::forward<Args>(args)...);
+        return *emplace<T>(end(), std::forward<Args>(args)...);
     }
 
-    void push_back(const value_type &value) { emplace(end(), value); }
-    void push_back(value_type &&value) { emplace(end(), std::move(value)); }
-
-    template <typename... Args>
+    template <typename T, typename... Args>
     reference emplace_front(Args &&...args) {
-        return *emplace(begin(), std::forward<Args>(args)...);
+        return *emplace<T>(begin(), std::forward<Args>(args)...);
     }
 
-    void push_front(const value_type &value) { emplace(begin(), value); }
-    void push_front(value_type &&value) { emplace(begin(), std::move(value)); }
+    iterator insert(const_iterator pos, std::unique_ptr<node_type> node) {
+        assert(node);
+        return insert_node(pos, node.release());
+    }
+
+    reference push_back(std::unique_ptr<node_type> node) { return *insert(end(), std::move(node)); }
+    reference push_front(std::unique_ptr<node_type> node) {
+        return *insert(begin(), std::move(node));
+    }
 
     iterator erase(const_iterator pos) {
         assert(pos != end());
@@ -140,6 +140,8 @@ class ilist {
         prev->set_next(next);
         next->set_prev(prev);
         delete to_erase;
+
+        --size_;
 
         return {next};
     }
@@ -153,13 +155,32 @@ class ilist {
     void pop_back() { erase(const_iterator{tail()}); }
 
   private:
-    void swap_sentinels_one_of_which_is_empty(ilist &other) {
+    iterator insert_node(const_iterator pos, node_type *new_node) noexcept {
+        auto *next = const_cast<node_type *>(pos.node_);
+        auto *prev = next->prev();
+
+        prev->set_next(new_node);
+        next->set_prev(new_node);
+        new_node->set_next(next);
+        new_node->set_prev(prev);
+
+        ++size_;
+
+        return iterator{new_node};
+    }
+
+    void swap_sentinels_one_of_which_is_empty(ilist &other) noexcept {
         assert(empty());
         assert(!other.empty());
 
         sentinel_.set_next(other.sentinel_->next());
         sentinel_.set_prev(other.sentinel_->prev());
         other.sentinel_.reset();
+    }
+
+    void fixup_head_and_tail() noexcept {
+        head()->set_prev(&sentinel_);
+        tail()->set_next(&sentinel_);
     }
 
     template <typename Self>
