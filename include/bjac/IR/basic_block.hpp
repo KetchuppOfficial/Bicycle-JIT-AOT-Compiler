@@ -44,6 +44,7 @@ class BasicBlock final : public Value, public ilist_node<BasicBlock>, private il
 
     auto predecessors() const { return std::ranges::ref_view(predecessors_); }
     void add_predecessor(BasicBlock &bb) { predecessors_.insert(std::addressof(bb)); }
+    void remove_predecessor(BasicBlock &bb) { predecessors_.erase(std::addressof(bb)); }
 
     iterator insert(const_iterator pos, std::unique_ptr<Instruction> instr) {
         instr->parent_ = this;
