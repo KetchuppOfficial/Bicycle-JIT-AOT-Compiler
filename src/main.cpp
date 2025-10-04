@@ -1,4 +1,6 @@
 #include <iostream>
+#include <print>
+#include <cstdlib>
 
 #include "bjac/IR/type.hpp"
 
@@ -37,7 +39,7 @@
  *     ret i64 %ret_val
  * }
  */
-int main() {
+int main() try {
     using Opcode = bjac::Instruction::Opcode;
     using enum bjac::Type;
 
@@ -83,4 +85,12 @@ int main() {
     ret_val.add_path(bb3, second);
 
     fibonacci.print(std::cout);
+
+    return 0;
+} catch (const std::exception &e) {
+    std::println(stderr, "Caught an instance of {}.\nwhat(): {}", typeid(e).name(), e.what());
+    return EXIT_FAILURE;
+} catch (...) {
+    std::println(stderr, "Caught an unknown exception");
+    return EXIT_FAILURE;
 }
