@@ -123,7 +123,11 @@ struct formatter<::bjac::Instruction::Opcode> final : public formatter<string_vi
 namespace bjac {
 
 class OperandsTypeMismatch final : public std::invalid_argument {
-    using std::invalid_argument::invalid_argument;
+  public:
+    OperandsTypeMismatch(Instruction::Opcode opcode, Type type_1, Type type_2)
+        : std::invalid_argument{
+              std::format("operands of {} instruction are of different types: {} and {}", opcode,
+                          type_1, type_2)} {}
 };
 
 } // namespace bjac

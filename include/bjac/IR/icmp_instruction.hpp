@@ -48,9 +48,7 @@ class ICmpInstruction final : public Instruction {
         const auto lhs_type = lhs.get_type();
         const auto rhs_type = rhs.get_type();
         if (lhs_type != rhs_type) {
-            throw OperandsTypeMismatch{std::format("operands are of different types: {} and {}",
-                                                   to_string_view(lhs_type),
-                                                   to_string_view(rhs_type))};
+            throw OperandsTypeMismatch{opcode_, lhs_type, rhs_type};
         }
     }
 

@@ -43,15 +43,13 @@ class BinaryOperator final : public Instruction {
         }
     }
 
-    static Type common_type(Value &lhs, Value &rhs) {
+    Type common_type(Value &lhs, Value &rhs) {
         const auto lhs_type = lhs.get_type();
         const auto rhs_type = rhs.get_type();
         if (lhs_type == rhs_type) {
             return lhs_type;
         } else {
-            throw OperandsTypeMismatch{std::format("operands are of different types: {} and {}",
-                                                   to_string_view(lhs_type),
-                                                   to_string_view(rhs_type))};
+            throw OperandsTypeMismatch{opcode_, lhs_type, rhs_type};
         }
     }
 
