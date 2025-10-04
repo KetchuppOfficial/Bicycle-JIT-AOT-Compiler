@@ -44,9 +44,6 @@ class Instruction : public Value, public ilist_node<Instruction> {
 
     explicit Instruction(Opcode opcode) : opcode_{opcode} {}
 
-    Instruction(Instruction &&rhs) = default;
-    Instruction &operator=(Instruction &&) = default;
-
     ~Instruction() override = default;
 
     Opcode get_opcode() const noexcept { return opcode_; }
