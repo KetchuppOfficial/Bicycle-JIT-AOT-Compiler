@@ -1,10 +1,14 @@
-#include <cassert>
 #include <format>
+#include <iterator>
+#include <ranges>
 #include <stdexcept>
 
 #include "bjac/IR/basic_block.hpp"
 #include "bjac/IR/function.hpp"
-#include "bjac/IR/instruction.hpp"
+
+#include "bjac/IR/argument_instruction.hpp"
+#include "bjac/IR/branch_instruction.hpp"
+#include "bjac/IR/phi_instruction.hpp"
 
 namespace bjac {
 

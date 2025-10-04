@@ -8,6 +8,7 @@
 #include <set>
 #include <utility>
 
+#include "bjac/IR/branch_instruction.hpp"
 #include "bjac/IR/instruction.hpp"
 #include "bjac/utils/ilist.hpp"
 #include "bjac/utils/ilist_node.hpp"
