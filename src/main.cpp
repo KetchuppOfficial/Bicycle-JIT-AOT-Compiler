@@ -15,30 +15,6 @@
 #include "bjac/IR/phi_instruction.hpp"
 #include "bjac/IR/ret_instruction.hpp"
 
-/*
- * i64 fibonacci(i64) {
- * %bb1:
- *     %arg = arg 0
- *     %two = const i64 2
- *     %1 = icmp ult i64 %arg, %two
- *     br %1, label %bb4, label %bb2
- * %bb2:
- *     %zero = const i64 0
- *     %one = const i64 1
- *     br %bb3
- * %bb3:
- *     %i = phi [%two, %bb2], [%next_i, %bb3]
- *     %second = phi [%one, %bb2], [%third, %bb3]
- *     %first = phi [%zero, %bb2], [%second, %bb3]
- *     %third = add_path i64 %first, %second
- *     %next_i = add_path i64 %i, %one
- *     %2 = icmp ule i64 %i, %arg
- *     br %2, label %bb3, label %bb4
- * %bb4:
- *     %ret_val = phi [%arg, %bb1], [%second, %bb3]
- *     ret i64 %ret_val
- * }
- */
 int main() try {
     using Opcode = bjac::Instruction::Opcode;
     using enum bjac::Type;
