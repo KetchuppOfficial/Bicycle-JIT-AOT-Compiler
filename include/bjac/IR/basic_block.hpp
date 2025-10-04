@@ -25,7 +25,7 @@ class BasicBlock final : public Value, public ilist_node<BasicBlock>, private il
     using instructions::iterator;
     using instructions::size_type;
 
-    BasicBlock() = default;
+    BasicBlock() : Value{Type::kNone} {}
 
     template <typename Self>
     auto *get_parent(this Self &&self) noexcept {

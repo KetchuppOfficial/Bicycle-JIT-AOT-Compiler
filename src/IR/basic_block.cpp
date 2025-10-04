@@ -9,7 +9,7 @@
 namespace bjac {
 
 BasicBlock::BasicBlock(Function &parent) noexcept
-    : parent_{std::addressof(parent)}, id_{parent.get_next_bb_id()} {}
+    : Value{Type::kNone}, parent_{std::addressof(parent)}, id_{parent.get_next_bb_id()} {}
 
 void BasicBlock::print(std::ostream &os) const {
     os << std::format("%bb{}:", get_id().value());

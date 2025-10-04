@@ -27,15 +27,16 @@ class Function final : public Value, private ilist<BasicBlock> {
     using basic_blocks::iterator;
     using basic_blocks::size_type;
 
-    Function(std::string_view name, Type return_type) : name_(name), return_type_{return_type} {}
+    Function(std::string_view name, Type return_type)
+        : Value{Type::kNone}, name_(name), return_type_{return_type} {}
 
     template <std::input_iterator It>
         requires std::convertible_to<std::iter_value_t<It>, Type>
     Function(std::string_view name, Type return_type, It first, It last)
-        : name_(name), return_type_{return_type}, arguments_(first, last) {}
+        : Value{Type::kNone}, name_(name), return_type_{return_type}, arguments_(first, last) {}
 
     Function(std::string_view name, Type return_type, std::initializer_list<Type> ilist)
-        : name_(name), return_type_{return_type}, arguments_(ilist) {}
+        : Value{Type::kNone}, name_(name), return_type_{return_type}, arguments_(ilist) {}
 
     std::string_view name() const noexcept { return name_; }
 

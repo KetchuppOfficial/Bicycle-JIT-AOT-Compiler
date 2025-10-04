@@ -7,10 +7,20 @@
 
 namespace bjac {
 
-enum class Type { kVoid, kI1, kI8, kI16, kI32, kI64 };
+enum class Type {
+    kNone, // used as the type of basic blocks, functions, br and ret instructions
+    kVoid,
+    kI1,
+    kI8,
+    kI16,
+    kI32,
+    kI64
+};
 
 inline std::string_view to_string_view(Type type) {
     switch (type) {
+    case Type::kNone:
+        return "none";
     case Type::kVoid:
         return "void";
     case Type::kI1:

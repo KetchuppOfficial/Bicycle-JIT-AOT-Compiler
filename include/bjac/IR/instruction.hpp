@@ -17,6 +17,7 @@
 namespace bjac {
 
 class BasicBlock;
+class Function;
 
 class Instruction : public Value, public ilist_node<Instruction> {
     using node_type = ilist_node<Instruction>;
@@ -42,7 +43,7 @@ class Instruction : public Value, public ilist_node<Instruction> {
 #include "bjac/IR/instructions.def"
     };
 
-    explicit Instruction(Opcode opcode) : opcode_{opcode} {}
+    explicit Instruction(Opcode opcode, Type type) : Value{type}, opcode_{opcode} {}
 
     ~Instruction() override = default;
 
@@ -77,8 +78,8 @@ class Instruction : public Value, public ilist_node<Instruction> {
   private:
     friend class BasicBlock;
 
-    Instruction(BasicBlock &parent, Opcode opcode) noexcept
-        : parent_{std::addressof(parent)}, opcode_{opcode} {}
+    Instruction(BasicBlock &parent, Opcode opcode, Type type) noexcept
+        : Value{type}, parent_{std::addressof(parent)}, opcode_{opcode} {}
 
     template <Opcode kBegin, Opcode kEnd>
     static constexpr bool is_in_category(Opcode opcode) noexcept {
@@ -103,7 +104,36 @@ inline std::string_view to_string_view(Instruction::Opcode opcode) noexcept {
     }
 }
 
-class BinaryOperator : public Instruction {
+} // namespace bjac
+
+namespace std {
+
+template <>
+struct formatter<::bjac::Instruction::Opcode> final : public formatter<string_view> {
+    template <typename ParseConstexpr>
+    constexpr ParseConstexpr::iterator parse(ParseConstexpr &ctx) {
+        return formatter<string_view>::parse(ctx);
+    }
+
+    template <class FmtContext>
+    FmtContext::iterator format(::bjac::Instruction::Opcode opcode, FmtContext &ctx) const {
+        return formatter<string_view>::format(::bjac::to_string_view(opcode), ctx);
+    }
+};
+
+} // namespace std
+
+namespace bjac {
+
+class InvalidBinaryOperatorOpcode final : public std::invalid_argument {
+    using std::invalid_argument::invalid_argument;
+};
+
+class OperandsTypeMismatch final : public std::invalid_argument {
+    using std::invalid_argument::invalid_argument;
+};
+
+class BinaryOperator final : public Instruction {
   public:
     static std::unique_ptr<BinaryOperator> create(Opcode opcode, Value &lhs, Value &rhs) {
         return std::unique_ptr<BinaryOperator>{new BinaryOperator{opcode, lhs, rhs}};
@@ -118,24 +148,35 @@ class BinaryOperator : public Instruction {
     const Value *get_rhs() const noexcept { return rhs_; }
 
     std::string to_string() const override {
-        return std::format("%{} = {} %{} %{}", Value::to_void_ptr(this), to_string_view(opcode_),
+        return std::format("%{} = {} {} %{}, %{}", Value::to_void_ptr(this), type_, opcode_,
                            Value::to_void_ptr(lhs_), Value::to_void_ptr(rhs_));
     }
 
-  protected:
+  private:
     BinaryOperator(Opcode opcode, Value &lhs, Value &rhs)
-        : Instruction(opcode), lhs_{&lhs}, rhs_{&rhs} {
+        : Instruction(opcode, common_type(lhs, rhs)), lhs_{&lhs}, rhs_{&rhs} {
         if (opcode < Opcode::kBinaryBegin || opcode >= Opcode::kBinaryEnd) {
             throw std::invalid_argument{"invalid opcode for a binary operator"};
         }
     }
 
-  private:
+    static Type common_type(Value &lhs, Value &rhs) {
+        const auto lhs_type = lhs.get_type();
+        const auto rhs_type = rhs.get_type();
+        if (lhs_type == rhs_type) {
+            return lhs_type;
+        } else {
+            throw OperandsTypeMismatch{std::format("operands are of different types: {} and {}",
+                                                   to_string_view(lhs_type),
+                                                   to_string_view(rhs_type))};
+        }
+    }
+
     Value *lhs_;
     Value *rhs_;
 };
 
-class ReturnInstruction : public Instruction {
+class ReturnInstruction final : public Instruction {
   public:
     static std::unique_ptr<ReturnInstruction> create() {
         return std::unique_ptr<ReturnInstruction>{new ReturnInstruction{}};
@@ -147,25 +188,32 @@ class ReturnInstruction : public Instruction {
 
     ~ReturnInstruction() override = default;
 
+    Type get_ret_type() const noexcept { return ret_val_ ? ret_val_->get_type() : Type::kVoid; }
+
     Value *get_ret_value() noexcept { return ret_val_; }
     const Value *get_ret_value() const noexcept { return ret_val_; }
 
     std::string to_string() const override {
         if (ret_val_) {
-            return std::format("{} %{}", to_string_view(opcode_), Value::to_void_ptr(ret_val_));
+            return std::format("{} {} %{}", opcode_, ret_val_->get_type(),
+                               Value::to_void_ptr(ret_val_));
         }
-        return std::format("{} {}", to_string_view(opcode_), to_string_view(Type::kVoid));
+        return std::format("{} {}", opcode_, Type::kVoid);
     }
 
-  protected:
-    ReturnInstruction() : Instruction(Opcode::kRet), ret_val_{nullptr} {} // ret void
-    ReturnInstruction(Value &ret_val) : Instruction(Opcode::kRet), ret_val_{&ret_val} {}
-
   private:
+    ReturnInstruction() : Instruction(Opcode::kRet, Type::kVoid), ret_val_{nullptr} {} // ret void
+    ReturnInstruction(Value &ret_val)
+        : Instruction(Opcode::kRet, Type::kVoid), ret_val_{&ret_val} {}
+
     Value *ret_val_;
 };
 
-class BranchInstruction : public Instruction {
+class InvalidConditionType final : public std::invalid_argument {
+    using std::invalid_argument::invalid_argument;
+};
+
+class BranchInstruction final : public Instruction {
   public:
     static std::unique_ptr<BranchInstruction> create(BasicBlock &true_path) {
         return std::unique_ptr<BranchInstruction>{new BranchInstruction{true_path}};
@@ -194,22 +242,28 @@ class BranchInstruction : public Instruction {
 
     std::string to_string() const override;
 
-  protected:
+  private:
     BranchInstruction(BasicBlock &true_path)
-        : Instruction(Opcode::kBr), condition_{nullptr}, true_path_{&true_path},
+        : Instruction(Opcode::kBr, Type::kVoid), condition_{nullptr}, true_path_{&true_path},
           false_path_{nullptr} {}
 
     BranchInstruction(Value &condition, BasicBlock &true_path, BasicBlock &false_path)
-        : Instruction(Opcode::kBr), condition_{&condition}, true_path_{&true_path},
-          false_path_{&false_path} {}
+        : Instruction(Opcode::kBr, Type::kVoid), condition_{check_condition(condition)},
+          true_path_{&true_path}, false_path_{&false_path} {}
 
-  private:
+    static Value *check_condition(Value &cond) {
+        if (cond.get_type() != Type::kI1) {
+            throw InvalidConditionType{"type of condition is not i1"};
+        }
+        return &cond;
+    }
+
     Value *condition_;
     BasicBlock *true_path_;
     BasicBlock *false_path_;
 };
 
-class ICmpInstruction : public Instruction {
+class ICmpInstruction final : public Instruction {
   public:
     enum class Kind { eq, ne, ugt, uge, ult, ule, sgt, sge, slt, sle };
 
@@ -237,10 +291,18 @@ class ICmpInstruction : public Instruction {
 
   protected:
     ICmpInstruction(Kind kind)
-        : Instruction(Opcode::kICmp), kind_{kind}, lhs_{nullptr}, rhs_{nullptr} {}
+        : Instruction(Opcode::kICmp, Type::kI1), kind_{kind}, lhs_{nullptr}, rhs_{nullptr} {}
 
     ICmpInstruction(Kind kind, Value &lhs, Value &rhs)
-        : Instruction(Opcode::kICmp), kind_{kind}, lhs_{&lhs}, rhs_{&rhs} {}
+        : Instruction(Opcode::kICmp, Type::kI1), kind_{kind}, lhs_{&lhs}, rhs_{&rhs} {
+        const auto lhs_type = lhs.get_type();
+        const auto rhs_type = rhs.get_type();
+        if (lhs_type != rhs_type) {
+            throw OperandsTypeMismatch{std::format("operands are of different types: {} and {}",
+                                                   to_string_view(lhs_type),
+                                                   to_string_view(rhs_type))};
+        }
+    }
 
   private:
     Kind kind_;
@@ -281,7 +343,7 @@ inline std::string_view to_string_view(ICmpInstruction::Kind kind) {
 namespace std {
 
 template <>
-struct formatter<::bjac::ICmpInstruction::Kind> : public formatter<string_view> {
+struct formatter<::bjac::ICmpInstruction::Kind> final : public formatter<string_view> {
     template <typename ParseConstexpr>
     constexpr ParseConstexpr::iterator parse(ParseConstexpr &ctx) {
         return formatter<string_view>::parse(ctx);
@@ -298,25 +360,35 @@ struct formatter<::bjac::ICmpInstruction::Kind> : public formatter<string_view> 
 namespace bjac {
 
 inline std::string ICmpInstruction::to_string() const {
-    return std::format("%{} = {} {} {}, {}", Value::to_void_ptr(this), to_string_view(opcode_),
-                       kind_, Value::to_void_ptr(lhs_), Value::to_void_ptr(rhs_));
+    return std::format("%{} = {} {} {} %{}, %{}", Value::to_void_ptr(this), opcode_, kind_,
+                       lhs_->get_type(), Value::to_void_ptr(lhs_), Value::to_void_ptr(rhs_));
 }
 
-class PHIInstruction : public Instruction {
+class PHITypeMismatch final : public std::invalid_argument {
+    using std::invalid_argument::invalid_argument;
+};
+
+class PHIInstruction final : public Instruction {
   public:
-    static std::unique_ptr<PHIInstruction> create() {
-        return std::unique_ptr<PHIInstruction>{new PHIInstruction{}};
+    static std::unique_ptr<PHIInstruction> create(Type type) {
+        return std::unique_ptr<PHIInstruction>{new PHIInstruction{type}};
     }
 
     ~PHIInstruction() override = default;
 
-    void add(BasicBlock &bb, Value &value) { records_.emplace(&bb, &value); }
+    void add_path(BasicBlock &bb, Value &value) {
+        if (value.get_type() != type_) {
+            throw PHITypeMismatch{"adding path of different type to a phi instruction"};
+        }
+        records_.emplace(std::addressof(bb), std::addressof(value));
+    }
+    void remove_path(BasicBlock &bb) { records_.erase(std::addressof(bb)); }
 
     template <typename Self>
     auto get(this Self &&self, BasicBlock &bb)
         -> std::conditional_t<std::is_const_v<std::remove_reference_t<Self>>, const Value *,
                               Value *> {
-        if (auto it = self.records_.find(&bb); it != self.records_.end()) {
+        if (auto it = self.records_.find(std::addressof(bb)); it != self.records_.end()) {
             return it->second;
         }
         return nullptr;
@@ -325,16 +397,20 @@ class PHIInstruction : public Instruction {
     std::string to_string() const override;
 
   protected:
-    PHIInstruction() : Instruction(Opcode::kPHI) {}
+    PHIInstruction(Type type) : Instruction(Opcode::kPHI, type) {}
 
   private:
     std::map<BasicBlock *, Value *> records_;
 };
 
-class ArgumentInstruction : public Instruction {
+class ArgOutOfRange final : public std::out_of_range {
+    using std::out_of_range::out_of_range;
+};
+
+class ArgumentInstruction final : public Instruction {
   public:
-    static std::unique_ptr<ArgumentInstruction> create(unsigned pos) {
-        return std::unique_ptr<ArgumentInstruction>{new ArgumentInstruction{pos}};
+    static std::unique_ptr<ArgumentInstruction> create(const Function &f, unsigned pos) {
+        return std::unique_ptr<ArgumentInstruction>{new ArgumentInstruction{f, pos}};
     }
 
     ~ArgumentInstruction() override = default;
@@ -342,17 +418,21 @@ class ArgumentInstruction : public Instruction {
     unsigned get_position() const noexcept { return pos_; }
 
     std::string to_string() const override {
-        return std::format("%{} = {} {}", Value::to_void_ptr(this), to_string_view(opcode_), pos_);
+        return std::format("%{} = {} {} [{}]", Value::to_void_ptr(this), opcode_, type_, pos_);
     }
 
   protected:
-    ArgumentInstruction(unsigned pos) : Instruction(Opcode::kArg), pos_{pos} {}
+    ArgumentInstruction(const Function &f, unsigned pos);
 
   private:
     unsigned pos_;
 };
 
-class ConstInstruction : public Instruction {
+class InvalidConstantType final : public std::invalid_argument {
+    using std::invalid_argument::invalid_argument;
+};
+
+class ConstInstruction final : public Instruction {
   public:
     static std::unique_ptr<ConstInstruction> create(Type type, std::uintmax_t value) {
         return std::unique_ptr<ConstInstruction>{new ConstInstruction{type, value}};
@@ -360,24 +440,26 @@ class ConstInstruction : public Instruction {
 
     ~ConstInstruction() = default;
 
-    Type get_type() const noexcept { return type_; }
     std::uintmax_t get_value() const noexcept { return value_; }
 
     std::string to_string() const override {
-        return std::format("%{} = {} {} {}", Value::to_void_ptr(this), to_string_view(opcode_),
-                           type_, value_);
+        return std::format("%{} = {} {} {}", Value::to_void_ptr(this), opcode_, type_, value_);
     }
 
   protected:
     ConstInstruction(Type type, std::uintmax_t value)
-        : Instruction(Opcode::kConst), type_{type}, value_{value} {
-        if (type == Type::kVoid) {
-            throw std::invalid_argument{"void constant shall not be created"};
+        : Instruction(Opcode::kConst, type), value_{value} {
+        switch (type) {
+        case Type::kVoid:
+            throw InvalidConstantType{"void constant shall not be created"};
+        case Type::kNone:
+            throw InvalidConstantType{"none constant shall not be created"};
+        default:
+            break;
         }
     }
 
   private:
-    Type type_;
     std::uintmax_t value_;
 };
 
