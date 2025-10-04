@@ -75,22 +75,6 @@ class Instruction : public Value, public ilist_node<Instruction> {
 
     bool is_other_op() const noexcept { return Instruction::is_other_op(opcode_); }
 
-    static std::string_view get_name(Opcode opcode) noexcept {
-        using enum Opcode;
-        using namespace std::string_view_literals;
-        switch (opcode) {
-#define HANDLE_INSTR(N, Opcode, Class, Name)                                                       \
-    case k##Opcode:                                                                                \
-        return #Name##sv;
-#include "bjac/IR/instructions.def"
-
-        default:
-            std::unreachable();
-        }
-    }
-
-    std::string_view get_name() const noexcept { return Instruction::get_name(opcode_); }
-
     virtual std::string to_string() const = 0;
 
   private:
@@ -105,9 +89,22 @@ class Instruction : public Value, public ilist_node<Instruction> {
         return std::to_underlying(kBegin) <= opc && opc < std::to_underlying(kEnd);
     }
 
+  protected:
     BasicBlock *parent_ = nullptr;
     Opcode opcode_;
 };
+
+inline std::string_view to_string_view(Instruction::Opcode opcode) noexcept {
+    using namespace std::string_view_literals;
+    switch (opcode) {
+    default:
+        std::unreachable();
+#define HANDLE_INSTR(N, Opc, Class, Name)                                                          \
+    case Instruction::Opcode::k##Opc:                                                              \
+        return #Name##sv;
+#include "bjac/IR/instructions.def"
+    }
+}
 
 class BinaryOperator : public Instruction {
   public:
@@ -124,7 +121,7 @@ class BinaryOperator : public Instruction {
     const Value *get_rhs() const noexcept { return rhs_; }
 
     std::string to_string() const override {
-        return std::format("%{} = {} %{} %{}", Value::to_void_ptr(this), get_name(),
+        return std::format("%{} = {} %{} %{}", Value::to_void_ptr(this), to_string_view(opcode_),
                            Value::to_void_ptr(lhs_), Value::to_void_ptr(rhs_));
     }
 
@@ -158,9 +155,9 @@ class ReturnInstruction : public Instruction {
 
     std::string to_string() const override {
         if (ret_val_) {
-            return std::format("{} %{}", get_name(), Value::to_void_ptr(ret_val_));
+            return std::format("{} %{}", to_string_view(opcode_), Value::to_void_ptr(ret_val_));
         }
-        return std::format("{} {}", get_name(), to_string_view(Type::kVoid));
+        return std::format("{} {}", to_string_view(opcode_), to_string_view(Type::kVoid));
     }
 
   protected:
@@ -304,8 +301,8 @@ struct formatter<::bjac::ICmpInstruction::Kind> : public formatter<string_view> 
 namespace bjac {
 
 inline std::string ICmpInstruction::to_string() const {
-    return std::format("%{} = {} {} {}, {}", Value::to_void_ptr(this), get_name(), kind_,
-                       Value::to_void_ptr(lhs_), Value::to_void_ptr(rhs_));
+    return std::format("%{} = {} {} {}, {}", Value::to_void_ptr(this), to_string_view(opcode_),
+                       kind_, Value::to_void_ptr(lhs_), Value::to_void_ptr(rhs_));
 }
 
 class PHIInstruction : public Instruction {
@@ -348,7 +345,7 @@ class ArgumentInstruction : public Instruction {
     unsigned get_position() const noexcept { return pos_; }
 
     std::string to_string() const override {
-        return std::format("%{} = {} {}", Value::to_void_ptr(this), get_name(), pos_);
+        return std::format("%{} = {} {}", Value::to_void_ptr(this), to_string_view(opcode_), pos_);
     }
 
   protected:
@@ -370,7 +367,8 @@ class ConstInstruction : public Instruction {
     std::uintmax_t get_value() const noexcept { return value_; }
 
     std::string to_string() const override {
-        return std::format("%{} = {} {} {}", Value::to_void_ptr(this), get_name(), type_, value_);
+        return std::format("%{} = {} {} {}", Value::to_void_ptr(this), to_string_view(opcode_),
+                           type_, value_);
     }
 
   protected:

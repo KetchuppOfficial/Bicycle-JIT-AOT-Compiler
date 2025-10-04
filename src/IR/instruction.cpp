@@ -8,11 +8,11 @@ namespace bjac {
 
 std::string BranchInstruction::to_string() const {
     if (is_conditional()) {
-        return std::format("{} %{}, label %bb{}, label %bb{}", get_name(),
+        return std::format("{} %{}, label %bb{}, label %bb{}", to_string_view(opcode_),
                            Value::to_void_ptr(condition_), true_path_->get_id().value(),
                            false_path_->get_id().value());
     } else {
-        return std::format("{} %bb{}", get_name(), true_path_->get_id().value());
+        return std::format("{} %bb{}", to_string_view(opcode_), true_path_->get_id().value());
     }
 }
 
@@ -28,7 +28,7 @@ std::string PHIInstruction::to_string() const {
     const auto &[bb, value] = *std::ranges::prev(records_.end());
     phi_list += std::format("[%{}, %bb{}]", Value::to_void_ptr(value), bb->get_id().value());
 
-    return std::format("%{} = {} {}", Value::to_void_ptr(this), get_name(), phi_list);
+    return std::format("%{} = {} {}", Value::to_void_ptr(this), to_string_view(opcode_), phi_list);
 }
 
 } // namespace bjac
