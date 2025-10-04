@@ -1,8 +1,8 @@
 #ifndef INCLUDE_BJAC_IR_BASIC_BLOCK_HPP
 #define INCLUDE_BJAC_IR_BASIC_BLOCK_HPP
 
-#include <memory>
 #include <iosfwd>
+#include <memory>
 #include <optional>
 #include <ranges>
 #include <set>
@@ -98,7 +98,13 @@ class BasicBlock final : public Value, public ilist_node<BasicBlock>, private il
     Function *parent_ = nullptr;
     unsigned id_ = 0;
 
-    std::set<BasicBlock *> predecessors_;
+    struct IDCompare {
+        bool operator()(const BasicBlock *lhs, const BasicBlock *rhs) const {
+            return lhs->get_id() < rhs->get_id();
+        }
+    };
+
+    std::set<BasicBlock *, IDCompare> predecessors_;
 };
 
 } // namespace bjac
