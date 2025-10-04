@@ -2,6 +2,7 @@
 #define INCLUDE_BJAC_IR_BASIC_BLOCK_HPP
 
 #include <memory>
+#include <iosfwd>
 #include <optional>
 #include <ranges>
 #include <set>
@@ -67,6 +68,8 @@ class BasicBlock final : public Value, public ilist_node<BasicBlock>, private il
     reference push_front(std::unique_ptr<Instruction> instr) {
         return *insert(begin(), std::move(instr));
     }
+
+    void print(std::ostream &os) const;
 
     using instructions::empty;
     using instructions::size;
