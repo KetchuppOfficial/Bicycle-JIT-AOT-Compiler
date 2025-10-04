@@ -143,6 +143,10 @@ class BinaryOperator : public Instruction {
 
 class ReturnInstruction : public Instruction {
   public:
+    static std::unique_ptr<ReturnInstruction> create() {
+        return std::unique_ptr<ReturnInstruction>{new ReturnInstruction{}};
+    }
+
     static std::unique_ptr<ReturnInstruction> create(Value &ret_val) {
         return std::unique_ptr<ReturnInstruction>{new ReturnInstruction{ret_val}};
     }
@@ -153,10 +157,14 @@ class ReturnInstruction : public Instruction {
     const Value *get_ret_value() const noexcept { return ret_val_; }
 
     std::string to_string() const override {
-        return std::format("{} %{}", get_name(), Value::to_void_ptr(ret_val_));
+        if (ret_val_) {
+            return std::format("{} %{}", get_name(), Value::to_void_ptr(ret_val_));
+        }
+        return std::format("{} {}", get_name(), to_string_view(Type::kVoid));
     }
 
   protected:
+    ReturnInstruction() : Instruction(Opcode::kRet), ret_val_{nullptr} {} // ret void
     ReturnInstruction(Value &ret_val) : Instruction(Opcode::kRet), ret_val_{&ret_val} {}
 
   private:
