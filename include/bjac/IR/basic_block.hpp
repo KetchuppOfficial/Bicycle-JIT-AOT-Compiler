@@ -30,7 +30,7 @@ class BasicBlock final : public Value, public ilist_node<BasicBlock>, private il
 
     template <typename Self>
     auto *get_parent(this Self &&self) noexcept {
-        return self.parent_;
+        return std::addressof(std::forward_like<Self>(*self.parent_));
     }
 
     template <typename Self>

@@ -4,6 +4,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 #include "bjac/IR/instruction.hpp"
 #include "bjac/IR/type.hpp"
@@ -32,15 +33,23 @@ class BranchInstruction final : public Instruction {
 
     bool is_conditional() const noexcept { return condition_ != nullptr; }
 
-    Value *get_condition() noexcept { return condition_; }
-    const Value *get_condition() const noexcept { return condition_; }
+    template <typename Self>
+    auto *get_condition(this Self &&self) noexcept {
+        return std::addressof(std::forward_like<Self>(*self.condition_));
+    }
 
-    BasicBlock *get_true_path() noexcept { return true_path_; }
-    const BasicBlock *get_true_path() const noexcept { return true_path_; }
+    template <typename Self>
+    auto *get_true_path(this Self &&self) noexcept {
+        return std::addressof(std::forward_like<Self>(*self.true_path_));
+    }
+
     void set_true_path(BasicBlock &bb) noexcept { true_path_ = &bb; }
 
-    BasicBlock *get_false_path() noexcept { return false_path_; }
-    const BasicBlock *get_false_path() const noexcept { return false_path_; }
+    template <typename Self>
+    auto *get_false_path(this Self &&self) noexcept {
+        return std::addressof(std::forward_like<Self>(*self.false_path_));
+    }
+
     void set_false_path(BasicBlock &bb) noexcept { false_path_ = &bb; }
 
     std::string to_string() const override;

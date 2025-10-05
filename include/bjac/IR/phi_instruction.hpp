@@ -5,7 +5,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
-#include <type_traits>
+#include <utility>
 
 #include "bjac/IR/instruction.hpp"
 #include "bjac/IR/type.hpp"
@@ -40,11 +40,9 @@ class PHIInstruction final : public Instruction {
     }
 
     template <typename Self>
-    auto get(this Self &&self, BasicBlock &bb)
-        -> std::conditional_t<std::is_const_v<std::remove_reference_t<Self>>, const Value *,
-                              Value *> {
+    auto *get(this Self &&self, BasicBlock &bb) {
         if (auto it = self.records_.find(std::addressof(bb)); it != self.records_.end()) {
-            return it->second;
+            return std::addressof(std::forward_like<Self>(*it->second));
         }
         return nullptr;
     }

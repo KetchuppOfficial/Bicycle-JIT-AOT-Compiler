@@ -25,11 +25,15 @@ class BinaryOperator final : public Instruction {
 
     ~BinaryOperator() override = default;
 
-    Value *get_lhs() noexcept { return lhs_; }
-    const Value *get_lhs() const noexcept { return lhs_; }
+    template<typename Self>
+    auto *get_lhs(this Self &&self) noexcept {
+        return std::addressof(std::forward_like<Self>(*self.lhs_));
+    }
 
-    Value *get_rhs() noexcept { return rhs_; }
-    const Value *get_rhs() const noexcept { return rhs_; }
+    template<typename Self>
+    auto *get_rhs(this Self &&self) noexcept {
+        return std::addressof(std::forward_like<Self>(*self.rhs_));
+    }
 
     std::string to_string() const override {
         return std::format("%{} = {} {} %{}, %{}", Value::to_void_ptr(this), type_, opcode_,
