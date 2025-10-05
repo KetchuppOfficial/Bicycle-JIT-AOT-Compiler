@@ -7,6 +7,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <set>
 
 #include "bjac/IR/type.hpp"
 #include "bjac/IR/value.hpp"
@@ -40,7 +41,8 @@ class Instruction : public Value, public ilist_node<Instruction> {
 #include "bjac/IR/instructions.def"
     };
 
-    explicit Instruction(Opcode opcode, Type type) : Value{type}, opcode_{opcode} {}
+    explicit Instruction(Opcode opcode, Type type)
+        : Value{type}, opcode_{opcode}, parent_{nullptr} {}
 
     ~Instruction() override = default;
 
@@ -70,13 +72,16 @@ class Instruction : public Value, public ilist_node<Instruction> {
 
     bool is_other_op() const noexcept { return Instruction::is_other_op(opcode_); }
 
+    void add_user(const Instruction *value) { users_.insert(value); }
+    void remove_user(const Instruction *value) { users_.erase(value); }
+
     virtual std::string to_string() const = 0;
 
   private:
     friend class BasicBlock;
 
     Instruction(BasicBlock &parent, Opcode opcode, Type type) noexcept
-        : Value{type}, parent_{std::addressof(parent)}, opcode_{opcode} {}
+        : Value{type}, opcode_{opcode}, parent_{std::addressof(parent)} {}
 
     template <Opcode kBegin, Opcode kEnd>
     static constexpr bool is_in_category(Opcode opcode) noexcept {
@@ -85,8 +90,9 @@ class Instruction : public Value, public ilist_node<Instruction> {
     }
 
   protected:
-    BasicBlock *parent_ = nullptr;
     Opcode opcode_;
+    BasicBlock *parent_;
+    std::set<const Instruction *> users_;
 };
 
 inline std::string_view to_string_view(Instruction::Opcode opcode) noexcept {

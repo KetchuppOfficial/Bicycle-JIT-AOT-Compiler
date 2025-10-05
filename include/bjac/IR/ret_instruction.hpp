@@ -17,7 +17,7 @@ class ReturnInstruction final : public Instruction {
         return std::unique_ptr<ReturnInstruction>{new ReturnInstruction{}};
     }
 
-    static std::unique_ptr<ReturnInstruction> create(Value &ret_val) {
+    static std::unique_ptr<ReturnInstruction> create(Instruction &ret_val) {
         return std::unique_ptr<ReturnInstruction>{new ReturnInstruction{ret_val}};
     }
 
@@ -38,10 +38,12 @@ class ReturnInstruction final : public Instruction {
 
   private:
     ReturnInstruction() : Instruction(Opcode::kRet, Type::kVoid), ret_val_{nullptr} {} // ret void
-    ReturnInstruction(Value &ret_val)
-        : Instruction(Opcode::kRet, Type::kVoid), ret_val_{&ret_val} {}
+    ReturnInstruction(Instruction &ret_val)
+        : Instruction(Opcode::kRet, Type::kVoid), ret_val_{&ret_val} {
+        ret_val.add_user(this);
+    }
 
-    Value *ret_val_;
+    Instruction *ret_val_;
 };
 
 } // namespace bjac

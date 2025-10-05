@@ -21,7 +21,7 @@ class ICmpInstruction final : public Instruction {
         return std::unique_ptr<ICmpInstruction>{new ICmpInstruction{kind}};
     }
 
-    static std::unique_ptr<ICmpInstruction> create(Kind kind, Value &lhs, Value &rhs) {
+    static std::unique_ptr<ICmpInstruction> create(Kind kind, Instruction &lhs, Instruction &rhs) {
         return std::unique_ptr<ICmpInstruction>{new ICmpInstruction{kind, lhs, rhs}};
     }
 
@@ -31,11 +31,11 @@ class ICmpInstruction final : public Instruction {
 
     Value *get_lhs() noexcept { return lhs_; }
     const Value *get_lhs() const noexcept { return lhs_; }
-    void set_lhs(Value &lhs) noexcept { lhs_ = &lhs; }
+    void set_lhs(Instruction &lhs) noexcept { lhs_ = &lhs; }
 
     Value *get_rhs() noexcept { return rhs_; }
     const Value *get_rhs() const noexcept { return rhs_; }
-    void set_rhs(Value &rhs) noexcept { rhs_ = &rhs; }
+    void set_rhs(Instruction &rhs) noexcept { rhs_ = &rhs; }
 
     std::string to_string() const override;
 
@@ -43,19 +43,22 @@ class ICmpInstruction final : public Instruction {
     ICmpInstruction(Kind kind)
         : Instruction(Opcode::kICmp, Type::kI1), kind_{kind}, lhs_{nullptr}, rhs_{nullptr} {}
 
-    ICmpInstruction(Kind kind, Value &lhs, Value &rhs)
+    ICmpInstruction(Kind kind, Instruction &lhs, Instruction &rhs)
         : Instruction(Opcode::kICmp, Type::kI1), kind_{kind}, lhs_{&lhs}, rhs_{&rhs} {
         const auto lhs_type = lhs.get_type();
         const auto rhs_type = rhs.get_type();
         if (lhs_type != rhs_type) {
             throw OperandsTypeMismatch{opcode_, lhs_type, rhs_type};
         }
+
+        lhs.add_user(this);
+        rhs.add_user(this);
     }
 
   private:
     Kind kind_;
-    Value *lhs_;
-    Value *rhs_;
+    Instruction *lhs_;
+    Instruction *rhs_;
 };
 
 inline std::string_view to_string_view(ICmpInstruction::Kind kind) {

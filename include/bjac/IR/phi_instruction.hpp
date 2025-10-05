@@ -9,7 +9,6 @@
 
 #include "bjac/IR/instruction.hpp"
 #include "bjac/IR/type.hpp"
-#include "bjac/IR/value.hpp"
 
 namespace bjac {
 
@@ -25,13 +24,20 @@ class PHIInstruction final : public Instruction {
 
     ~PHIInstruction() override = default;
 
-    void add_path(BasicBlock &bb, Value &value) {
+    void add_path(BasicBlock &bb, Instruction &value) {
         if (value.get_type() != type_) {
             throw PHITypeMismatch{"adding path of different type to a phi instruction"};
         }
         records_.emplace(std::addressof(bb), std::addressof(value));
+        value.add_user(this);
     }
-    void remove_path(BasicBlock &bb) { records_.erase(std::addressof(bb)); }
+
+    void remove_path(BasicBlock &bb) {
+        if (auto it = records_.find(std::addressof(bb)); it != records_.end()) {
+            it->second->remove_user(this);
+            records_.erase(it);
+        }
+    }
 
     template <typename Self>
     auto get(this Self &&self, BasicBlock &bb)
@@ -49,7 +55,7 @@ class PHIInstruction final : public Instruction {
     PHIInstruction(Type type) : Instruction(Opcode::kPHI, type) {}
 
   private:
-    std::map<BasicBlock *, Value *> records_;
+    std::map<BasicBlock *, Instruction *> records_;
 };
 
 } // namespace bjac

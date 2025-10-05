@@ -18,7 +18,8 @@ class InvalidBinaryOperatorOpcode final : public std::invalid_argument {
 
 class BinaryOperator final : public Instruction {
   public:
-    static std::unique_ptr<BinaryOperator> create(Opcode opcode, Value &lhs, Value &rhs) {
+    static std::unique_ptr<BinaryOperator> create(Opcode opcode, Instruction &lhs,
+                                                  Instruction &rhs) {
         return std::unique_ptr<BinaryOperator>{new BinaryOperator{opcode, lhs, rhs}};
     }
 
@@ -36,14 +37,20 @@ class BinaryOperator final : public Instruction {
     }
 
   private:
-    BinaryOperator(Opcode opcode, Value &lhs, Value &rhs)
-        : Instruction(opcode, common_type(lhs, rhs)), lhs_{&lhs}, rhs_{&rhs} {
+    BinaryOperator(Opcode opcode, Instruction &lhs, Instruction &rhs)
+        : Instruction(check_opcode(opcode), common_type(lhs, rhs)), lhs_{&lhs}, rhs_{&rhs} {
+        lhs.add_user(this);
+        rhs.add_user(this);
+    }
+
+    static Opcode check_opcode(Opcode opcode) {
         if (opcode < Opcode::kBinaryBegin || opcode >= Opcode::kBinaryEnd) {
             throw InvalidBinaryOperatorOpcode{"invalid opcode for a binary operator"};
         }
+        return opcode;
     }
 
-    Type common_type(Value &lhs, Value &rhs) {
+    Type common_type(Instruction &lhs, Instruction &rhs) {
         const auto lhs_type = lhs.get_type();
         const auto rhs_type = rhs.get_type();
         if (lhs_type == rhs_type) {
@@ -53,8 +60,8 @@ class BinaryOperator final : public Instruction {
         }
     }
 
-    Value *lhs_;
-    Value *rhs_;
+    Instruction *lhs_;
+    Instruction *rhs_;
 };
 
 } // namespace bjac
