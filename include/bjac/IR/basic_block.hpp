@@ -71,6 +71,21 @@ class BasicBlock final : public Value, public ilist_node<BasicBlock>, private il
         return *insert(begin(), std::move(instr));
     }
 
+    template <typename T, typename... Args>
+    iterator emplace(const_iterator pos, Args &&...args) {
+        return insert(pos, T::create(std::forward<Args>(args)...));
+    }
+
+    template <typename T, typename... Args>
+    T &emplace_front(Args &&...args) {
+        return static_cast<T &>(*emplace<T>(begin(), std::forward<Args>(args)...));
+    }
+
+    template <typename T, typename... Args>
+    T &emplace_back(Args &&...args) {
+        return static_cast<T &>(*emplace<T>(end(), std::forward<Args>(args)...));
+    }
+
     void print(std::ostream &os) const;
 
     using instructions::empty;

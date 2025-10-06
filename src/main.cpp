@@ -1,6 +1,6 @@
+#include <cstdlib>
 #include <iostream>
 #include <print>
-#include <cstdlib>
 
 #include "bjac/IR/type.hpp"
 
@@ -26,27 +26,24 @@ int main() try {
     auto &bb3 = fibonacci.emplace_back();
     auto &bb4 = fibonacci.emplace_back();
 
-    auto &arg = bb1.push_back(bjac::ArgumentInstruction::create(fibonacci, 0));
-    auto &two = bb1.push_back(bjac::ConstInstruction::create(kI64, 2));
+    auto &arg = bb1.emplace_back<bjac::ArgumentInstruction>(fibonacci, 0);
+    auto &two = bb1.emplace_back<bjac::ConstInstruction>(kI64, 2);
     auto &bb1_cmp =
-        bb1.push_back(bjac::ICmpInstruction::create(bjac::ICmpInstruction::Kind::ult, arg, two));
-    bb1.push_back(bjac::BranchInstruction::create(bb1_cmp, bb4, bb2));
+        bb1.emplace_back<bjac::ICmpInstruction>(bjac::ICmpInstruction::Kind::ult, arg, two);
+    bb1.emplace_back<bjac::BranchInstruction>(bb1_cmp, bb4, bb2);
 
-    auto &zero = bb2.push_back(bjac::ConstInstruction::create(kI64, 0));
-    auto &one = bb2.push_back(bjac::ConstInstruction::create(kI64, 1));
-    bb2.push_back(bjac::BranchInstruction::create(bb3));
+    auto &zero = bb2.emplace_back<bjac::ConstInstruction>(kI64, 0);
+    auto &one = bb2.emplace_back<bjac::ConstInstruction>(kI64, 1);
+    bb2.emplace_back<bjac::BranchInstruction>(bb3);
 
-    auto &i =
-        static_cast<bjac::PHIInstruction &>(bb3.push_back(bjac::PHIInstruction::create(kI64)));
-    auto &second =
-        static_cast<bjac::PHIInstruction &>(bb3.push_back(bjac::PHIInstruction::create(kI64)));
-    auto &first =
-        static_cast<bjac::PHIInstruction &>(bb3.push_back(bjac::PHIInstruction::create(kI64)));
-    auto &third = bb3.push_back(bjac::BinaryOperator::create(Opcode::kAdd, first, second));
-    auto &next_i = bb3.push_back(bjac::BinaryOperator::create(Opcode::kAdd, i, one));
+    auto &i = bb3.emplace_back<bjac::PHIInstruction>(kI64);
+    auto &second = bb3.emplace_back<bjac::PHIInstruction>(kI64);
+    auto &first = bb3.emplace_back<bjac::PHIInstruction>(kI64);
+    auto &third = bb3.emplace_back<bjac::BinaryOperator>(Opcode::kAdd, first, second);
+    auto &next_i = bb3.emplace_back<bjac::BinaryOperator>(Opcode::kAdd, i, one);
     auto &bb3_cmp =
-        bb3.push_back(bjac::ICmpInstruction::create(bjac::ICmpInstruction::Kind::ule, i, arg));
-    bb3.push_back(bjac::BranchInstruction::create(bb3_cmp, bb3, bb4));
+        bb3.emplace_back<bjac::ICmpInstruction>(bjac::ICmpInstruction::Kind::ule, i, arg);
+    bb3.emplace_back<bjac::BranchInstruction>(bb3_cmp, bb3, bb4);
     i.add_path(bb2, two);
     i.add_path(bb3, next_i);
     second.add_path(bb2, one);
@@ -54,9 +51,8 @@ int main() try {
     first.add_path(bb2, zero);
     first.add_path(bb3, second);
 
-    auto &ret_val =
-        static_cast<bjac::PHIInstruction &>(bb4.push_back(bjac::PHIInstruction::create(kI64)));
-    bb4.push_back(bjac::ReturnInstruction::create(ret_val));
+    auto &ret_val = bb4.emplace_back<bjac::PHIInstruction>(kI64);
+    bb4.emplace_back<bjac::ReturnInstruction>(ret_val);
     ret_val.add_path(bb1, arg);
     ret_val.add_path(bb3, second);
 
