@@ -36,9 +36,9 @@ FILES
 )
 
 add_library(ir
-    src/IR/basic_block.cpp
-    src/IR/function.cpp
-    src/IR/instruction.cpp
+    lib/IR/basic_block.cpp
+    lib/IR/function.cpp
+    lib/IR/instruction.cpp
 )
 add_library(bjac::ir ALIAS ir)
 target_include_directories(ir PUBLIC include)
