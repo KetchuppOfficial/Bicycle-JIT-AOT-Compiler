@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.20)
 
 project(bicycle-jit-aot-compiler LANGUAGES CXX)
 
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+
 if (${PROJECT_SOURCE_DIR} STREQUAL ${PROJECT_BINARY_DIR})
     message(FATAL_ERROR "In-source build is forbidden")
 endif()
@@ -24,24 +27,41 @@ add_library(bjac::ilist ALIAS ilist)
 target_link_libraries(ilist INTERFACE bjac::defaults)
 target_sources(ilist INTERFACE
 FILE_SET
-    headers
-TYPE
     HEADERS
 BASE_DIRS
     include
 FILES
-    bjac/utils/ilist_iterator.hpp
-    bjac/utils/ilist_node.hpp
-    bjac/utils/ilist.hpp
+    include/bjac/utils/ilist_iterator.hpp
+    include/bjac/utils/ilist_node.hpp
+    include/bjac/utils/ilist.hpp
 )
 
-add_library(ir
+add_library(ir)
+add_library(bjac::ir ALIAS ir)
+target_sources(ir PRIVATE
     lib/IR/basic_block.cpp
     lib/IR/function.cpp
     lib/IR/instruction.cpp
 )
-add_library(bjac::ir ALIAS ir)
-target_include_directories(ir PUBLIC include)
+target_sources(ir PUBLIC
+FILE_SET
+    HEADERS
+BASE_DIRS
+    include
+FILES
+    include/bjac/IR/argument_instruction.hpp
+    include/bjac/IR/basic_block.hpp
+    include/bjac/IR/binary_operator.hpp
+    include/bjac/IR/branch_instruction.hpp
+    include/bjac/IR/constant_instruction.hpp
+    include/bjac/IR/function.hpp
+    include/bjac/IR/icmp_instruction.hpp
+    include/bjac/IR/instruction.hpp
+    include/bjac/IR/phi_instruction.hpp
+    include/bjac/IR/ret_instruction.hpp
+    include/bjac/IR/type.hpp
+    include/bjac/IR/value.hpp
+)
 target_link_libraries(ir
 PUBLIC
     bjac::ilist
@@ -55,3 +75,15 @@ if (BJAC_BUILD_TESTS)
     enable_testing()
     add_subdirectory(test)
 endif()
+
+install(TARGETS ir ilist
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+            COMPONENT BJAC_Runtime
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            COMPONENT BJAC_Runtime
+            NAMELINK_COMPONENT BJAC_Development
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            COMPONENT BJAC_Development
+    FILE_SET HEADERS DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+                     COMPONENT BJAC_Development
+)
