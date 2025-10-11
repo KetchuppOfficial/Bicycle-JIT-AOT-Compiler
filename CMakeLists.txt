@@ -10,6 +10,8 @@ if (NOT DEFINED CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
 
+option(BJAC_BUILD_TESTS "build tests")
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_CXX_STANDARD 23)
@@ -47,3 +49,8 @@ PUBLIC
 
 add_executable(fibonacci-test src/main.cpp)
 target_link_libraries(fibonacci-test PRIVATE bjac::ir)
+
+if (BJAC_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(test)
+endif()
