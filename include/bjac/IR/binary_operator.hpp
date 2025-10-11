@@ -25,12 +25,12 @@ class BinaryOperator final : public Instruction {
 
     ~BinaryOperator() override = default;
 
-    template<typename Self>
+    template <typename Self>
     auto *get_lhs(this Self &&self) noexcept {
         return std::addressof(std::forward_like<Self>(*self.lhs_));
     }
 
-    template<typename Self>
+    template <typename Self>
     auto *get_rhs(this Self &&self) noexcept {
         return std::addressof(std::forward_like<Self>(*self.rhs_));
     }
