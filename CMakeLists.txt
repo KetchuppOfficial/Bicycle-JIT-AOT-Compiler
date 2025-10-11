@@ -14,12 +14,14 @@ option(BJAC_BUILD_TESTS "build tests")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+include(cmake/defaults.cmake)
+
 add_library(ilist INTERFACE)
 add_library(bjac::ilist ALIAS ilist)
+target_link_libraries(ilist INTERFACE bjac::defaults)
 target_sources(ilist INTERFACE
 FILE_SET
     headers
@@ -40,11 +42,10 @@ add_library(ir
 )
 add_library(bjac::ir ALIAS ir)
 target_include_directories(ir PUBLIC include)
-target_link_libraries(ir PUBLIC bjac::ilist)
-target_compile_options(ir
+target_link_libraries(ir
 PUBLIC
-    $<$<CXX_COMPILER_ID:MSVC>:/Wall>
-    $<$<CXX_COMPILER_ID:GNU,Clang>: -Wall -Wextra -pedantic>
+    bjac::ilist
+    bjac::defaults
 )
 
 add_executable(fibonacci-test src/main.cpp)
