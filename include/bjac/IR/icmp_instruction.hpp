@@ -9,21 +9,12 @@
 
 #include "bjac/IR/instruction.hpp"
 #include "bjac/IR/type.hpp"
-#include "bjac/IR/value.hpp"
 
 namespace bjac {
 
 class ICmpInstruction final : public Instruction {
   public:
     enum class Kind { eq, ne, ugt, uge, ult, ule, sgt, sge, slt, sle };
-
-    static std::unique_ptr<ICmpInstruction> create(Kind kind) {
-        return std::unique_ptr<ICmpInstruction>{new ICmpInstruction{kind}};
-    }
-
-    static std::unique_ptr<ICmpInstruction> create(Kind kind, Instruction &lhs, Instruction &rhs) {
-        return std::unique_ptr<ICmpInstruction>{new ICmpInstruction{kind, lhs, rhs}};
-    }
 
     ~ICmpInstruction() override = default;
 
@@ -45,12 +36,15 @@ class ICmpInstruction final : public Instruction {
 
     std::string to_string() const override;
 
-  protected:
-    ICmpInstruction(Kind kind)
-        : Instruction(Opcode::kICmp, Type::kI1), kind_{kind}, lhs_{nullptr}, rhs_{nullptr} {}
+  private:
+    friend class BasicBlock;
 
-    ICmpInstruction(Kind kind, Instruction &lhs, Instruction &rhs)
-        : Instruction(Opcode::kICmp, Type::kI1), kind_{kind}, lhs_{&lhs}, rhs_{&rhs} {
+    ICmpInstruction(BasicBlock &parent, Kind kind)
+        : Instruction(parent, Opcode::kICmp, Type::kI1), kind_{kind}, lhs_{nullptr}, rhs_{nullptr} {
+    }
+
+    ICmpInstruction(BasicBlock &parent, Kind kind, Instruction &lhs, Instruction &rhs)
+        : Instruction(parent, Opcode::kICmp, Type::kI1), kind_{kind}, lhs_{&lhs}, rhs_{&rhs} {
         const auto lhs_type = lhs.get_type();
         const auto rhs_type = rhs.get_type();
         if (lhs_type != rhs_type) {
@@ -61,7 +55,6 @@ class ICmpInstruction final : public Instruction {
         rhs.add_user(this);
     }
 
-  private:
     Kind kind_;
     Instruction *lhs_;
     Instruction *rhs_;
@@ -113,14 +106,5 @@ struct formatter<::bjac::ICmpInstruction::Kind> final : public formatter<string_
 };
 
 } // namespace std
-
-namespace bjac {
-
-inline std::string ICmpInstruction::to_string() const {
-    return std::format("%{} = {} {} {} %{}, %{}", Value::to_void_ptr(this), opcode_, kind_,
-                       lhs_->get_type(), Value::to_void_ptr(lhs_), Value::to_void_ptr(rhs_));
-}
-
-} // namespace bjac
 
 #endif // INCLUDE_BJAC_IR_ICMP_INSTRUCTION_HPP

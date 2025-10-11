@@ -6,6 +6,7 @@
 #include <optional>
 #include <ranges>
 #include <set>
+#include <type_traits>
 #include <utility>
 
 #include "bjac/IR/branch_instruction.hpp"
@@ -26,8 +27,6 @@ class BasicBlock final : public Value, public ilist_node<BasicBlock>, private il
     using instructions::iterator;
     using instructions::size_type;
 
-    BasicBlock() : Value{Type::kNone} {}
-
     template <typename Self>
     auto *get_parent(this Self &&self) noexcept {
         return std::addressof(std::forward_like<Self>(*self.parent_));
@@ -43,37 +42,27 @@ class BasicBlock final : public Value, public ilist_node<BasicBlock>, private il
 
     std::optional<unsigned> get_id() const { return parent_ ? std::optional{id_} : std::nullopt; }
 
+    unsigned get_next_instr_id() const noexcept { return next_instr_id_; }
+
     auto predecessors() const { return std::ranges::ref_view(predecessors_); }
     void add_predecessor(const BasicBlock &bb) { predecessors_.insert(std::addressof(bb)); }
     void remove_predecessor(const BasicBlock &bb) { predecessors_.erase(std::addressof(bb)); }
 
-    iterator insert(const_iterator pos, std::unique_ptr<Instruction> instr) {
-        instr->parent_ = this;
-        return instructions::insert(pos, std::move(instr));
-    }
-
-    iterator insert(const_iterator pos, std::unique_ptr<BranchInstruction> instr) {
-        instr->get_true_path()->add_predecessor(*this);
-        if (instr->is_conditional()) {
-            instr->get_false_path()->add_predecessor(*this);
-        }
-        instr->parent_ = this;
-        return instructions::insert(pos, std::move(instr));
-    }
-
-    reference push_back(std::unique_ptr<Instruction> instr) {
-        return *insert(end(), std::move(instr));
-    }
-    reference push_back(std::unique_ptr<BranchInstruction> instr) {
-        return *insert(end(), std::move(instr));
-    }
-    reference push_front(std::unique_ptr<Instruction> instr) {
-        return *insert(begin(), std::move(instr));
-    }
-
     template <typename T, typename... Args>
     iterator emplace(const_iterator pos, Args &&...args) {
-        return insert(pos, T::create(std::forward<Args>(args)...));
+        std::unique_ptr<T> instr{new T(*this, std::forward<Args>(args)...)};
+
+        if constexpr (std::is_same_v<T, BranchInstruction>) {
+            instr->get_true_path()->add_predecessor(*this);
+            if (instr->is_conditional()) {
+                instr->get_false_path()->add_predecessor(*this);
+            }
+        }
+
+        instr->parent_ = this;
+        ++next_instr_id_;
+
+        return instructions::insert(pos, std::move(instr));
     }
 
     template <typename T, typename... Args>
@@ -114,6 +103,7 @@ class BasicBlock final : public Value, public ilist_node<BasicBlock>, private il
 
     Function *parent_ = nullptr;
     unsigned id_ = 0;
+    unsigned next_instr_id_ = 0;
 
     struct IDCompare {
         bool operator()(const BasicBlock *lhs, const BasicBlock *rhs) const {

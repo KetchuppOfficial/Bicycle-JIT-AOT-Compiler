@@ -13,11 +13,6 @@ class Value {
 
     Type get_type() const noexcept { return type_; }
 
-    template <typename T>
-    static const void *to_void_ptr(const T *ptr) {
-        return static_cast<const void *>(static_cast<const Value *>(ptr));
-    }
-
   protected:
     Type type_;
 };

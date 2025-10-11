@@ -47,9 +47,9 @@ class Function final : public Value, private ilist<BasicBlock> {
 
     template <typename... Args>
     iterator emplace(const_iterator pos, Args &&...args) {
-        auto ptr = new BasicBlock(*this, std::forward<Args>(args)...);
+        std::unique_ptr<BasicBlock> bb{new BasicBlock(*this, std::forward<Args>(args)...)};
         ++next_bb_id_;
-        return basic_blocks::insert(pos, std::unique_ptr<BasicBlock>{ptr});
+        return basic_blocks::insert(pos, std::move(bb));
     }
 
     template <typename... Args>

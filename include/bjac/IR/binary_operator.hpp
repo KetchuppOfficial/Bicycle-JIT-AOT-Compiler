@@ -1,14 +1,13 @@
 #ifndef INCLUDE_BJAC_IR_BINARY_OPERATOR_HPP
 #define INCLUDE_BJAC_IR_BINARY_OPERATOR_HPP
 
-#include <format>
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 #include "bjac/IR/instruction.hpp"
 #include "bjac/IR/type.hpp"
-#include "bjac/IR/value.hpp"
 
 namespace bjac {
 
@@ -18,11 +17,6 @@ class InvalidBinaryOperatorOpcode final : public std::invalid_argument {
 
 class BinaryOperator final : public Instruction {
   public:
-    static std::unique_ptr<BinaryOperator> create(Opcode opcode, Instruction &lhs,
-                                                  Instruction &rhs) {
-        return std::unique_ptr<BinaryOperator>{new BinaryOperator{opcode, lhs, rhs}};
-    }
-
     ~BinaryOperator() override = default;
 
     template <typename Self>
@@ -35,14 +29,13 @@ class BinaryOperator final : public Instruction {
         return std::addressof(std::forward_like<Self>(*self.rhs_));
     }
 
-    std::string to_string() const override {
-        return std::format("%{} = {} {} %{}, %{}", Value::to_void_ptr(this), type_, opcode_,
-                           Value::to_void_ptr(lhs_), Value::to_void_ptr(rhs_));
-    }
+    std::string to_string() const override;
 
   private:
-    BinaryOperator(Opcode opcode, Instruction &lhs, Instruction &rhs)
-        : Instruction(check_opcode(opcode), common_type(lhs, rhs)), lhs_{&lhs}, rhs_{&rhs} {
+    friend class BasicBlock;
+
+    BinaryOperator(BasicBlock &parent, Opcode opcode, Instruction &lhs, Instruction &rhs)
+        : Instruction(parent, check_opcode(opcode), common_type(lhs, rhs)), lhs_{&lhs}, rhs_{&rhs} {
         lhs.add_user(this);
         rhs.add_user(this);
     }

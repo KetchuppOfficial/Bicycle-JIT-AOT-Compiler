@@ -18,10 +18,6 @@ class PHITypeMismatch final : public std::invalid_argument {
 
 class PHIInstruction final : public Instruction {
   public:
-    static std::unique_ptr<PHIInstruction> create(Type type) {
-        return std::unique_ptr<PHIInstruction>{new PHIInstruction{type}};
-    }
-
     ~PHIInstruction() override = default;
 
     void add_path(BasicBlock &bb, Instruction &value) {
@@ -49,10 +45,11 @@ class PHIInstruction final : public Instruction {
 
     std::string to_string() const override;
 
-  protected:
-    PHIInstruction(Type type) : Instruction(Opcode::kPHI, type) {}
-
   private:
+    friend class BasicBlock;
+
+    PHIInstruction(BasicBlock &parent, Type type) : Instruction(parent, Opcode::kPHI, type) {}
+
     std::map<BasicBlock *, Instruction *> records_;
 };
 

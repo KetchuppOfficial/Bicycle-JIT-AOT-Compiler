@@ -62,23 +62,23 @@ You will see the textual representation of the IR of a function computing n'th f
 ```text
 i64 fibonacci("i64")
 %bb0:
-    %0x439510 = arg i64 [0]
-    %0x439550 = constant i64 2
-    %0x4395a0 = icmp ult i64 %0x439510, %0x439550
-    br i1 %0x4395a0, label %bb3, label %bb1
+    %0.0 = i64 arg [0]
+    %0.1 = i64 constant 2
+    %0.2 = icmp ult i64 %0.0, %0.1
+    br i1 %0.2, label %bb3, label %bb1
 %bb1: preds: %bb0
-    %0x4396b0 = constant i64 0
-    %0x439700 = constant i64 1
+    %1.0 = i64 constant 0
+    %1.1 = i64 constant 1
     br label %bb2
 %bb2: preds: %bb1, %bb2
-    %0x4397e0 = phi i64 [%0x439550, %bb1], [%0x439980, %bb2]
-    %0x439850 = phi i64 [%0x439700, %bb1], [%0x439930, %bb2]
-    %0x4398c0 = phi i64 [%0x4396b0, %bb1], [%0x439850, %bb2]
-    %0x439930 = i64 add %0x4398c0, %0x439850
-    %0x439980 = i64 add %0x4397e0, %0x439700
-    %0x4399d0 = icmp ule i64 %0x4397e0, %0x439510
-    br i1 %0x4399d0, label %bb2, label %bb3
+    %2.0 = phi i64 [%0.1, %bb1], [%2.4, %bb2]
+    %2.1 = phi i64 [%1.1, %bb1], [%2.3, %bb2]
+    %2.2 = phi i64 [%1.0, %bb1], [%2.1, %bb2]
+    %2.3 = i64 add %2.2, %2.1
+    %2.4 = i64 add %2.0, %1.1
+    %2.5 = icmp ule i64 %2.0, %0.0
+    br i1 %2.5, label %bb2, label %bb3
 %bb3: preds: %bb0, %bb2
-    %0x439c60 = phi i64 [%0x439510, %bb0], [%0x439850, %bb2]
-    ret i64 %0x439c60
+    %3.0 = phi i64 [%0.0, %bb0], [%2.1, %bb2]
+    ret i64 %3.0
 ```

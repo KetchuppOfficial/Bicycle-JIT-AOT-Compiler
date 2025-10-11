@@ -19,16 +19,6 @@ class InvalidConditionType final : public std::invalid_argument {
 
 class BranchInstruction final : public Instruction {
   public:
-    static std::unique_ptr<BranchInstruction> create(BasicBlock &true_path) {
-        return std::unique_ptr<BranchInstruction>{new BranchInstruction{true_path}};
-    }
-
-    static std::unique_ptr<BranchInstruction> create(Instruction &condition, BasicBlock &true_path,
-                                                     BasicBlock &false_path) {
-        return std::unique_ptr<BranchInstruction>{
-            new BranchInstruction{condition, true_path, false_path}};
-    }
-
     ~BranchInstruction() override = default;
 
     bool is_conditional() const noexcept { return condition_ != nullptr; }
@@ -55,12 +45,15 @@ class BranchInstruction final : public Instruction {
     std::string to_string() const override;
 
   private:
-    BranchInstruction(BasicBlock &true_path)
-        : Instruction(Opcode::kBr, Type::kVoid), condition_{nullptr}, true_path_{&true_path},
-          false_path_{nullptr} {}
+    friend class BasicBlock;
 
-    BranchInstruction(Instruction &condition, BasicBlock &true_path, BasicBlock &false_path)
-        : Instruction(Opcode::kBr, Type::kVoid), condition_{check_condition(condition)},
+    BranchInstruction(BasicBlock &parent, BasicBlock &true_path)
+        : Instruction(parent, Opcode::kBr, Type::kVoid), condition_{nullptr},
+          true_path_{&true_path}, false_path_{nullptr} {}
+
+    BranchInstruction(BasicBlock &parent, Instruction &condition, BasicBlock &true_path,
+                      BasicBlock &false_path)
+        : Instruction(parent, Opcode::kBr, Type::kVoid), condition_{check_condition(condition)},
           true_path_{&true_path}, false_path_{&false_path} {
         condition.add_user(this);
     }

@@ -41,12 +41,16 @@ class Instruction : public Value, public ilist_node<Instruction> {
 #include "bjac/IR/instructions.def"
     };
 
-    explicit Instruction(Opcode opcode, Type type)
-        : Value{type}, opcode_{opcode}, parent_{nullptr} {}
-
     ~Instruction() override = default;
 
     Opcode get_opcode() const noexcept { return opcode_; }
+
+    template <typename Self>
+    auto *get_parent(this Self &&self) noexcept {
+        return std::addressof(std::forward_like<Self>(*self.parent_));
+    }
+
+    std::optional<unsigned> get_id() const { return parent_ ? std::optional{id_} : std::nullopt; }
 
     static constexpr bool is_binary_op(Opcode opcode) noexcept {
         return is_in_category<Opcode::kBinaryBegin, Opcode::kBinaryEnd>(opcode);
@@ -80,9 +84,6 @@ class Instruction : public Value, public ilist_node<Instruction> {
   private:
     friend class BasicBlock;
 
-    Instruction(BasicBlock &parent, Opcode opcode, Type type) noexcept
-        : Value{type}, opcode_{opcode}, parent_{std::addressof(parent)} {}
-
     template <Opcode kBegin, Opcode kEnd>
     static constexpr bool is_in_category(Opcode opcode) noexcept {
         auto opc = std::to_underlying(opcode);
@@ -90,8 +91,11 @@ class Instruction : public Value, public ilist_node<Instruction> {
     }
 
   protected:
+    Instruction(BasicBlock &parent, Opcode opcode, Type type) noexcept;
+
     Opcode opcode_;
     BasicBlock *parent_;
+    unsigned id_;
     std::set<const Instruction *> users_;
 };
 
