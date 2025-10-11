@@ -16,6 +16,9 @@
                 inherit system;
             };
         in (pkgs.mkShell.override { stdenv = pkgs.gcc15Stdenv; }) {
+            buildInputs = with pkgs; [
+                gtest
+            ];
             nativeBuildInputs = with pkgs; [
                 cmake
             ];

@@ -25,11 +25,28 @@ in nix.conf.
 nix develop --extra-experimental-features nix-command --extra-experimental-features flakes
 ```
 
-### 2) Build the project
+### 2) Configure build system
 
 ```bash
 cmake -B build -DCMAKE_BUILD_TYPE=Release
+```
+
+List of cmake options defined by the project:
+
+| Option             | Values     | Explanation                     | Default |
+|--------------------|------------|---------------------------------|---------|
+| `BJAC_BUILD_TESTS` | `ON`/`OFF` | Set to `ON` to build unit tests |  `OFF`  |
+
+### 3) Build the project
+
+```bash
 cmake --build build
+```
+
+## Run unit tests
+
+```bash
+ctest --test-dir build
 ```
 
 ## Simple IR test
