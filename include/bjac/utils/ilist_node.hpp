@@ -30,17 +30,27 @@ class ilist_node {
         std::swap(prev_, other.prev_);
     }
 
-    ilist_node *next() noexcept { return next_; }
-    const ilist_node *next() const noexcept { return next_; }
+    template <typename Self>
+    auto *next(this Self &&self) noexcept {
+        return std::addressof(std::forward_like<Self>(*self.next_));
+    }
+
     void set_next(ilist_node *next) noexcept { next_ = next; }
 
-    ilist_node *prev() noexcept { return prev_; }
-    const ilist_node *prev() const noexcept { return prev_; }
+    template <typename Self>
+    auto *prev(this Self &&self) noexcept {
+        return std::addressof(std::forward_like<Self>(*self.prev_));
+    }
+
     void set_prev(ilist_node *prev) noexcept { prev_ = prev; }
 
     // Note: this methods should be called only if ilist_node is a base class subobject of ValueT
-    auto &value() noexcept { return *static_cast<value_type *>(this); }
-    const auto &value() const noexcept { return *static_cast<const value_type *>(this); }
+    template <typename Self>
+    auto &value(this Self &&self) noexcept {
+        using derived = std::conditional_t<std::is_const_v<std::remove_reference_t<Self>>,
+                                           const value_type, value_type>;
+        return static_cast<derived &>(self);
+    }
 
   private:
     ilist_node *next_;
