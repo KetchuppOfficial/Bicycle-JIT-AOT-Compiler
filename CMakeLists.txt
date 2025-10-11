@@ -12,17 +12,34 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-add_library(bjac-ir
+add_library(ilist INTERFACE)
+add_library(bjac::ilist ALIAS ilist)
+target_sources(ilist INTERFACE
+FILE_SET
+    headers
+TYPE
+    HEADERS
+BASE_DIRS
+    include
+FILES
+    bjac/utils/ilist_iterator.hpp
+    bjac/utils/ilist_node.hpp
+    bjac/utils/ilist.hpp
+)
+
+add_library(ir
     src/IR/basic_block.cpp
     src/IR/function.cpp
     src/IR/instruction.cpp
 )
-target_include_directories(bjac-ir PUBLIC include)
-target_compile_options(bjac-ir
+add_library(bjac::ir ALIAS ir)
+target_include_directories(ir PUBLIC include)
+target_link_libraries(ir PUBLIC bjac::ilist)
+target_compile_options(ir
 PUBLIC
     $<$<CXX_COMPILER_ID:MSVC>:/Wall>
     $<$<CXX_COMPILER_ID:GNU,Clang>: -Wall -Wextra -pedantic>
 )
 
 add_executable(fibonacci-test src/main.cpp)
-target_link_libraries(fibonacci-test PRIVATE bjac-ir)
+target_link_libraries(fibonacci-test PRIVATE bjac::ir)
