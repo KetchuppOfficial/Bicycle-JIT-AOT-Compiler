@@ -3,11 +3,11 @@
 
 #include <format>
 #include <memory>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <utility>
-#include <set>
 
 #include "bjac/IR/type.hpp"
 #include "bjac/IR/value.hpp"
