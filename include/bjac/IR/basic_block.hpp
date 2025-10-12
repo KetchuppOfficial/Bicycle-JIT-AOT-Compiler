@@ -48,6 +48,20 @@ class BasicBlock final : public Value, public ilist_node<BasicBlock>, private il
     void add_predecessor(const BasicBlock &bb) { predecessors_.insert(std::addressof(bb)); }
     void remove_predecessor(const BasicBlock &bb) { predecessors_.erase(std::addressof(bb)); }
 
+    auto successors() const {
+        using R = decltype(std::declval<const BranchInstruction &>().successors());
+        if (empty()) {
+            return R{nullptr, nullptr};
+        }
+
+        const Instruction &term = back();
+        if (term.get_opcode() != Instruction::Opcode::kBr) {
+            return R{nullptr, nullptr};
+        }
+
+        return static_cast<const BranchInstruction &>(term).successors();
+    }
+
     template <typename T, typename... Args>
     iterator emplace(const_iterator pos, Args &&...args) {
         std::unique_ptr<T> instr{new T(*this, std::forward<Args>(args)...)};
