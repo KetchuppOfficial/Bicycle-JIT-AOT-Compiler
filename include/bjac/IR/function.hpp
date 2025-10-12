@@ -101,6 +101,29 @@ class Function final : public Value, private ilist<BasicBlock> {
     unsigned next_bb_id_ = 0;
 };
 
+struct FunctionGraphTraits {
+    using graph_type = Function;
+    using size_type = Function::size_type;
+    using vertex_handler = const BasicBlock *;
+
+    static size_type n_vertices(const graph_type &g) { return g.size(); }
+    static std::ranges::forward_range auto vertices(const graph_type &g) {
+        return std::views::transform(g, [](auto &bb) static { return std::addressof(bb); });
+    }
+
+    static std::ranges::forward_range auto adjacent_vertices([[maybe_unused]] const graph_type &g,
+                                                             vertex_handler v) {
+        return v->successors();
+    }
+
+    static std::ranges::forward_range auto predecessors([[maybe_unused]] const graph_type &g,
+                                                        vertex_handler v) {
+        return v->predecessors();
+    }
+
+    static vertex_handler source(const graph_type &g) { return std::addressof(g.front()); }
+};
+
 } // namespace bjac
 
 #endif // INCLUDE_BJAC_IR_FUNCTION_HPP
