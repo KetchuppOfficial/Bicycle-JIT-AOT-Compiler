@@ -52,7 +52,7 @@ class ilist {
         }
     }
 
-    bool empty() const noexcept { return head() == tail(); }
+    bool empty() const noexcept { return size_ == 0; }
     size_type size() const noexcept { return size_; }
 
     void swap(ilist &other) noexcept {
