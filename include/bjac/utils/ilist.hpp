@@ -75,16 +75,20 @@ class ilist {
         }
     }
 
+    // Note: C-style cast is necessary because other classes may inherit from ilist privately
     template <typename Self>
     auto &front(this Self &&self) {
         assert(!self.empty());
-        return self.head()->value();
+        using Base = decltype(std::forward_like<Self>(std::declval<ilist>()));
+        return ((Base)self).head()->value();
     }
 
+    // Note: C-style cast is necessary because other classes may inherit from ilist privately
     template <typename Self>
     auto &back(this Self &&self) {
         assert(!self.empty());
-        return self.tail()->value();
+        using Base = decltype(std::forward_like<Self>(std::declval<ilist>()));
+        return ((Base)self).tail()->value();
     }
 
     iterator begin() noexcept { return {head()}; }
