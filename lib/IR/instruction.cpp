@@ -51,10 +51,10 @@ std::string BranchInstruction::to_string() const {
     if (is_conditional()) {
         return std::format("{} {} %{}.{}, label %bb{}, label %bb{}", opcode_,
                            condition_->get_type(), condition_->get_parent()->get_id().value(),
-                           condition_->get_id().value(), true_path_->get_id().value(),
-                           false_path_->get_id().value());
+                           condition_->get_id().value(), get_true_path()->get_id().value(),
+                           get_false_path()->get_id().value());
     } else {
-        return std::format("{} label %bb{}", opcode_, true_path_->get_id().value());
+        return std::format("{} label %bb{}", opcode_, get_true_path()->get_id().value());
     }
 }
 

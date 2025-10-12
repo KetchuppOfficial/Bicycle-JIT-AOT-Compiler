@@ -1,6 +1,8 @@
 #ifndef INCLUDE_BJAC_IR_BRANCH_INSTRUCTION_HPP
 #define INCLUDE_BJAC_IR_BRANCH_INSTRUCTION_HPP
 
+#include <array>
+#include <iterator>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -30,17 +32,22 @@ class BranchInstruction final : public Instruction {
 
     template <typename Self>
     auto *get_true_path(this Self &&self) noexcept {
-        return std::addressof(std::forward_like<Self>(*self.true_path_));
+        return std::addressof(std::forward_like<Self>(*self.paths_[0]));
     }
 
-    void set_true_path(BasicBlock &bb) noexcept { true_path_ = &bb; }
+    void set_true_path(BasicBlock &bb) noexcept { paths_[0] = &bb; }
 
     template <typename Self>
     auto *get_false_path(this Self &&self) noexcept {
-        return std::addressof(std::forward_like<Self>(*self.false_path_));
+        return std::addressof(std::forward_like<Self>(*self.paths_[1]));
     }
 
-    void set_false_path(BasicBlock &bb) noexcept { false_path_ = &bb; }
+    void set_false_path(BasicBlock &bb) noexcept { paths_[1] = &bb; }
+
+    auto successors() const {
+        return std::ranges::subrange{paths_.begin(),
+                                     condition_ ? paths_.end() : std::ranges::next(paths_.begin())};
+    }
 
     std::string to_string() const override;
 
@@ -49,12 +56,12 @@ class BranchInstruction final : public Instruction {
 
     BranchInstruction(BasicBlock &parent, BasicBlock &true_path)
         : Instruction(parent, Opcode::kBr, Type::kVoid), condition_{nullptr},
-          true_path_{&true_path}, false_path_{nullptr} {}
+          paths_{&true_path, nullptr} {}
 
     BranchInstruction(BasicBlock &parent, Instruction &condition, BasicBlock &true_path,
                       BasicBlock &false_path)
         : Instruction(parent, Opcode::kBr, Type::kVoid), condition_{check_condition(condition)},
-          true_path_{&true_path}, false_path_{&false_path} {
+          paths_{&true_path, &false_path} {
         condition.add_user(this);
     }
 
@@ -66,8 +73,7 @@ class BranchInstruction final : public Instruction {
     }
 
     Instruction *condition_;
-    BasicBlock *true_path_;
-    BasicBlock *false_path_;
+    std::array<BasicBlock *, 2> paths_;
 };
 
 } // namespace bjac
