@@ -44,9 +44,9 @@ class BasicBlock final : public Value, public ilist_node<BasicBlock>, private il
 
     unsigned get_next_instr_id() const noexcept { return next_instr_id_; }
 
-    auto predecessors() const { return std::ranges::ref_view(predecessors_); }
-    void add_predecessor(const BasicBlock &bb) { predecessors_.insert(std::addressof(bb)); }
-    void remove_predecessor(const BasicBlock &bb) { predecessors_.erase(std::addressof(bb)); }
+    auto predecessors() const { return std::ranges::subrange(predecessors_); }
+    void add_predecessor(BasicBlock &bb) { predecessors_.insert(std::addressof(bb)); }
+    void remove_predecessor(BasicBlock &bb) { predecessors_.erase(std::addressof(bb)); }
 
     auto successors() const {
         using R = decltype(std::declval<const BranchInstruction &>().successors());
@@ -125,7 +125,7 @@ class BasicBlock final : public Value, public ilist_node<BasicBlock>, private il
         }
     };
 
-    std::set<const BasicBlock *, IDCompare> predecessors_;
+    std::set<BasicBlock *, IDCompare> predecessors_;
 };
 
 } // namespace bjac
