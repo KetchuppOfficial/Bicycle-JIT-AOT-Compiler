@@ -68,6 +68,20 @@ PUBLIC
     bjac::defaults
 )
 
+add_library(graphs INTERFACE)
+add_library(bjac::graphs ALIAS graphs)
+target_link_libraries(graphs INTERFACE bjac::defaults)
+target_sources(graphs INTERFACE
+FILE_SET
+    HEADERS
+BASE_DIRS
+    include
+FILES
+    include/bjac/graphs/dfs.hpp
+    include/bjac/graphs/dominator_tree.hpp
+    include/bjac/graphs/graph_traits.hpp
+)
+
 add_executable(fibonacci-test src/main.cpp)
 target_link_libraries(fibonacci-test PRIVATE bjac::ir)
 
