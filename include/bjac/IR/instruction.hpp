@@ -117,10 +117,7 @@ namespace std {
 
 template <>
 struct formatter<::bjac::Instruction::Opcode> final : public formatter<string_view> {
-    template <typename ParseConstexpr>
-    constexpr ParseConstexpr::iterator parse(ParseConstexpr &ctx) {
-        return formatter<string_view>::parse(ctx);
-    }
+    using formatter<string_view>::parse;
 
     template <class FmtContext>
     FmtContext::iterator format(::bjac::Instruction::Opcode opcode, FmtContext &ctx) const {
