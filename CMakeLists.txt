@@ -82,9 +82,6 @@ FILES
     include/bjac/graphs/graph_traits.hpp
 )
 
-add_executable(fibonacci-test src/main.cpp)
-target_link_libraries(fibonacci-test PRIVATE bjac::ir)
-
 if (BJAC_BUILD_TESTS)
     enable_testing()
     add_subdirectory(test)

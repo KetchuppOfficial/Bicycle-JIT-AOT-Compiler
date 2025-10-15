@@ -51,10 +51,10 @@ ctest --test-dir build
 
 ## Simple IR test
 
-Run executable:
+Run executable (`BJAC_BUILD_TESTS` has to be `ON`):
 
 ```bash
-build/fibonacci-test
+build/test/IR/fibonacci_test
 ```
 
 You will see the textual representation of the IR of a function computing n'th fibonacci number:
