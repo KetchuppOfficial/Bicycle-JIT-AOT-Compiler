@@ -3,9 +3,9 @@
 
 #include <algorithm>
 #include <cassert>
+#include <optional>
 #include <ranges>
 #include <unordered_map>
-#include <optional>
 
 #include "bjac/graphs/dfs.hpp"
 
@@ -88,19 +88,8 @@ class DominatorTree final {
                     return it->second.vertex;
                 });
 
-            auto sdom = [&] -> vertex_handler {
-                if (sdom_candidates_1.empty()) {
-                    assert(!sdom_candidates_2.empty());
-                    return *std::ranges::min_element(sdom_candidates_2, comp);
-                } else if (sdom_candidates_2.empty()) {
-                    assert(!sdom_candidates_1.empty());
-                    return *std::ranges::min_element(sdom_candidates_1, comp);
-                } else {
-                    vertex_handler min_1 = *std::ranges::min_element(sdom_candidates_1, comp);
-                    vertex_handler min_2 = *std::ranges::min_element(sdom_candidates_2, comp);
-                    return std::min(min_1, min_2, comp);
-                }
-            }();
+            auto sdom_candidates = std::views::concat(sdom_candidates_1, sdom_candidates_2);
+            vertex_handler sdom = *std::ranges::min_element(sdom_candidates, comp);
 
             v_to_sdom.try_emplace(w, sdom, dfs.info(sdom).get_discovery_time());
             visited_vertices.push_back(w);
