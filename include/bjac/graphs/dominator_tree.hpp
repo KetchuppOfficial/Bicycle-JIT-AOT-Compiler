@@ -69,8 +69,8 @@ class DominatorTree final {
         std::vector<vertex_handler> visited_vertices;
         visited_vertices.reserve(dfs.size());
 
-        for (vertex_handler w : std::views::reverse(dfs.search_order()) |
-                                    std::views::take(dfs.size() - 1) | std::views::values) {
+        for (vertex_handler w :
+             dfs.pre_order() | std::views::reverse | std::views::take(dfs.size() - 1)) {
             auto preds = Traits::predecessors(g, w);
 
             auto sdom_candidates_1 = std::views::filter(preds, [&dfs, w](vertex_handler v) {
@@ -101,10 +101,10 @@ class DominatorTree final {
     void compute_idoms(const dfs_type &dfs, const VertexToSDomContainer &v_to_sdom) {
         v_to_idom_.reserve(dfs.size());
 
-        auto search_order = dfs.search_order();
+        auto pre_order = dfs.pre_order();
 
-        for (vertex_handler w : search_order | std::views::reverse |
-                                    std::views::take(dfs.size() - 1) | std::views::values) {
+        for (vertex_handler w :
+             pre_order | std::views::reverse | std::views::take(dfs.size() - 1)) {
             auto w_it = v_to_sdom.find(w);
             assert(w_it != v_to_sdom.end());
             vertex_handler sdom_w = w_it->second.vertex;
@@ -124,7 +124,7 @@ class DominatorTree final {
             }
         }
 
-        for (vertex_handler w : search_order | std::views::drop(1) | std::views::values) {
+        for (vertex_handler w : pre_order | std::views::drop(1)) {
             auto w_it = v_to_idom_.find(w);
             assert(w_it != v_to_idom_.end());
             if (vertex_handler &idom = w_it->second; idom != v_to_sdom.at(w).vertex) {
