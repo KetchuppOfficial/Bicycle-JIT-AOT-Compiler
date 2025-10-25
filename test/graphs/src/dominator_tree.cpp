@@ -60,6 +60,7 @@ TEST(DominatorTree, Mandatory_2) {
     bb.at('G')->emplace_back<bjac::BranchInstruction>(cond, *bb.at('H'), *bb.at('I'));
     bb.at('H')->emplace_back<bjac::BranchInstruction>(*bb.at('B'));
     bb.at('I')->emplace_back<bjac::BranchInstruction>(*bb.at('K'));
+    bb.at('J')->emplace_back<bjac::BranchInstruction>(*bb.at('C'));
 
     // Act
     bjac::DominatorTree<bjac::Function, bjac::FunctionGraphTraits> dom_tree{foo};
