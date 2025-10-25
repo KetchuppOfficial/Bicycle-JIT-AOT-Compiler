@@ -23,7 +23,7 @@ class DominatorTree final {
     using const_iterator = typename VertexToIDomContainer::const_iterator;
     using iterator = const_iterator;
 
-    DominatorTree(const G &g) {
+    explicit DominatorTree(const G &g) {
         const dfs_type dfs{g, Traits::source(g)};
         compute_idoms(dfs, compute_semidominators(g, dfs));
     }
