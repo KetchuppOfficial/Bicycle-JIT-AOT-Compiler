@@ -42,6 +42,20 @@ class DominatorTree final {
         return std::nullopt;
     }
 
+    bool is_dominator_of(vertex_handler v, vertex_handler u) const {
+        for (;;) {
+            if (auto v_it = v_to_idom_.find(v); v_it == v_to_idom_.end()) {
+                return false;
+            } else {
+                if (vertex_handler idom = v_it->second; idom == u) {
+                    return true;
+                } else {
+                    v = idom;
+                }
+            }
+        }
+    }
+
     const_iterator begin() const { return v_to_idom_.begin(); }
     const_iterator cbegin() const { return v_to_idom_.cbegin(); }
     const_iterator end() const { return v_to_idom_.end(); }
