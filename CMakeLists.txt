@@ -80,6 +80,7 @@ FILES
     include/bjac/graphs/dfs.hpp
     include/bjac/graphs/dominator_tree.hpp
     include/bjac/graphs/graph_traits.hpp
+    include/bjac/graphs/inverse_graph_adaptor.hpp
 )
 
 if (BJAC_BUILD_TESTS)
