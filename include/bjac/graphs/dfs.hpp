@@ -3,8 +3,10 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <initializer_list>
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace bjac {
@@ -17,8 +19,9 @@ class DFS final {
 
     class InfoNode final {
       public:
-        InfoNode(vertex_handler v)
-            : vertex_{v}, discovery_time_{0}, finished_time_{0}, predecessor_{nullptr} {}
+        InfoNode(vertex_handler v) : InfoNode{v, nullptr} {}
+        InfoNode(vertex_handler v, InfoNode *predecessor)
+            : vertex_(v), discovery_time_{0}, finished_time_{0}, predecessor_{predecessor} {}
 
         vertex_handler get_vertex() const { return vertex_; }
         time_type get_discovery_time() const { return discovery_time_; }
@@ -69,7 +72,6 @@ class DFS final {
     };
 
   private:
-    enum class Status : bool { not_visited, visited };
     using InfoContainer = std::unordered_map<vertex_handler, InfoNode>;
 
   public:
@@ -81,44 +83,36 @@ class DFS final {
     using const_st_iterator = SpanningTreeAncestorIterator;
     using st_iterator = const_st_iterator;
 
-    DFS(const G &g, vertex_handler source) : source_(source) {
-        const auto n_vertices = Traits::n_vertices(g);
-
-        info_.reserve(n_vertices);
-        pre_order_.reserve(n_vertices);
-        post_order_.reserve(n_vertices);
-
-        std::unordered_map<vertex_handler, Status> visit_table;
-        visit_table.reserve(n_vertices);
-        for (vertex_handler v : Traits::vertices(g)) {
-            info_.try_emplace(v, v);
-            visit_table.emplace(v, Status::not_visited);
-        }
+    // Note: vertices from already_visited appear only in post_order, not in pre_order
+    DFS(const G &g, vertex_handler source,
+        std::initializer_list<vertex_handler> already_visited = {})
+        : source_(source) {
+        std::unordered_set<vertex_handler> visited_vertices{already_visited};
 
         std::vector<vertex_handler> stack;
-        stack.reserve(n_vertices);
+        stack.reserve(Traits::n_vertices(g));
 
-        stack.push_back(source);
+        info_.try_emplace(source_, source_);
+        stack.push_back(source_);
 
         for (time_type time = 0; !stack.empty();) {
             const auto u = stack.back();
             auto &u_info = info_.find(u)->second;
 
-            if (auto &was_visited = visit_table.find(u)->second; was_visited == Status::visited) {
-                stack.pop_back();
-                u_info.finished_time_ = ++time;
-                post_order_.push_back(u);
-            } else {
-                was_visited = Status::visited;
+            if (visited_vertices.insert(u).second) {
                 u_info.discovery_time_ = ++time;
                 pre_order_.push_back(u);
 
                 for (vertex_handler v : Traits::adjacent_vertices(g, u)) {
-                    if (visit_table.find(v)->second == Status::not_visited) {
-                        info_.find(v)->second.predecessor_ = std::addressof(u_info);
+                    if (!visited_vertices.contains(v)) {
+                        info_.try_emplace(v, v, std::addressof(u_info));
                         stack.push_back(v);
                     }
                 }
+            } else {
+                stack.pop_back();
+                u_info.finished_time_ = ++time;
+                post_order_.push_back(u);
             }
         }
     }
