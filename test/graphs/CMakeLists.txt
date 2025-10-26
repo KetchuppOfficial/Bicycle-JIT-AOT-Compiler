@@ -1,5 +1,6 @@
 add_executable(graphs_tests
     src/dominator_tree.cpp
+    src/loop_tree.cpp
 )
 
 target_link_libraries(graphs_tests
