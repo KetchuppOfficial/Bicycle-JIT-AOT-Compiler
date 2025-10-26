@@ -88,7 +88,7 @@ if (BJAC_BUILD_TESTS)
     add_subdirectory(test)
 endif()
 
-install(TARGETS ir ilist
+install(TARGETS ir ilist graphs
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
             COMPONENT BJAC_Runtime
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
