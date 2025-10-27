@@ -43,7 +43,7 @@ class LoopTree final {
     }
 
     std::unsigned_integral auto loops_count() const noexcept { return header_to_loop_.size(); }
-    template<typename Self>
+    template <typename Self>
     auto &get_loop(this Self &&self, vertex_handler header) {
         return std::forward_like<Self>(*self.header_to_loop_.at(header));
     }

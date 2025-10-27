@@ -3,6 +3,8 @@
 
 namespace bjac {
 
+// clang-format off
+
 // This class is useless on its own but serves as the documentation for what is expected from a
 // graph traits class.
 struct DefaultGraphTraits {
@@ -41,6 +43,8 @@ struct DefaultGraphTraits {
  */
 };
 
-} // bjac
+// clang-format on
+
+} // namespace bjac
 
 #endif // INCLUDE_BJAC_GRAPHS_GRAPH_TRAITS_HPP
