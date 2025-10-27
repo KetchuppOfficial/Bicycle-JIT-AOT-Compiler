@@ -92,11 +92,11 @@ class DFS final {
         std::vector<vertex_handler> stack;
         stack.reserve(Traits::n_vertices(g));
 
-        info_.try_emplace(source_, source_);
+        info_.emplace(source_, source_);
         stack.push_back(source_);
 
         for (time_type time = 0; !stack.empty();) {
-            const auto u = stack.back();
+            vertex_handler u = stack.back();
             auto &u_info = info_.find(u)->second;
 
             if (visited_vertices.insert(u).second) {
