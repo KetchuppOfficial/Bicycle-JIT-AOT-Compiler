@@ -1,7 +1,6 @@
 #ifndef INCLUDE_BJAC_GRAPHS_DFS_HPP
 #define INCLUDE_BJAC_GRAPHS_DFS_HPP
 
-#include <algorithm>
 #include <cstddef>
 #include <initializer_list>
 #include <memory>
@@ -139,8 +138,11 @@ class DFS final {
     auto post_order() const { return std::ranges::subrange(post_order_); }
 
     bool is_ancestor_of(vertex_handler v, vertex_handler u) const {
-        return std::any_of(st_begin(v), st_end(),
-                           [u](auto &info_node) { return info_node.get_vertex() == u; });
+        const auto &v_info = info_.at(v);
+        const auto &u_info = info_.at(u);
+
+        return u_info.get_discovery_time() <= v_info.get_discovery_time() &&
+               v_info.get_finished_time() <= u_info.get_finished_time();
     }
 
     bool is_proper_ancestor_of(vertex_handler v, vertex_handler u) const {
