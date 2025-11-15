@@ -24,9 +24,23 @@ class BinaryOperator final : public Instruction {
         return std::addressof(std::forward_like<Self>(*self.lhs_));
     }
 
+    void set_lhs(Instruction &lhs) {
+        if (lhs.get_type() != get_type()) {
+            throw OperandsTypeMismatch{opcode_, lhs.get_type(), get_type()};
+        }
+        lhs_ = std::addressof(lhs);
+    }
+
     template <typename Self>
     auto *get_rhs(this Self &&self) noexcept {
         return std::addressof(std::forward_like<Self>(*self.rhs_));
+    }
+
+    void set_rhs(Instruction &rhs) {
+        if (rhs.get_type() != get_type()) {
+            throw OperandsTypeMismatch{opcode_, get_type(), rhs.get_type()};
+        }
+        rhs_ = std::addressof(rhs);
     }
 
     std::string to_string() const override;
