@@ -33,11 +33,11 @@ class BranchInstruction final : public Instruction {
         return std::addressof(std::forward_like<Self>(*self.paths_[0]));
     }
 
-    void set_true_path(BasicBlock &bb) noexcept { paths_[0] = &bb; }
+    void set_true_path(BasicBlock &bb) noexcept { paths_[0] = std::addressof(bb); }
 
     BasicBlock *get_false_path() noexcept { return paths_[1]; }
     const BasicBlock *get_false_path() const noexcept { return paths_[1]; }
-    void set_false_path(BasicBlock &bb) noexcept { paths_[1] = &bb; }
+    void set_false_path(BasicBlock &bb) noexcept { paths_[1] = std::addressof(bb); }
 
     auto successors() const {
         return std::ranges::subrange{paths_.begin(),
@@ -51,12 +51,12 @@ class BranchInstruction final : public Instruction {
 
     BranchInstruction(BasicBlock &parent, BasicBlock &true_path)
         : Instruction(parent, Opcode::kBr, Type::kVoid), condition_{nullptr},
-          paths_{&true_path, nullptr} {}
+          paths_{std::addressof(true_path), nullptr} {}
 
     BranchInstruction(BasicBlock &parent, Instruction &condition, BasicBlock &true_path,
                       BasicBlock &false_path)
         : Instruction(parent, Opcode::kBr, Type::kVoid), condition_{check_condition(condition)},
-          paths_{&true_path, &false_path} {
+          paths_{std::addressof(true_path), std::addressof(false_path)} {
         condition.add_user(this);
     }
 

@@ -28,7 +28,7 @@ class ilist {
     using size_type = std::size_t;
     using difference_type = iterator::difference_type;
 
-    ilist() noexcept : sentinel_{&sentinel_, &sentinel_}, size_{0} {}
+    ilist() noexcept : sentinel_{std::addressof(sentinel_), std::addressof(sentinel_)}, size_{0} {}
 
     ilist(const ilist &) = delete;
     ilist &operator=(const ilist &) = delete;

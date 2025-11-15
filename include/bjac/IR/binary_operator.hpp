@@ -35,7 +35,8 @@ class BinaryOperator final : public Instruction {
     friend class BasicBlock;
 
     BinaryOperator(BasicBlock &parent, Opcode opcode, Instruction &lhs, Instruction &rhs)
-        : Instruction(parent, check_opcode(opcode), common_type(lhs, rhs)), lhs_{&lhs}, rhs_{&rhs} {
+        : Instruction(parent, check_opcode(opcode), common_type(lhs, rhs)),
+          lhs_{std::addressof(lhs)}, rhs_{std::addressof(rhs)} {
         lhs.add_user(this);
         rhs.add_user(this);
     }
