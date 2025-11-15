@@ -25,14 +25,14 @@ class ICmpInstruction final : public Instruction {
         return std::addressof(std::forward_like<Self>(*self.lhs_));
     }
 
-    void set_lhs(Instruction &lhs) noexcept { lhs_ = &lhs; }
+    void set_lhs(Instruction &lhs) noexcept { lhs_ = std::addressof(lhs); }
 
     template <typename Self>
     auto *get_rhs(this Self &&self) noexcept {
         return std::addressof(std::forward_like<Self>(*self.rhs_));
     }
 
-    void set_rhs(Instruction &rhs) noexcept { rhs_ = &rhs; }
+    void set_rhs(Instruction &rhs) noexcept { rhs_ = std::addressof(rhs); }
 
     std::string to_string() const override;
 
@@ -40,7 +40,8 @@ class ICmpInstruction final : public Instruction {
     friend class BasicBlock;
 
     ICmpInstruction(BasicBlock &parent, Kind kind, Instruction &lhs, Instruction &rhs)
-        : Instruction(parent, Opcode::kICmp, Type::kI1), kind_{kind}, lhs_{&lhs}, rhs_{&rhs} {
+        : Instruction(parent, Opcode::kICmp, Type::kI1), kind_{kind}, lhs_{std::addressof(lhs)},
+          rhs_{std::addressof(rhs)} {
         const auto lhs_type = lhs.get_type();
         const auto rhs_type = rhs.get_type();
         if (lhs_type != rhs_type) {
