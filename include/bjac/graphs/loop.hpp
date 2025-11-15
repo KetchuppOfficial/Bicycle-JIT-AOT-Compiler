@@ -13,10 +13,14 @@ namespace bjac {
 template <typename VertexHandler>
 class Loop final {
   public:
-    explicit Loop(VertexHandler header) : header_(header) {}
+    explicit Loop(VertexHandler header) : header_(header), parent_{nullptr} {}
 
     VertexHandler get_header() const { return header_; }
     void set_header(VertexHandler header) { header_ = header; }
+
+    Loop *get_parent_loop() noexcept { return parent_; }
+    const Loop *get_parent_loop() const noexcept { return parent_; }
+    void set_parent_loop(Loop &parent) noexcept { parent_ = std::addressof(parent); }
 
     std::unsigned_integral auto vertices_count() const noexcept { return vertices_.size(); }
     std::ranges::forward_range auto vertices() const { return std::ranges::subrange(vertices_); }
@@ -40,6 +44,7 @@ class Loop final {
 
   private:
     VertexHandler header_;
+    Loop *parent_;
     std::unordered_set<VertexHandler> vertices_;
     std::unordered_map<VertexHandler, std::unique_ptr<Loop>> inner_loops_;
 };

@@ -33,7 +33,9 @@ class LoopTree final {
             for (vertex_handler v : dfs.post_order()) {
                 loop->add_vertex(v);
                 if (auto it = header_to_loop_.find(v); it != header_to_loop_.end()) {
-                    loop->add_inner_loop(std::move(it->second));
+                    auto &inner_loop_ptr = it->second;
+                    inner_loop_ptr->set_parent_loop(*loop);
+                    loop->add_inner_loop(std::move(inner_loop_ptr));
                     header_to_loop_.erase(it);
                 }
             }
