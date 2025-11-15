@@ -8,8 +8,8 @@
 #include <utility>
 #include <vector>
 
-#include "bjac/graphs//inverse_graph_adaptor.hpp"
 #include "bjac/graphs/dominator_tree.hpp"
+#include "bjac/graphs/graph_traits.hpp"
 #include "bjac/graphs/loop.hpp"
 
 namespace bjac {
@@ -20,12 +20,8 @@ class LoopTree final {
 
   public:
     explicit LoopTree(const G &g) {
-        using InverseGraph = InverseGraphAdaptor<G, Traits>;
-        const InverseGraph inverse_graph{g};
-
         for (const auto &[latch, header] : compute_back_edges(g)) {
-            DFS<InverseGraph, InverseGraphAdaptorTraits<G, Traits>> dfs(inverse_graph, latch,
-                                                                        {header});
+            const DFS<G, ReverseGraphTraits<Traits>> dfs(g, latch, {header});
 
             auto loop = std::make_unique<Loop<vertex_handler>>(header);
 
