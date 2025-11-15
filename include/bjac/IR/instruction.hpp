@@ -91,7 +91,7 @@ class Instruction : public Value, public ilist_node<Instruction> {
     }
 
   protected:
-    Instruction(BasicBlock &parent, Opcode opcode, Type type) noexcept;
+    Instruction(BasicBlock &parent, Opcode opcode, Type type);
 
     Opcode opcode_;
     BasicBlock *parent_;
