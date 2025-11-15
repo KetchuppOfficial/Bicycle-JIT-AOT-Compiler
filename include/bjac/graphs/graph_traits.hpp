@@ -1,6 +1,8 @@
 #ifndef INCLUDE_BJAC_GRAPHS_GRAPH_TRAITS_HPP
 #define INCLUDE_BJAC_GRAPHS_GRAPH_TRAITS_HPP
 
+#include <ranges>
+
 namespace bjac {
 
 // clang-format off
@@ -44,6 +46,30 @@ struct DefaultGraphTraits {
 };
 
 // clang-format on
+
+template <typename Traits>
+struct ReverseGraphTraits {
+    using graph_type = typename Traits::graph_type;
+    using size_type = typename Traits::size_type;
+    using vertex_handler = typename Traits::vertex_handler;
+
+    static size_type n_vertices(const graph_type &g) { return g.size(); }
+    static std::ranges::forward_range auto vertices(const graph_type &g) {
+        return Traits::vertices(g);
+    }
+
+    static std::ranges::forward_range auto adjacent_vertices([[maybe_unused]] const graph_type &g,
+                                                             vertex_handler v) {
+        return Traits::predecessors(g, v);
+    }
+
+    static std::ranges::forward_range auto predecessors([[maybe_unused]] const graph_type &g,
+                                                        vertex_handler v) {
+        return Traits::adjacent_vertices(g, v);
+    }
+
+    static vertex_handler source(const graph_type &g) { return Traits::source(g); }
+};
 
 } // namespace bjac
 
