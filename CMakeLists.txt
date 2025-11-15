@@ -36,7 +36,7 @@ FILES
     include/bjac/utils/ilist.hpp
 )
 
-add_library(ir)
+add_library(ir STATIC)
 add_library(bjac::ir ALIAS ir)
 target_sources(ir PRIVATE
     lib/IR/basic_block.cpp
@@ -84,12 +84,33 @@ FILES
     include/bjac/graphs/loop.hpp
 )
 
+add_library(transforms STATIC)
+add_library(bjac::transforms ALIAS transforms)
+target_link_libraries(transforms
+PRIVATE
+    bjac::graphs
+PUBLIC
+    bjac::defaults
+    bjac::ir
+)
+target_sources(transforms PRIVATE
+    lib/transforms/constant_folding.cpp
+)
+target_sources(transforms PUBLIC
+FILE_SET
+    HEADERS
+BASE_DIRS
+    include
+FILES
+    include/bjac/transforms/constant_folding.hpp
+)
+
 if (BJAC_BUILD_TESTS)
     enable_testing()
     add_subdirectory(test)
 endif()
 
-install(TARGETS ir ilist graphs
+install(TARGETS ir ilist graphs transforms
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
             COMPONENT BJAC_Runtime
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
