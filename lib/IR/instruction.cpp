@@ -18,7 +18,7 @@
 
 namespace bjac {
 
-Instruction::Instruction(BasicBlock &parent, Opcode opcode, Type type) noexcept
+Instruction::Instruction(BasicBlock &parent, Opcode opcode, Type type)
     : Value{type}, opcode_{opcode}, parent_{std::addressof(parent)},
       id_{parent.get_next_instr_id()} {}
 

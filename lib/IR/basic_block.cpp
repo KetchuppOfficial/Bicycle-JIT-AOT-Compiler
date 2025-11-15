@@ -8,7 +8,7 @@
 
 namespace bjac {
 
-BasicBlock::BasicBlock(Function &parent) noexcept
+BasicBlock::BasicBlock(Function &parent)
     : Value{Type::kNone}, parent_{std::addressof(parent)}, id_{parent.get_next_bb_id()},
       next_instr_id_{0} {}
 

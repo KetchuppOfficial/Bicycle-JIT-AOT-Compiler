@@ -112,7 +112,7 @@ class BasicBlock final : public Value, public ilist_node<BasicBlock>, private il
   private:
     friend class Function;
 
-    BasicBlock(Function &parent) noexcept;
+    BasicBlock(Function &parent);
 
     Function *parent_;
     unsigned id_;
