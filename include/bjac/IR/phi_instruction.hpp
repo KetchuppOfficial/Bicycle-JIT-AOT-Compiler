@@ -3,6 +3,7 @@
 
 #include <map>
 #include <memory>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -36,11 +37,27 @@ class PHIInstruction final : public Instruction {
     }
 
     template <typename Self>
-    auto *get(this Self &&self, BasicBlock &bb) {
+    auto *get_value(this Self &&self, BasicBlock &bb) {
         if (auto it = self.records_.find(std::addressof(bb)); it != self.records_.end()) {
             return std::addressof(std::forward_like<Self>(*it->second));
         }
         return nullptr;
+    }
+
+    std::ranges::bidirectional_range auto get_sources() { return records_ | std::views::keys; }
+
+    std::ranges::bidirectional_range auto get_sources() const {
+        return records_ | std::views::keys |
+               std::views::transform(
+                   [](BasicBlock *bb) static -> const BasicBlock * { return bb; });
+    }
+
+    std::ranges::bidirectional_range auto get_values() { return records_ | std::views::values; }
+
+    std::ranges::bidirectional_range auto get_values() const {
+        return records_ | std::views::values |
+               std::views::transform(
+                   [](Instruction *i) static -> const Instruction * { return i; });
     }
 
     std::string to_string() const override;
