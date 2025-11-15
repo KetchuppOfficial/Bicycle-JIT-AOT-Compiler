@@ -198,7 +198,7 @@ class ilist {
     }
 
     node_type sentinel_;
-    size_type size_ = 0;
+    size_type size_;
 };
 
 } // namespace bjac
