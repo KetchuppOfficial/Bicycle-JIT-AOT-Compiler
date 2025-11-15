@@ -3,6 +3,7 @@
 
 #include <format>
 #include <memory>
+#include <ranges>
 #include <set>
 #include <stdexcept>
 #include <string>
@@ -76,8 +77,14 @@ class Instruction : public Value, public ilist_node<Instruction> {
 
     bool is_other_op() const noexcept { return Instruction::is_other_op(opcode_); }
 
-    void add_user(const Instruction *value) { users_.insert(value); }
-    void remove_user(const Instruction *value) { users_.erase(value); }
+    void add_user(Instruction *value) { users_.insert(value); }
+    void remove_user(Instruction *value) { users_.erase(value); }
+
+    std::ranges::bidirectional_range auto get_users() { return std::ranges::subrange{users_}; }
+    std::ranges::bidirectional_range auto get_users() const {
+        return users_ | std::views::transform(
+                            [](Instruction *i) static -> const Instruction * { return i; });
+    }
 
     virtual std::string to_string() const = 0;
 
@@ -96,7 +103,7 @@ class Instruction : public Value, public ilist_node<Instruction> {
     Opcode opcode_;
     BasicBlock *parent_;
     unsigned id_;
-    std::set<const Instruction *> users_;
+    std::set<Instruction *> users_;
 };
 
 inline std::string_view to_string_view(Instruction::Opcode opcode) noexcept {
