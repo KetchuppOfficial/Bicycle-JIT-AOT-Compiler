@@ -37,37 +37,34 @@ ArgumentInstruction::ArgumentInstruction(BasicBlock &parent, const Function &f, 
     : Instruction(parent, Opcode::kArg, get_arg_type(f, pos)), pos_{pos} {}
 
 std::string ArgumentInstruction::to_string() const {
-    return std::format("%{}.{} = {} {} [{}]", parent_->get_id().value(), get_id().value(), type_,
-                       opcode_, pos_);
+    return std::format("%{}.{} = {} {} [{}]", parent_->get_id(), get_id(), type_, opcode_, pos_);
 }
 
 std::string BinaryOperator::to_string() const {
-    return std::format("%{}.{} = {} {} %{}.{}, %{}.{}", parent_->get_id().value(), get_id().value(),
-                       type_, opcode_, lhs_->get_parent()->get_id().value(), lhs_->get_id().value(),
-                       rhs_->get_parent()->get_id().value(), rhs_->get_id().value());
+    return std::format("%{}.{} = {} {} %{}.{}, %{}.{}", parent_->get_id(), get_id(), type_, opcode_,
+                       lhs_->get_parent()->get_id(), lhs_->get_id(), rhs_->get_parent()->get_id(),
+                       rhs_->get_id());
 }
 
 std::string BranchInstruction::to_string() const {
     if (is_conditional()) {
         return std::format("{} {} %{}.{}, label %bb{}, label %bb{}", opcode_,
-                           condition_->get_type(), condition_->get_parent()->get_id().value(),
-                           condition_->get_id().value(), get_true_path()->get_id().value(),
-                           get_false_path()->get_id().value());
+                           condition_->get_type(), condition_->get_parent()->get_id(),
+                           condition_->get_id(), get_true_path()->get_id(),
+                           get_false_path()->get_id());
     } else {
-        return std::format("{} label %bb{}", opcode_, get_true_path()->get_id().value());
+        return std::format("{} label %bb{}", opcode_, get_true_path()->get_id());
     }
 }
 
 std::string ConstInstruction::to_string() const {
-    return std::format("%{}.{} = {} {} {}", parent_->get_id().value(), get_id().value(), type_,
-                       opcode_, value_);
+    return std::format("%{}.{} = {} {} {}", parent_->get_id(), get_id(), type_, opcode_, value_);
 }
 
 std::string ICmpInstruction::to_string() const {
-    return std::format("%{}.{} = {} {} {} %{}.{}, %{}.{}", parent_->get_id().value(),
-                       get_id().value(), opcode_, kind_, lhs_->get_type(),
-                       lhs_->get_parent()->get_id().value(), lhs_->get_id().value(),
-                       rhs_->get_parent()->get_id().value(), rhs_->get_id().value());
+    return std::format("%{}.{} = {} {} {} %{}.{}, %{}.{}", parent_->get_id(), get_id(), opcode_,
+                       kind_, lhs_->get_type(), lhs_->get_parent()->get_id(), lhs_->get_id(),
+                       rhs_->get_parent()->get_id(), rhs_->get_id());
 }
 
 std::string PHIInstruction::to_string() const {
@@ -79,21 +76,20 @@ std::string PHIInstruction::to_string() const {
 
     auto prev_end = std::ranges::prev(records_.end());
     for (const auto &[bb, instr] : std::ranges::subrange(records_.begin(), prev_end)) {
-        phi_list += std::format("[%{}.{}, %bb{}], ", instr->get_parent()->get_id().value(),
-                                instr->get_id().value(), bb->get_id().value());
+        phi_list += std::format("[%{}.{}, %bb{}], ", instr->get_parent()->get_id(), instr->get_id(),
+                                bb->get_id());
     }
     const auto &[bb, instr] = *std::ranges::prev(records_.end());
-    phi_list += std::format("[%{}.{}, %bb{}]", instr->get_parent()->get_id().value(),
-                            instr->get_id().value(), bb->get_id().value());
+    phi_list += std::format("[%{}.{}, %bb{}]", instr->get_parent()->get_id(), instr->get_id(),
+                            bb->get_id());
 
-    return std::format("%{}.{} = {} {} {}", parent_->get_id().value(), get_id().value(), opcode_,
-                       type_, phi_list);
+    return std::format("%{}.{} = {} {} {}", parent_->get_id(), get_id(), opcode_, type_, phi_list);
 }
 
 std::string ReturnInstruction::to_string() const {
     if (ret_val_) {
         return std::format("{} {} %{}.{}", opcode_, ret_val_->get_type(),
-                           ret_val_->get_parent()->get_id().value(), ret_val_->get_id().value());
+                           ret_val_->get_parent()->get_id(), ret_val_->get_id());
     }
     return std::format("{} {}", opcode_, Type::kVoid);
 }
