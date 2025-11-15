@@ -1,6 +1,7 @@
 #ifndef INCLUDE_BJAC_IR_RET_INSTRUCTION_HPP
 #define INCLUDE_BJAC_IR_RET_INSTRUCTION_HPP
 
+#include <memory>
 #include <string>
 
 #include "bjac/IR/instruction.hpp"
@@ -16,6 +17,7 @@ class ReturnInstruction final : public Instruction {
 
     Instruction *get_ret_value() noexcept { return ret_val_; }
     const Instruction *get_ret_value() const noexcept { return ret_val_; }
+    void set_ret_value(Instruction &ret_val) noexcept { ret_val_ = std::addressof(ret_val); }
 
     std::string to_string() const override;
 
