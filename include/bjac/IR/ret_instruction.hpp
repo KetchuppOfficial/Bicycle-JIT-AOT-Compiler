@@ -1,9 +1,7 @@
 #ifndef INCLUDE_BJAC_IR_RET_INSTRUCTION_HPP
 #define INCLUDE_BJAC_IR_RET_INSTRUCTION_HPP
 
-#include <memory>
 #include <string>
-#include <utility>
 
 #include "bjac/IR/instruction.hpp"
 #include "bjac/IR/type.hpp"
@@ -16,10 +14,8 @@ class ReturnInstruction final : public Instruction {
 
     Type get_ret_type() const noexcept { return ret_val_ ? ret_val_->get_type() : Type::kVoid; }
 
-    template <typename Self>
-    auto *get_ret_value(this Self &&self) noexcept {
-        return std::addressof(std::forward_like<Self>(*self.ret_val_));
-    }
+    Instruction *get_ret_value() noexcept { return ret_val_; }
+    const Instruction *get_ret_value() const noexcept { return ret_val_; }
 
     std::string to_string() const override;
 

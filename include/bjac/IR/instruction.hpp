@@ -50,7 +50,7 @@ class Instruction : public Value, public ilist_node<Instruction> {
         return std::addressof(std::forward_like<Self>(*self.parent_));
     }
 
-    std::optional<unsigned> get_id() const { return parent_ ? std::optional{id_} : std::nullopt; }
+    unsigned get_id() const noexcept { return id_; }
 
     static constexpr bool is_binary_op(Opcode opcode) noexcept {
         return is_in_category<Opcode::kBinaryBegin, Opcode::kBinaryEnd>(opcode);

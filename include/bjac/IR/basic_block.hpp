@@ -3,7 +3,6 @@
 
 #include <iosfwd>
 #include <memory>
-#include <optional>
 #include <ranges>
 #include <set>
 #include <type_traits>
@@ -40,7 +39,7 @@ class BasicBlock final : public Value, public ilist_node<BasicBlock>, private il
         return nullptr;
     }
 
-    std::optional<unsigned> get_id() const { return parent_ ? std::optional{id_} : std::nullopt; }
+    unsigned get_id() const noexcept { return id_; }
 
     unsigned get_next_instr_id() const noexcept { return next_instr_id_; }
 
@@ -115,9 +114,9 @@ class BasicBlock final : public Value, public ilist_node<BasicBlock>, private il
 
     BasicBlock(Function &parent) noexcept;
 
-    Function *parent_ = nullptr;
-    unsigned id_ = 0;
-    unsigned next_instr_id_ = 0;
+    Function *parent_;
+    unsigned id_;
+    unsigned next_instr_id_;
 
     struct IDCompare {
         bool operator()(const BasicBlock *lhs, const BasicBlock *rhs) const {

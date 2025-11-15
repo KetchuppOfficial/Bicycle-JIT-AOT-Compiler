@@ -39,10 +39,6 @@ class ICmpInstruction final : public Instruction {
   private:
     friend class BasicBlock;
 
-    ICmpInstruction(BasicBlock &parent, Kind kind)
-        : Instruction(parent, Opcode::kICmp, Type::kI1), kind_{kind}, lhs_{nullptr}, rhs_{nullptr} {
-    }
-
     ICmpInstruction(BasicBlock &parent, Kind kind, Instruction &lhs, Instruction &rhs)
         : Instruction(parent, Opcode::kICmp, Type::kI1), kind_{kind}, lhs_{&lhs}, rhs_{&rhs} {
         const auto lhs_type = lhs.get_type();

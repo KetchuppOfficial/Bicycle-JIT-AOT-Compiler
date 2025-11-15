@@ -25,10 +25,8 @@ class BranchInstruction final : public Instruction {
 
     bool is_conditional() const noexcept { return condition_ != nullptr; }
 
-    template <typename Self>
-    auto *get_condition(this Self &&self) noexcept {
-        return std::addressof(std::forward_like<Self>(*self.condition_));
-    }
+    Instruction *get_condition() noexcept { return condition_; }
+    const Instruction *get_condition() const noexcept { return condition_; }
 
     template <typename Self>
     auto *get_true_path(this Self &&self) noexcept {
@@ -37,11 +35,8 @@ class BranchInstruction final : public Instruction {
 
     void set_true_path(BasicBlock &bb) noexcept { paths_[0] = &bb; }
 
-    template <typename Self>
-    auto *get_false_path(this Self &&self) noexcept {
-        return std::addressof(std::forward_like<Self>(*self.paths_[1]));
-    }
-
+    BasicBlock *get_false_path() noexcept { return paths_[1]; }
+    const BasicBlock *get_false_path() const noexcept { return paths_[1]; }
     void set_false_path(BasicBlock &bb) noexcept { paths_[1] = &bb; }
 
     auto successors() const {
