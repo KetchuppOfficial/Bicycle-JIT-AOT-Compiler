@@ -28,6 +28,7 @@ class BranchInstruction final : public Instruction {
 
     Instruction *get_condition() noexcept { return condition_; }
     const Instruction *get_condition() const noexcept { return condition_; }
+    void set_condition(Instruction &cond) noexcept { condition_ = check_condition(cond); }
 
     template <typename Self>
     auto *get_true_path(this Self &&self) noexcept {
