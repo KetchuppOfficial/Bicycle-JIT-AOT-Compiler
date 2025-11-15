@@ -11,9 +11,10 @@
 
 namespace bjac {
 
-template <typename G, typename Traits>
+template <typename Traits>
 class DominatorTree final {
   public:
+    using graph_type = typename Traits::graph_type;
     using vertex_handler = typename Traits::vertex_handler;
 
   private:
@@ -23,9 +24,9 @@ class DominatorTree final {
     using const_iterator = typename VertexToIDomContainer::const_iterator;
     using iterator = const_iterator;
 
-    explicit DominatorTree(const G &g) : DominatorTree{g, DFS<G, Traits>{g, Traits::source(g)}} {}
+    explicit DominatorTree(graph_type &g) : DominatorTree{g, DFS<Traits>{g}} {}
 
-    explicit DominatorTree(const G &g, const DFS<G, Traits> &dfs) {
+    explicit DominatorTree(graph_type &g, const DFS<Traits> &dfs) {
         compute_idoms(dfs, compute_semidominators(g, dfs));
     }
 
@@ -63,7 +64,7 @@ class DominatorTree final {
     const_iterator cend() const { return v_to_idom_.cend(); }
 
   private:
-    using time_type = typename DFS<G, Traits>::time_type;
+    using time_type = typename DFS<Traits>::time_type;
 
     struct SDom {
         vertex_handler vertex;
@@ -72,7 +73,8 @@ class DominatorTree final {
 
     using VertexToSDomContainer = std::unordered_map<vertex_handler, SDom>;
 
-    static VertexToSDomContainer compute_semidominators(const G &g, const DFS<G, Traits> &dfs) {
+    static VertexToSDomContainer compute_semidominators(const graph_type &g,
+                                                        const DFS<Traits> &dfs) {
         auto comp = [&dfs](vertex_handler v, vertex_handler u) {
             return dfs.info(v).get_discovery_time() < dfs.info(u).get_discovery_time();
         };
@@ -112,7 +114,7 @@ class DominatorTree final {
         return v_to_sdom;
     }
 
-    void compute_idoms(const DFS<G, Traits> &dfs, const VertexToSDomContainer &v_to_sdom) {
+    void compute_idoms(const DFS<Traits> &dfs, const VertexToSDomContainer &v_to_sdom) {
         v_to_idom_.reserve(dfs.size());
 
         auto pre_order = dfs.pre_order();

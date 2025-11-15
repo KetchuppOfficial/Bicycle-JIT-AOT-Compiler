@@ -26,7 +26,7 @@ TEST(LoopTree, Mandatory_1) {
     bb.at('E')->emplace_back<bjac::BranchInstruction>(*bb.at('B'));
 
     // Act
-    bjac::LoopTree<bjac::Function, bjac::FunctionGraphTraits> loop_tree{foo};
+    bjac::LoopTree<bjac::ConstFunctionGraphTraits> loop_tree{foo};
 
     // Assert
     EXPECT_EQ(loop_tree.loops_count(), 1);
@@ -60,7 +60,7 @@ TEST(LoopTree, Mandatory_2) {
     bb.at('E')->emplace_back<bjac::BranchInstruction>(*bb.at('B'));
 
     // Act
-    bjac::LoopTree<bjac::Function, bjac::FunctionGraphTraits> loop_tree{foo};
+    bjac::LoopTree<bjac::ConstFunctionGraphTraits> loop_tree{foo};
 
     // Assert
     EXPECT_EQ(loop_tree.loops_count(), 1);
@@ -96,7 +96,7 @@ TEST(LoopTree, Mandatory_3) {
     bb.at('H')->emplace_back<bjac::BranchInstruction>(*bb.at('A'));
 
     // Act
-    bjac::LoopTree<bjac::Function, bjac::FunctionGraphTraits> loop_tree{foo};
+    bjac::LoopTree<bjac::ConstFunctionGraphTraits> loop_tree{foo};
 
     // Assert
     EXPECT_EQ(loop_tree.loops_count(), 1);
@@ -140,7 +140,7 @@ TEST(LoopTree, Mandatory_4) {
     bb.at('G')->emplace_back<bjac::BranchInstruction>(*bb.at('D'));
 
     // Act
-    bjac::LoopTree<bjac::Function, bjac::FunctionGraphTraits> loop_tree{foo};
+    bjac::LoopTree<bjac::ConstFunctionGraphTraits> loop_tree{foo};
 
     // Assert
     EXPECT_EQ(loop_tree.loops_count(), 0);
@@ -170,7 +170,7 @@ TEST(LoopTree, Mandatory_5) {
     bb.at('J')->emplace_back<bjac::BranchInstruction>(*bb.at('C'));
 
     // Act
-    bjac::LoopTree<bjac::Function, bjac::FunctionGraphTraits> loop_tree{foo};
+    bjac::LoopTree<bjac::ConstFunctionGraphTraits> loop_tree{foo};
 
     // Assert
     EXPECT_EQ(loop_tree.loops_count(), 1);
@@ -225,7 +225,7 @@ TEST(LoopTree, Mandatory_6) {
     bb.at('H')->emplace_back<bjac::BranchInstruction>(cond, *bb.at('G'), *bb.at('I'));
 
     // Act
-    bjac::LoopTree<bjac::Function, bjac::FunctionGraphTraits> loop_tree{foo};
+    bjac::LoopTree<bjac::ConstFunctionGraphTraits> loop_tree{foo};
 
     // Assert
     EXPECT_EQ(loop_tree.loops_count(), 1);

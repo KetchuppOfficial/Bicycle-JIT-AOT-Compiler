@@ -101,28 +101,32 @@ class Function final : public Value, private ilist<BasicBlock> {
     unsigned next_bb_id_ = 0;
 };
 
+template <typename F>
+    requires std::same_as<F, Function> || std::same_as<F, const Function>
 struct FunctionGraphTraits {
-    using graph_type = Function;
-    using size_type = Function::size_type;
-    using vertex_handler = const BasicBlock *;
+    using graph_type = F;
+    using size_type = typename F::size_type;
+    using vertex_handler = std::conditional_t<std::is_const_v<F>, const BasicBlock *, BasicBlock *>;
 
-    static size_type n_vertices(const graph_type &g) { return g.size(); }
-    static std::ranges::forward_range auto vertices(const graph_type &g) {
+    static size_type n_vertices(const F &g) { return g.size(); }
+    static std::ranges::forward_range auto vertices(F &g) {
         return std::views::transform(g, [](auto &bb) static { return std::addressof(bb); });
     }
 
-    static std::ranges::forward_range auto adjacent_vertices([[maybe_unused]] const graph_type &g,
+    static std::ranges::forward_range auto adjacent_vertices([[maybe_unused]] F &g,
                                                              vertex_handler v) {
         return v->successors();
     }
 
-    static std::ranges::forward_range auto predecessors([[maybe_unused]] const graph_type &g,
-                                                        vertex_handler v) {
+    static std::ranges::forward_range auto predecessors([[maybe_unused]] F &g, vertex_handler v) {
         return v->predecessors();
     }
 
-    static vertex_handler source(const graph_type &g) { return std::addressof(g.front()); }
+    static vertex_handler source(F &g) { return std::addressof(g.front()); }
 };
+
+using ConstFunctionGraphTraits = FunctionGraphTraits<const Function>;
+using MutFunctionGraphTraits = FunctionGraphTraits<Function>;
 
 } // namespace bjac
 

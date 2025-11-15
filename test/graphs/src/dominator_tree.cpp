@@ -27,7 +27,7 @@ TEST(DominatorTree, Mandatory_1) {
     bb.at('G')->emplace_back<bjac::BranchInstruction>(*bb.at('D'));
 
     // Act
-    bjac::DominatorTree<bjac::Function, bjac::FunctionGraphTraits> dom_tree{foo};
+    bjac::DominatorTree<bjac::ConstFunctionGraphTraits> dom_tree{foo};
 
     // Assert
     EXPECT_FALSE(dom_tree.contains(bb.at('A')));
@@ -63,7 +63,7 @@ TEST(DominatorTree, Mandatory_2) {
     bb.at('J')->emplace_back<bjac::BranchInstruction>(*bb.at('C'));
 
     // Act
-    bjac::DominatorTree<bjac::Function, bjac::FunctionGraphTraits> dom_tree{foo};
+    bjac::DominatorTree<bjac::ConstFunctionGraphTraits> dom_tree{foo};
 
     // Assert
     EXPECT_FALSE(dom_tree.contains(bb.at('A')));
@@ -101,7 +101,7 @@ TEST(DominatorTree, Mandatory_3) {
     bb.at('H')->emplace_back<bjac::BranchInstruction>(cond, *bb.at('G'), *bb.at('I'));
 
     // Act
-    bjac::DominatorTree<bjac::Function, bjac::FunctionGraphTraits> dom_tree{foo};
+    bjac::DominatorTree<bjac::ConstFunctionGraphTraits> dom_tree{foo};
 
     // Assert
     EXPECT_FALSE(dom_tree.contains(bb.at('A')));

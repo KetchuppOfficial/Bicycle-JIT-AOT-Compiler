@@ -30,15 +30,15 @@ struct DefaultGraphTraits {
  *
  * // returns a range which value type is vertex_handler and which contains all vertices in the
  * // given graph
- * static std::ranges::forward_range auto vertices(const graph_type &g);
+ * static std::ranges::forward_range auto vertices(graph_type &g);
  *
  * // returns a range which value type is vertex_handler and which contains all adjacent vertices
  * // of the given one in the given graph
- * static std::ranges::forward_range auto adjacent_vertices(const graph_type &g, vertex_handler v);
+ * static std::ranges::forward_range auto adjacent_vertices(graph_type &g, vertex_handler v);
  *
  * // returns a range which value type is vertex_handler and which contains all such vertices u that
  * // edges (u, v) are edges of the graph g
- * static std::ranges::forward_range auto predecessors(const graph_type &g, vertex_handler v);
+ * static std::ranges::forward_range auto predecessors(graph_type &g, vertex_handler v);
  *
  * // returns the source vertex of a flow graph (provided only for flow graphs)
  * static vertex_handler source(const G &g);
@@ -54,21 +54,19 @@ struct ReverseGraphTraits {
     using vertex_handler = typename Traits::vertex_handler;
 
     static size_type n_vertices(const graph_type &g) { return g.size(); }
-    static std::ranges::forward_range auto vertices(const graph_type &g) {
-        return Traits::vertices(g);
-    }
+    static std::ranges::forward_range auto vertices(graph_type &g) { return Traits::vertices(g); }
 
-    static std::ranges::forward_range auto adjacent_vertices([[maybe_unused]] const graph_type &g,
+    static std::ranges::forward_range auto adjacent_vertices([[maybe_unused]] graph_type &g,
                                                              vertex_handler v) {
         return Traits::predecessors(g, v);
     }
 
-    static std::ranges::forward_range auto predecessors([[maybe_unused]] const graph_type &g,
+    static std::ranges::forward_range auto predecessors([[maybe_unused]] graph_type &g,
                                                         vertex_handler v) {
         return Traits::adjacent_vertices(g, v);
     }
 
-    static vertex_handler source(const graph_type &g) { return Traits::source(g); }
+    static vertex_handler source(graph_type &g) { return Traits::source(g); }
 };
 
 } // namespace bjac

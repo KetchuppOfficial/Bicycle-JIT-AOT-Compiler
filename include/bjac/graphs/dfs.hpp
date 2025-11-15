@@ -10,10 +10,11 @@
 
 namespace bjac {
 
-template <typename G, typename Traits>
+template <typename Traits>
 class DFS final {
   public:
     using time_type = std::size_t;
+    using graph_type = typename Traits::graph_type;
     using vertex_handler = typename Traits::vertex_handler;
 
     class InfoNode final {
@@ -83,7 +84,7 @@ class DFS final {
     using st_iterator = const_st_iterator;
 
     // Note: vertices from already_visited appear only in post_order, not in pre_order
-    DFS(const G &g, vertex_handler source,
+    DFS(graph_type &g, vertex_handler source,
         std::initializer_list<vertex_handler> already_visited = {})
         : source_(source) {
         std::unordered_set<vertex_handler> visited_vertices{already_visited};
@@ -115,6 +116,9 @@ class DFS final {
             }
         }
     }
+
+    DFS(graph_type &g, std::initializer_list<vertex_handler> already_visited = {})
+        : DFS(g, Traits::source(g), already_visited) {}
 
     vertex_handler get_source() const { return source_; }
 

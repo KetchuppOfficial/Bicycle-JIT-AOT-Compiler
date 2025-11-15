@@ -43,22 +43,27 @@ class BasicBlock final : public Value, public ilist_node<BasicBlock>, private il
 
     unsigned get_next_instr_id() const noexcept { return next_instr_id_; }
 
-    auto predecessors() const { return std::ranges::subrange(predecessors_); }
+    auto predecessors() { return std::ranges::subrange(predecessors_); }
+    auto predecessors() const {
+        return predecessors_ | std::views::transform(
+                                   [](BasicBlock *bb) static -> const BasicBlock * { return bb; });
+    }
+
     void add_predecessor(BasicBlock &bb) { predecessors_.insert(std::addressof(bb)); }
     void remove_predecessor(BasicBlock &bb) { predecessors_.erase(std::addressof(bb)); }
 
-    auto successors() const {
-        using R = decltype(std::declval<const BranchInstruction &>().successors());
-        if (empty()) {
-            return R{nullptr, nullptr};
-        }
+    template <typename Self>
+    auto successors(this Self &&self) {
+        using branch_type = decltype(std::forward_like<Self>(std::declval<BranchInstruction &>()));
+        using R = decltype(std::declval<branch_type &>().successors());
 
-        const Instruction &term = back();
-        if (term.get_opcode() != Instruction::Opcode::kBr) {
-            return R{nullptr, nullptr};
+        if (self.empty()) {
+            return R{};
+        } else if (auto &term = self.back(); term.get_opcode() != Instruction::Opcode::kBr) {
+            return R{};
+        } else {
+            return static_cast<branch_type &>(term).successors();
         }
-
-        return static_cast<const BranchInstruction &>(term).successors();
     }
 
     template <typename T, typename... Args>

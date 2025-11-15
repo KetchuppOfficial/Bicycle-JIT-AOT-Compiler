@@ -14,14 +14,15 @@
 
 namespace bjac {
 
-template <typename G, typename Traits>
+template <typename Traits>
 class LoopTree final {
+  public:
+    using graph_type = typename Traits::graph_type;
     using vertex_handler = typename Traits::vertex_handler;
 
-  public:
-    explicit LoopTree(const G &g) {
+    explicit LoopTree(graph_type &g) {
         for (const auto &[latch, header] : compute_back_edges(g)) {
-            const DFS<G, ReverseGraphTraits<Traits>> dfs(g, latch, {header});
+            const DFS<ReverseGraphTraits<Traits>> dfs(g, latch, {header});
 
             auto loop = std::make_unique<Loop<vertex_handler>>(header);
 
@@ -53,9 +54,9 @@ class LoopTree final {
     }
 
   private:
-    static auto compute_back_edges(const G &g) {
-        const DFS<G, Traits> dfs{g, Traits::source(g)};
-        const DominatorTree<G, Traits> dom_tree{g, dfs};
+    static auto compute_back_edges(graph_type &g) {
+        const DFS<Traits> dfs{g};
+        const DominatorTree<Traits> dom_tree{g, dfs};
 
         std::vector<std::pair<vertex_handler, vertex_handler>> back_edges_;
         for (vertex_handler v : dfs.pre_order()) {

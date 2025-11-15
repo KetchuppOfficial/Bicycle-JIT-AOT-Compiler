@@ -4,6 +4,7 @@
 #include <array>
 #include <iterator>
 #include <memory>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -39,9 +40,17 @@ class BranchInstruction final : public Instruction {
     const BasicBlock *get_false_path() const noexcept { return paths_[1]; }
     void set_false_path(BasicBlock &bb) noexcept { paths_[1] = std::addressof(bb); }
 
-    auto successors() const {
+    auto successors() {
         return std::ranges::subrange{paths_.begin(),
                                      condition_ ? paths_.end() : std::ranges::next(paths_.begin())};
+    }
+
+    auto successors() const {
+        auto succ = std::ranges::subrange{
+            paths_.begin(), condition_ ? paths_.end() : std::ranges::next(paths_.begin())};
+
+        return succ | std::views::transform(
+                          [](BasicBlock *bb) static -> const BasicBlock * { return bb; });
     }
 
     std::string to_string() const override;
