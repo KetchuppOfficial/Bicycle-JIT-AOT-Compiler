@@ -31,4 +31,9 @@ void BasicBlock::print(std::ostream &os) const {
     }
 }
 
+std::ostream &operator<<(std::ostream &os, const BasicBlock &bb) {
+    bb.print(os);
+    return os;
+}
+
 } // namespace bjac

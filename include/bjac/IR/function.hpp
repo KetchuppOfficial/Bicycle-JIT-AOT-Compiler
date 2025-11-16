@@ -72,6 +72,7 @@ class Function final : public Value, private ilist<BasicBlock> {
     reference push_front(std::unique_ptr<BasicBlock> bb) { return *insert(begin(), std::move(bb)); }
 
     void print(std::ostream &os) const;
+    friend std::ostream &operator<<(std::ostream &os, const Function &f);
 
     using basic_blocks::empty;
     using basic_blocks::size;

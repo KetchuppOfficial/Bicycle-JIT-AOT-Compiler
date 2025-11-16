@@ -94,6 +94,7 @@ class BasicBlock final : public Value, public ilist_node<BasicBlock>, private il
     }
 
     void print(std::ostream &os) const;
+    friend std::ostream &operator<<(std::ostream &os, const BasicBlock &bb);
 
     using instructions::empty;
     using instructions::size;

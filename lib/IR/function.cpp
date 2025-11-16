@@ -11,4 +11,9 @@ void Function::print(std::ostream &os) const {
     }
 }
 
+std::ostream &operator<<(std::ostream &os, const Function &f) {
+    f.print(os);
+    return os;
+}
+
 } // namespace bjac
