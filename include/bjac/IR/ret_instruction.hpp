@@ -24,12 +24,8 @@ class ReturnInstruction final : public Instruction {
   private:
     friend class BasicBlock;
 
-    ReturnInstruction(BasicBlock &parent)
-        : Instruction(parent, Opcode::kRet, Type::kVoid), ret_val_{nullptr} {} // ret void
-    ReturnInstruction(BasicBlock &parent, Instruction &ret_val)
-        : Instruction(parent, Opcode::kRet, Type::kVoid), ret_val_{std::addressof(ret_val)} {
-        ret_val.add_user(this);
-    }
+    ReturnInstruction(BasicBlock &parent); // ret void
+    ReturnInstruction(BasicBlock &parent, Instruction &ret_val);
 
     Instruction *ret_val_;
 };

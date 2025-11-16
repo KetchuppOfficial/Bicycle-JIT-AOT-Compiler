@@ -86,6 +86,23 @@ std::string PHIInstruction::to_string() const {
     return std::format("%{}.{} = {} {} {}", parent_->get_id(), get_id(), opcode_, type_, phi_list);
 }
 
+ReturnInstruction::ReturnInstruction(BasicBlock &parent)
+    : Instruction(parent, Opcode::kRet, Type::kVoid), ret_val_{nullptr} {
+    if (auto ret_type = parent.get_parent()->return_type(); ret_type != Type::kVoid) {
+        throw std::invalid_argument{std::format("trying to create {} {} in a function returning {}",
+                                                Opcode::kRet, Type::kVoid, ret_type)};
+    }
+}
+
+ReturnInstruction::ReturnInstruction(BasicBlock &parent, Instruction &ret_val)
+    : Instruction(parent, Opcode::kRet, Type::kVoid), ret_val_{std::addressof(ret_val)} {
+    if (auto ret_type = parent.get_parent()->return_type(); ret_type != ret_val.get_type()) {
+        throw std::invalid_argument{std::format("trying to create {} {} in a function returning {}",
+                                                Opcode::kRet, ret_val.get_type(), ret_type)};
+    }
+    ret_val.add_user(this);
+}
+
 std::string ReturnInstruction::to_string() const {
     if (ret_val_) {
         return std::format("{} {} %{}.{}", opcode_, ret_val_->get_type(),
