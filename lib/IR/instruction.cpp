@@ -37,7 +37,8 @@ ArgumentInstruction::ArgumentInstruction(BasicBlock &parent, const Function &f, 
     : Instruction(parent, Opcode::kArg, get_arg_type(f, pos)), pos_{pos} {}
 
 std::string ArgumentInstruction::to_string() const {
-    return std::format("%{}.{} = {} {} [{}]", parent_->get_id(), get_id(), type_, opcode_, pos_);
+    return std::format("%{}.{} = {} {} [{}]", parent_->get_id(), get_id(), type_, Opcode::kArg,
+                       pos_);
 }
 
 std::string BinaryOperator::to_string() const {
@@ -48,23 +49,24 @@ std::string BinaryOperator::to_string() const {
 
 std::string BranchInstruction::to_string() const {
     if (is_conditional()) {
-        return std::format("{} {} %{}.{}, label %bb{}, label %bb{}", opcode_,
+        return std::format("{} {} %{}.{}, label %bb{}, label %bb{}", Opcode::kBr,
                            condition_->get_type(), condition_->get_parent()->get_id(),
                            condition_->get_id(), get_true_path()->get_id(),
                            get_false_path()->get_id());
     } else {
-        return std::format("{} label %bb{}", opcode_, get_true_path()->get_id());
+        return std::format("{} label %bb{}", Opcode::kBr, get_true_path()->get_id());
     }
 }
 
 std::string ConstInstruction::to_string() const {
-    return std::format("%{}.{} = {} {} {}", parent_->get_id(), get_id(), type_, opcode_, value_);
+    return std::format("%{}.{} = {} {} {}", parent_->get_id(), get_id(), type_, Opcode::kConst,
+                       value_);
 }
 
 std::string ICmpInstruction::to_string() const {
-    return std::format("%{}.{} = {} {} {} %{}.{}, %{}.{}", parent_->get_id(), get_id(), opcode_,
-                       kind_, lhs_->get_type(), lhs_->get_parent()->get_id(), lhs_->get_id(),
-                       rhs_->get_parent()->get_id(), rhs_->get_id());
+    return std::format("%{}.{} = {} {} {} %{}.{}, %{}.{}", parent_->get_id(), get_id(),
+                       Opcode::kICmp, kind_, lhs_->get_type(), lhs_->get_parent()->get_id(),
+                       lhs_->get_id(), rhs_->get_parent()->get_id(), rhs_->get_id());
 }
 
 std::string PHIInstruction::to_string() const {
@@ -83,7 +85,8 @@ std::string PHIInstruction::to_string() const {
     phi_list += std::format("[%{}.{}, %bb{}]", instr->get_parent()->get_id(), instr->get_id(),
                             bb->get_id());
 
-    return std::format("%{}.{} = {} {} {}", parent_->get_id(), get_id(), opcode_, type_, phi_list);
+    return std::format("%{}.{} = {} {} {}", parent_->get_id(), get_id(), Opcode::kPHI, type_,
+                       phi_list);
 }
 
 ReturnInstruction::ReturnInstruction(BasicBlock &parent)
@@ -105,10 +108,10 @@ ReturnInstruction::ReturnInstruction(BasicBlock &parent, Instruction &ret_val)
 
 std::string ReturnInstruction::to_string() const {
     if (ret_val_) {
-        return std::format("{} {} %{}.{}", opcode_, ret_val_->get_type(),
+        return std::format("{} {} %{}.{}", Opcode::kRet, ret_val_->get_type(),
                            ret_val_->get_parent()->get_id(), ret_val_->get_id());
     }
-    return std::format("{} {}", opcode_, Type::kVoid);
+    return std::format("{} {}", Opcode::kRet, Type::kVoid);
 }
 
 } // namespace bjac
