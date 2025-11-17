@@ -95,6 +95,7 @@ PUBLIC
 )
 target_sources(transforms PRIVATE
     lib/transforms/constant_folding.cpp
+    lib/transforms/dce.cpp
 )
 target_sources(transforms PUBLIC
 FILE_SET
@@ -103,6 +104,7 @@ BASE_DIRS
     include
 FILES
     include/bjac/transforms/constant_folding.hpp
+    include/bjac/transforms/dce.hpp
 )
 
 if (BJAC_BUILD_TESTS)
