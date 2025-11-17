@@ -130,6 +130,7 @@ static bool fold_icmp(const ICmpInstruction &icmp) {
 
 void replace_uses(Instruction &from, Instruction &to) {
     for (auto *user : from.get_users()) {
+        to.add_user(user);
         if (user->is_binary_op()) {
             auto &bin_op = static_cast<BinaryOperator &>(*user);
             if (bin_op.get_lhs() == std::addressof(from)) {
@@ -167,19 +168,25 @@ void ConstantFoldingPass::run(Function &f) {
                 using enum Instruction::Opcode;
                 if (it->is_binary_op()) {
                     auto &bin_op = static_cast<BinaryOperator &>(*it);
-                    if (bin_op.get_lhs()->get_opcode() == kConst &&
-                        bin_op.get_rhs()->get_opcode() == kConst) {
-                        return bb->emplace<ConstInstruction>(it, bin_op.get_type(),
-                                                             fold_binary_operator(bin_op));
+                    auto *lhs = bin_op.get_lhs();
+                    auto *rhs = bin_op.get_rhs();
+                    if (lhs->get_opcode() == kConst && rhs->get_opcode() == kConst) {
+                        const auto res = fold_binary_operator(bin_op);
+                        lhs->remove_user(std::addressof(bin_op));
+                        rhs->remove_user(std::addressof(bin_op));
+                        return bb->emplace<ConstInstruction>(it, bin_op.get_type(), res);
                     }
                 } else {
                     switch (it->get_opcode()) {
                     case kICmp: {
                         auto &icmp = static_cast<ICmpInstruction &>(*it);
-                        if (icmp.get_lhs()->get_opcode() == kConst &&
-                            icmp.get_rhs()->get_opcode() == kConst) {
-                            return bb->emplace<ConstInstruction>(it, icmp.get_type(),
-                                                                 fold_icmp(icmp));
+                        auto *lhs = icmp.get_lhs();
+                        auto *rhs = icmp.get_rhs();
+                        if (lhs->get_opcode() == kConst && rhs->get_opcode() == kConst) {
+                            const auto res = fold_icmp(icmp);
+                            lhs->remove_user(std::addressof(icmp));
+                            rhs->remove_user(std::addressof(icmp));
+                            return bb->emplace<ConstInstruction>(it, icmp.get_type(), res);
                         }
                         break;
                     }
