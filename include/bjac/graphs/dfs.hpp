@@ -122,6 +122,8 @@ class DFS final {
 
     vertex_handler get_source() const { return source_; }
 
+    bool contains(vertex_handler v) const { return info_.contains(v); }
+
     const InfoNode &info(vertex_handler v) const { return info_.at(v); }
 
     size_type size() const noexcept { return info_.size(); }
