@@ -80,6 +80,7 @@ class Instruction : public Value, public ilist_node<Instruction> {
     void add_user(Instruction *value) { users_.insert(value); }
     void remove_user(Instruction *value) { users_.erase(value); }
 
+    std::unsigned_integral auto users_count() const noexcept { return users_.size(); }
     std::ranges::bidirectional_range auto get_users() { return std::ranges::subrange{users_}; }
     std::ranges::bidirectional_range auto get_users() const {
         return users_ | std::views::transform(
