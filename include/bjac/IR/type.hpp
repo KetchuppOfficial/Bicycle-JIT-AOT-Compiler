@@ -8,7 +8,7 @@
 namespace bjac {
 
 enum class Type {
-    kNone, // used as the type of basic blocks, functions, br and ret instructions
+    kNone, // used as the type of basic blocks and functions
     kVoid,
     kI1,
     kI8,
