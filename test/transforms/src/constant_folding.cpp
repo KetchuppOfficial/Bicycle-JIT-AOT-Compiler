@@ -1,6 +1,9 @@
+#include <algorithm>
+#include <array>
 #include <cstdint>
 #include <format>
 #include <iterator>
+#include <utility>
 
 #include <gtest/gtest.h>
 
@@ -41,24 +44,35 @@ TEST_P(ConstantFoldingForBinaryOperation, /* no test name */) {
     // Assert
     EXPECT_EQ(bb.size(), 4) << foo;
 
-    EXPECT_EQ(std::next(bb.begin(), 0)->get_type(), bjac::Type::kI64);
-    ASSERT_EQ(std::next(bb.begin(), 0)->get_opcode(), bjac::Instruction::Opcode::kConst);
+    EXPECT_EQ(std::next(bb.begin(), 0)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(std::next(bb.begin(), 0)->users_count(), 0) << foo;
+    ASSERT_EQ(std::next(bb.begin(), 0)->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
     EXPECT_EQ(static_cast<bjac::ConstInstruction &>(*std::next(bb.begin(), 0)).get_value(),
-              GetParam().lhs);
+              GetParam().lhs)
+        << foo;
 
-    EXPECT_EQ(std::next(bb.begin(), 1)->get_type(), bjac::Type::kI64);
-    ASSERT_EQ(std::next(bb.begin(), 1)->get_opcode(), bjac::Instruction::Opcode::kConst);
+    EXPECT_EQ(std::next(bb.begin(), 1)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(std::next(bb.begin(), 1)->users_count(), 0) << foo;
+    ASSERT_EQ(std::next(bb.begin(), 1)->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
     EXPECT_EQ(static_cast<bjac::ConstInstruction &>(*std::next(bb.begin(), 1)).get_value(),
-              GetParam().rhs);
+              GetParam().rhs)
+        << foo;
 
-    EXPECT_EQ(std::next(bb.begin(), 2)->get_type(), bjac::Type::kI64);
-    ASSERT_EQ(std::next(bb.begin(), 2)->get_opcode(), bjac::Instruction::Opcode::kConst);
+    EXPECT_EQ(std::next(bb.begin(), 2)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(std::next(bb.begin(), 2)->users_count(), 1) << foo;
+    EXPECT_TRUE(
+        std::ranges::contains(std::next(bb.begin(), 2)->get_users(), &*std::next(bb.begin(), 3)))
+        << foo;
+    ASSERT_EQ(std::next(bb.begin(), 2)->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
     EXPECT_EQ(static_cast<bjac::ConstInstruction &>(*std::next(bb.begin(), 2)).get_value(),
-              GetParam().res);
+              GetParam().res)
+        << foo;
 
-    ASSERT_EQ(std::next(bb.begin(), 3)->get_opcode(), bjac::Instruction::Opcode::kRet);
+    EXPECT_EQ(std::next(bb.begin(), 3)->users_count(), 0) << foo;
+    ASSERT_EQ(std::next(bb.begin(), 3)->get_opcode(), bjac::Instruction::Opcode::kRet) << foo;
     EXPECT_EQ(static_cast<bjac::ReturnInstruction &>(*std::next(bb.begin(), 3)).get_ret_value(),
-              &static_cast<bjac::ConstInstruction &>(*std::next(bb.begin(), 2)));
+              &static_cast<bjac::ConstInstruction &>(*std::next(bb.begin(), 2)))
+        << foo;
 }
 
 INSTANTIATE_TEST_SUITE_P(
@@ -120,23 +134,30 @@ TEST_P(ConstantFoldingForICmp, /* no test name */) {
     EXPECT_EQ(bb.size(), 4) << foo;
 
     EXPECT_EQ(std::next(bb.begin(), 0)->get_type(), bjac::Type::kI64) << foo;
-    ASSERT_EQ(std::next(bb.begin(), 0)->get_opcode(), bjac::Instruction::Opcode::kConst);
+    EXPECT_EQ(std::next(bb.begin(), 0)->users_count(), 0) << foo;
+    ASSERT_EQ(std::next(bb.begin(), 0)->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
     EXPECT_EQ(static_cast<bjac::ConstInstruction &>(*std::next(bb.begin(), 0)).get_value(),
               GetParam().lhs)
         << foo;
 
     EXPECT_EQ(std::next(bb.begin(), 1)->get_type(), bjac::Type::kI64) << foo;
-    ASSERT_EQ(std::next(bb.begin(), 1)->get_opcode(), bjac::Instruction::Opcode::kConst);
+    EXPECT_EQ(std::next(bb.begin(), 1)->users_count(), 0) << foo;
+    ASSERT_EQ(std::next(bb.begin(), 1)->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
     EXPECT_EQ(static_cast<bjac::ConstInstruction &>(*std::next(bb.begin(), 1)).get_value(),
               GetParam().rhs)
         << foo;
 
     EXPECT_EQ(std::next(bb.begin(), 2)->get_type(), bjac::Type::kI1) << foo;
+    EXPECT_EQ(std::next(bb.begin(), 2)->users_count(), 1) << foo;
+    EXPECT_TRUE(
+        std::ranges::contains(std::next(bb.begin(), 2)->get_users(), &*std::next(bb.begin(), 3)))
+        << foo;
     ASSERT_EQ(std::next(bb.begin(), 2)->get_opcode(), bjac::Instruction::Opcode::kConst);
     EXPECT_EQ(static_cast<bjac::ConstInstruction &>(*std::next(bb.begin(), 2)).get_value(),
               GetParam().res)
         << foo;
 
+    EXPECT_EQ(std::next(bb.begin(), 3)->users_count(), 0) << foo;
     ASSERT_EQ(std::next(bb.begin(), 3)->get_opcode(), bjac::Instruction::Opcode::kRet) << foo;
     EXPECT_EQ(static_cast<bjac::ReturnInstruction &>(*std::next(bb.begin(), 3)).get_ret_value(),
               &static_cast<bjac::ConstInstruction &>(*std::next(bb.begin(), 2)))
@@ -242,12 +263,30 @@ TEST(ConstantFolding, Combination) {
     // Assert
     EXPECT_EQ(bb.size(), 8) << foo;
 
+    for (auto [i, n] : std::array<std::pair<int, int>, 6>{
+             {{0, 1}, {1, 2}, {2, 1 + 2}, {3, 8}, {4, 3}, {5, 8 - 3}}}) {
+        EXPECT_EQ(std::next(bb.begin(), i)->get_type(), bjac::Type::kI64) << "i = " << i << '\n'
+                                                                          << foo;
+        EXPECT_EQ(std::next(bb.begin(), i)->users_count(), 0) << "i = " << i << '\n' << foo;
+        ASSERT_EQ(std::next(bb.begin(), i)->get_opcode(), bjac::Instruction::Opcode::kConst)
+            << "i = " << i << '\n'
+            << foo;
+        EXPECT_EQ(static_cast<bjac::ConstInstruction &>(*std::next(bb.begin(), i)).get_value(), n)
+            << "i = " << i << '\n'
+            << foo;
+    }
+
     EXPECT_EQ(std::next(bb.begin(), 6)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(std::next(bb.begin(), 6)->users_count(), 1) << foo;
+    EXPECT_TRUE(
+        std::ranges::contains(std::next(bb.begin(), 6)->get_users(), &*std::next(bb.begin(), 7)))
+        << foo;
     ASSERT_EQ(std::next(bb.begin(), 6)->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
     EXPECT_EQ(static_cast<bjac::ConstInstruction &>(*std::next(bb.begin(), 6)).get_value(),
               (1 + 2) * (8 - 3))
         << foo;
 
+    EXPECT_EQ(std::next(bb.begin(), 7)->users_count(), 0) << foo;
     ASSERT_EQ(std::next(bb.begin(), 7)->get_opcode(), bjac::Instruction::Opcode::kRet) << foo;
     EXPECT_EQ(static_cast<bjac::ReturnInstruction &>(*std::next(bb.begin(), 7)).get_ret_value(),
               &static_cast<bjac::ConstInstruction &>(*std::next(bb.begin(), 6)))
