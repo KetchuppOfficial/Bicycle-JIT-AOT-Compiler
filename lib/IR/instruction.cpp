@@ -1,5 +1,4 @@
 #include <format>
-#include <iterator>
 #include <memory>
 #include <ranges>
 #include <stdexcept>
@@ -41,14 +40,9 @@ std::string users_to_string(const Instruction &instr) {
         return {};
     }
 
-    std::string res{" ; used by: "};
-    for (auto *user : users | std::views::take(users.size() - 1)) {
-        res += ssa_value_to_string(*user);
-        res += ", ";
-    }
-    res += ssa_value_to_string(*users.back());
-
-    return res;
+    auto values = users | std::views::transform(
+                              [](const auto *user) static { return ssa_value_to_string(*user); });
+    return std::format(" ; used by: {:s}", std::views::join_with(values, ", "));
 }
 
 } // unnamed namespace
@@ -95,17 +89,13 @@ std::string PHIInstruction::to_string() const {
         throw std::invalid_argument{"phi instruction does not have enough records"};
     }
 
-    std::string phi_list;
+    auto phi_strings =
+        records_ | std::views::transform([](const auto &r) static {
+            return std::format("[{}, %bb{}]", ssa_value_to_string(*r.second), r.first->get_id());
+        });
 
-    auto prev_end = std::ranges::prev(records_.end());
-    for (const auto &[bb, instr] : std::ranges::subrange(records_.begin(), prev_end)) {
-        phi_list += std::format("[{}, %bb{}], ", ssa_value_to_string(*instr), bb->get_id());
-    }
-    const auto &[bb, instr] = *prev_end;
-    phi_list += std::format("[{}, %bb{}]", ssa_value_to_string(*instr), bb->get_id());
-
-    return std::format("{} = {} {} {}{}", ssa_value_to_string(*this), Opcode::kPHI, type_, phi_list,
-                       users_to_string(*this));
+    return std::format("{} = {} {} {:s}{}", ssa_value_to_string(*this), Opcode::kPHI, type_,
+                       std::views::join_with(phi_strings, ", "), users_to_string(*this));
 }
 
 ReturnInstruction::ReturnInstruction(BasicBlock &parent)
