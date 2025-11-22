@@ -142,6 +142,16 @@ void replace_uses(Instruction &from, Instruction &to) {
         } else {
             using enum Instruction::Opcode;
             switch (user->get_opcode()) {
+            case kICmp: {
+                auto &icmp = static_cast<ICmpInstruction &>(*user);
+                if (icmp.get_lhs() == std::addressof(from)) {
+                    icmp.set_lhs(to);
+                }
+                if (icmp.get_rhs() == std::addressof(from)) {
+                    icmp.set_rhs(to);
+                }
+                break;
+            }
             case kRet:
                 static_cast<ReturnInstruction *>(user)->set_ret_value(to);
                 break;
