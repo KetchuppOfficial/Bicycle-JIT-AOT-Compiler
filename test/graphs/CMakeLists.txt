@@ -1,9 +1,9 @@
-add_executable(graphs_tests
+add_executable(bjac_graphs_tests
     src/dominator_tree.cpp
     src/loop_tree.cpp
 )
 
-target_link_libraries(graphs_tests
+target_link_libraries(bjac_graphs_tests
 PRIVATE
     GTest::GTest
     GTest::gtest_main
@@ -12,4 +12,4 @@ PRIVATE
     bjac::ir
 )
 
-gtest_discover_tests(graphs_tests)
+gtest_discover_tests(bjac_graphs_tests)

@@ -21,10 +21,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(cmake/defaults.cmake)
 
-add_library(ilist INTERFACE)
-add_library(bjac::ilist ALIAS ilist)
-target_link_libraries(ilist INTERFACE bjac::defaults)
-target_sources(ilist INTERFACE
+add_library(bjac_ilist INTERFACE)
+add_library(bjac::ilist ALIAS bjac_ilist)
+target_link_libraries(bjac_ilist INTERFACE bjac::defaults)
+target_sources(bjac_ilist INTERFACE
 FILE_SET
     HEADERS
 BASE_DIRS
@@ -35,13 +35,13 @@ FILES
     include/bjac/utils/ilist.hpp
 )
 
-add_library(ir STATIC
+add_library(bjac_ir STATIC
     lib/IR/basic_block.cpp
     lib/IR/function.cpp
     lib/IR/instruction.cpp
 )
-add_library(bjac::ir ALIAS ir)
-target_sources(ir PUBLIC
+add_library(bjac::ir ALIAS bjac_ir)
+target_sources(bjac_ir PUBLIC
 FILE_SET
     HEADERS
 BASE_DIRS
@@ -60,16 +60,16 @@ FILES
     include/bjac/IR/type.hpp
     include/bjac/IR/value.hpp
 )
-target_link_libraries(ir
+target_link_libraries(bjac_ir
 PUBLIC
     bjac::ilist
     bjac::defaults
 )
 
-add_library(graphs INTERFACE)
-add_library(bjac::graphs ALIAS graphs)
-target_link_libraries(graphs INTERFACE bjac::defaults)
-target_sources(graphs INTERFACE
+add_library(bjac_graphs INTERFACE)
+add_library(bjac::graphs ALIAS bjac_graphs)
+target_link_libraries(bjac_graphs INTERFACE bjac::defaults)
+target_sources(bjac_graphs INTERFACE
 FILE_SET
     HEADERS
 BASE_DIRS
@@ -82,19 +82,19 @@ FILES
     include/bjac/graphs/loop.hpp
 )
 
-add_library(transforms STATIC
+add_library(bjac_transforms STATIC
     lib/transforms/constant_folding.cpp
     lib/transforms/dce.cpp
 )
-add_library(bjac::transforms ALIAS transforms)
-target_link_libraries(transforms
+add_library(bjac::transforms ALIAS bjac_transforms)
+target_link_libraries(bjac_transforms
 PRIVATE
     bjac::graphs
 PUBLIC
     bjac::defaults
     bjac::ir
 )
-target_sources(transforms PUBLIC
+target_sources(bjac_transforms PUBLIC
 FILE_SET
     HEADERS
 BASE_DIRS
@@ -109,7 +109,7 @@ if (BJAC_BUILD_TESTS)
     add_subdirectory(test)
 endif()
 
-install(TARGETS ir ilist graphs transforms
+install(TARGETS bjac_ir bjac_ilist bjac_graphs bjac_transforms
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
             COMPONENT BJAC_Runtime
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
