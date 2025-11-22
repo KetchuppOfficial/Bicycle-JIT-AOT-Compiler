@@ -1,11 +1,11 @@
 #ifndef INCLUDE_BJAC_TRANSFORMS_CONSTANT_FOLDING_HPP
 #define INCLUDE_BJAC_TRANSFORMS_CONSTANT_FOLDING_HPP
 
-#include "bjac/IR/function.hpp"
+#include "bjac/transforms/pass.hpp"
 
 namespace bjac {
 
-class ConstantFoldingPass final {
+class ConstantFoldingPass final : public PassMixin<ConstantFoldingPass> {
   public:
     ConstantFoldingPass() = default;
 

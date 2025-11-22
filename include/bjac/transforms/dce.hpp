@@ -1,11 +1,11 @@
 #ifndef INCLUDE_BJAC_TRANSFORMS_DCE_HPP
 #define INCLUDE_BJAC_TRANSFORMS_DCE_HPP
 
-#include "bjac/IR/function.hpp"
+#include "bjac/transforms/pass.hpp"
 
 namespace bjac {
 
-class DCE final {
+class DCE final : public PassMixin<DCE> {
   public:
     DCE() = default;
 
