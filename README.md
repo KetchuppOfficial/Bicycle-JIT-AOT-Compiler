@@ -60,7 +60,7 @@ build/test/IR/fibonacci_test
 You will see the textual representation of the IR of a function computing n'th fibonacci number:
 
 ```text
-i64 fibonacci("i64")
+i64 fibonacci(i64)
 %bb0:
     %0.0 = i64 arg [0] ; used by: %0.2, %2.5, %3.0
     %0.1 = i64 constant 2 ; used by: %0.2, %2.0
