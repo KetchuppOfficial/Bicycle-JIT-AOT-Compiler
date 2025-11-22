@@ -81,6 +81,9 @@ class Instruction : public Value, public ilist_node<Instruction> {
     void remove_user(Instruction *value) { users_.erase(value); }
 
     std::unsigned_integral auto users_count() const noexcept { return users_.size(); }
+
+    bool has_user(const Instruction *user) const { return users_.contains(user); }
+
     std::ranges::bidirectional_range auto get_users() { return std::ranges::subrange{users_}; }
     std::ranges::bidirectional_range auto get_users() const {
         return users_ | std::views::transform(
@@ -104,7 +107,7 @@ class Instruction : public Value, public ilist_node<Instruction> {
     Opcode opcode_;
     BasicBlock *parent_;
     unsigned id_;
-    std::set<Instruction *> users_;
+    std::set<Instruction *, std::less<>> users_;
 };
 
 inline std::string_view to_string_view(Instruction::Opcode opcode) noexcept {
