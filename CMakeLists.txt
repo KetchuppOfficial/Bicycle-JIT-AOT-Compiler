@@ -9,8 +9,8 @@ if (${PROJECT_SOURCE_DIR} STREQUAL ${PROJECT_BINARY_DIR})
     message(FATAL_ERROR "In-source build is forbidden")
 endif()
 
-if (NOT DEFINED CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Debug)
+if (NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Default build type" FORCE)
 endif()
 
 option(BJAC_BUILD_TESTS "build tests")
