@@ -252,7 +252,7 @@ INSTANTIATE_TEST_SUITE_P(
         return std::format("{}_{}_{}", info.param.kind, info.param.lhs, info.param.rhs);
     });
 
-TEST(ConstantFolding, Combination) {
+TEST(ConstantFolding, ArithmeticCombination) {
     // Assign
     bjac::Function foo{"foo", bjac::Type::kI64};
 
@@ -299,6 +299,62 @@ TEST(ConstantFolding, Combination) {
     ASSERT_EQ(instrs[6]->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
     EXPECT_EQ(static_cast<const bjac::ConstInstruction *>(instrs[6])->get_value(),
               (1 + 2) * (8 - 3))
+        << foo;
+
+    EXPECT_EQ(instrs[7]->users_count(), 0) << foo;
+    ASSERT_EQ(instrs[7]->get_opcode(), bjac::Instruction::Opcode::kRet) << foo;
+    EXPECT_EQ(static_cast<const bjac::ReturnInstruction *>(instrs[7])->get_ret_value(),
+              static_cast<const bjac::ConstInstruction *>(instrs[6]))
+        << foo;
+}
+
+TEST(ConstantFolding, ArithmeticCombinationWithLogic) {
+    // Assign
+    bjac::Function foo{"foo", bjac::Type::kI1};
+
+    auto &bb = foo.emplace_back();
+
+    { // Use scope to discourage usage of variables defined within after the optimization pass
+        auto &const_1 = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, 1);
+        auto &const_2 = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, 2);
+        auto &add = bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kAdd, const_1,
+                                                          const_2);
+        auto &const_3 = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, 8);
+        auto &const_4 = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, 3);
+        auto &sub = bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kSub, const_3,
+                                                          const_4);
+        auto &icmp =
+            bb.emplace_back<bjac::ICmpInstruction>(bjac::ICmpInstruction::Kind::eq, add, sub);
+        bb.emplace_back<bjac::ReturnInstruction>(icmp);
+    }
+
+    // Act
+    bjac::ConstantFoldingPass{}.run(foo);
+
+    // Assert
+    EXPECT_EQ(foo.size(), 1) << foo;
+    EXPECT_EQ(bb.get_parent(), std::addressof(foo)) << foo;
+
+    EXPECT_EQ(bb.size(), 8) << foo;
+
+    const auto instrs = get_instructions(bb);
+
+    for (auto [i, n] : std::views::enumerate(std::array{1, 2, 1 + 2, 8, 3, 8 - 3})) {
+        EXPECT_EQ(instrs[i]->get_type(), bjac::Type::kI64) << "i = " << i << '\n' << foo;
+        EXPECT_EQ(instrs[i]->users_count(), 0) << "i = " << i << '\n' << foo;
+        ASSERT_EQ(instrs[i]->get_opcode(), bjac::Instruction::Opcode::kConst) << "i = " << i << '\n'
+                                                                              << foo;
+        EXPECT_EQ(static_cast<const bjac::ConstInstruction *>(instrs[i])->get_value(), n)
+            << "i = " << i << '\n'
+            << foo;
+    }
+
+    EXPECT_EQ(instrs[6]->get_type(), bjac::Type::kI1) << foo;
+    EXPECT_EQ(instrs[6]->users_count(), 1) << foo;
+    EXPECT_TRUE(instrs[6]->has_user(instrs[7])) << foo;
+    ASSERT_EQ(instrs[6]->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
+    EXPECT_EQ(static_cast<const bjac::ConstInstruction *>(instrs[6])->get_value(),
+              (1 + 2) == (8 - 3))
         << foo;
 
     EXPECT_EQ(instrs[7]->users_count(), 0) << foo;
