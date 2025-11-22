@@ -186,7 +186,7 @@ void ConstantFoldingPass::run(Function &f) {
                             const auto res = fold_icmp(icmp);
                             lhs->remove_user(std::addressof(icmp));
                             rhs->remove_user(std::addressof(icmp));
-                            return bb->emplace<ConstInstruction>(it, icmp.get_type(), res);
+                            return bb->emplace<ConstInstruction>(it, Type::kI1, res);
                         }
                         break;
                     }
