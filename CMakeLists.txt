@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 3.30)
 project(bicycle-jit-aot-compiler LANGUAGES CXX)
 
 include(GNUInstallDirs)
-include(CMakePackageConfigHelpers)
 
 if (${PROJECT_SOURCE_DIR} STREQUAL ${PROJECT_BINARY_DIR})
     message(FATAL_ERROR "In-source build is forbidden")
