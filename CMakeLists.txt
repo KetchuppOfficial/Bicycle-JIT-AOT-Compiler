@@ -35,13 +35,12 @@ FILES
     include/bjac/utils/ilist.hpp
 )
 
-add_library(ir STATIC)
-add_library(bjac::ir ALIAS ir)
-target_sources(ir PRIVATE
+add_library(ir STATIC
     lib/IR/basic_block.cpp
     lib/IR/function.cpp
     lib/IR/instruction.cpp
 )
+add_library(bjac::ir ALIAS ir)
 target_sources(ir PUBLIC
 FILE_SET
     HEADERS
@@ -83,7 +82,10 @@ FILES
     include/bjac/graphs/loop.hpp
 )
 
-add_library(transforms STATIC)
+add_library(transforms STATIC
+    lib/transforms/constant_folding.cpp
+    lib/transforms/dce.cpp
+)
 add_library(bjac::transforms ALIAS transforms)
 target_link_libraries(transforms
 PRIVATE
@@ -91,10 +93,6 @@ PRIVATE
 PUBLIC
     bjac::defaults
     bjac::ir
-)
-target_sources(transforms PRIVATE
-    lib/transforms/constant_folding.cpp
-    lib/transforms/dce.cpp
 )
 target_sources(transforms PUBLIC
 FILE_SET
