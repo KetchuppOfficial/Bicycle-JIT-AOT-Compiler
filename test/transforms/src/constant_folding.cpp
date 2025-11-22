@@ -1,9 +1,8 @@
-#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <format>
-#include <iterator>
-#include <utility>
+#include <ranges>
+#include <vector>
 
 #include <gtest/gtest.h>
 
@@ -14,6 +13,12 @@
 #include "bjac/IR/ret_instruction.hpp"
 
 #include "bjac/transforms/constant_folding.hpp"
+
+static auto get_instructions(const bjac::BasicBlock &bb) {
+    return std::vector<const bjac::Instruction *>{
+        std::from_range,
+        bb | std::views::transform([](const auto &instr) { return std::addressof(instr); })};
+}
 
 struct BinOpParam {
     bjac::Instruction::Opcode opcode;
@@ -30,48 +35,51 @@ class ConstantFoldingForBinaryOperation : public ::testing::TestWithParam<BinOpP
 
 TEST_P(ConstantFoldingForBinaryOperation, /* no test name */) {
     // Assign
-    bjac::Function foo{"foo", bjac::Type::kI64, {}};
+    bjac::Function foo{"foo", bjac::Type::kI64};
 
     auto &bb = foo.emplace_back();
-    auto &const_1 = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, GetParam().lhs);
-    auto &const_2 = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, GetParam().rhs);
-    auto &op = bb.emplace_back<bjac::BinaryOperator>(GetParam().opcode, const_1, const_2);
-    bb.emplace_back<bjac::ReturnInstruction>(op);
+
+    { // Use scope to discourage usage of variables defined within after the optimization pass
+        auto &const_1 = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, GetParam().lhs);
+        auto &const_2 = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, GetParam().rhs);
+        auto &op = bb.emplace_back<bjac::BinaryOperator>(GetParam().opcode, const_1, const_2);
+        bb.emplace_back<bjac::ReturnInstruction>(op);
+    }
 
     // Act
     bjac::ConstantFoldingPass{}.run(foo);
 
     // Assert
+    EXPECT_EQ(foo.size(), 1) << foo;
+    EXPECT_EQ(bb.get_parent(), std::addressof(foo)) << foo;
+
     EXPECT_EQ(bb.size(), 4) << foo;
 
-    EXPECT_EQ(std::next(bb.begin(), 0)->get_type(), bjac::Type::kI64) << foo;
-    EXPECT_EQ(std::next(bb.begin(), 0)->users_count(), 0) << foo;
-    ASSERT_EQ(std::next(bb.begin(), 0)->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
-    EXPECT_EQ(static_cast<bjac::ConstInstruction &>(*std::next(bb.begin(), 0)).get_value(),
-              GetParam().lhs)
+    const auto instrs = get_instructions(bb);
+
+    EXPECT_EQ(instrs[0]->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs[0]->users_count(), 0) << foo;
+    ASSERT_EQ(instrs[0]->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
+    EXPECT_EQ(static_cast<const bjac::ConstInstruction *>(instrs[0])->get_value(), GetParam().lhs)
         << foo;
 
-    EXPECT_EQ(std::next(bb.begin(), 1)->get_type(), bjac::Type::kI64) << foo;
-    EXPECT_EQ(std::next(bb.begin(), 1)->users_count(), 0) << foo;
-    ASSERT_EQ(std::next(bb.begin(), 1)->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
-    EXPECT_EQ(static_cast<bjac::ConstInstruction &>(*std::next(bb.begin(), 1)).get_value(),
-              GetParam().rhs)
+    EXPECT_EQ(instrs[1]->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs[1]->users_count(), 0) << foo;
+    ASSERT_EQ(instrs[1]->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
+    EXPECT_EQ(static_cast<const bjac::ConstInstruction *>(instrs[1])->get_value(), GetParam().rhs)
         << foo;
 
-    EXPECT_EQ(std::next(bb.begin(), 2)->get_type(), bjac::Type::kI64) << foo;
-    EXPECT_EQ(std::next(bb.begin(), 2)->users_count(), 1) << foo;
-    EXPECT_TRUE(
-        std::ranges::contains(std::next(bb.begin(), 2)->get_users(), &*std::next(bb.begin(), 3)))
-        << foo;
-    ASSERT_EQ(std::next(bb.begin(), 2)->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
-    EXPECT_EQ(static_cast<bjac::ConstInstruction &>(*std::next(bb.begin(), 2)).get_value(),
-              GetParam().res)
+    EXPECT_EQ(instrs[2]->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs[2]->users_count(), 1) << foo;
+    EXPECT_TRUE(instrs[2]->has_user(instrs[3])) << foo;
+    ASSERT_EQ(instrs[2]->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
+    EXPECT_EQ(static_cast<const bjac::ConstInstruction *>(instrs[2])->get_value(), GetParam().res)
         << foo;
 
-    EXPECT_EQ(std::next(bb.begin(), 3)->users_count(), 0) << foo;
-    ASSERT_EQ(std::next(bb.begin(), 3)->get_opcode(), bjac::Instruction::Opcode::kRet) << foo;
-    EXPECT_EQ(static_cast<bjac::ReturnInstruction &>(*std::next(bb.begin(), 3)).get_ret_value(),
-              &static_cast<bjac::ConstInstruction &>(*std::next(bb.begin(), 2)))
+    EXPECT_EQ(instrs[3]->users_count(), 0) << foo;
+    ASSERT_EQ(instrs[3]->get_opcode(), bjac::Instruction::Opcode::kRet) << foo;
+    EXPECT_EQ(static_cast<const bjac::ReturnInstruction *>(instrs[3])->get_ret_value(),
+              static_cast<const bjac::ConstInstruction *>(instrs[2]))
         << foo;
 }
 
@@ -119,48 +127,51 @@ class ConstantFoldingForICmp : public ::testing::TestWithParam<ICmpParam> {};
 
 TEST_P(ConstantFoldingForICmp, /* no test name */) {
     // Assign
-    bjac::Function foo{"foo", bjac::Type::kI1, {}};
+    bjac::Function foo{"foo", bjac::Type::kI1};
 
     auto &bb = foo.emplace_back();
-    auto &const_1 = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, GetParam().lhs);
-    auto &const_2 = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, GetParam().rhs);
-    auto &icmp = bb.emplace_back<bjac::ICmpInstruction>(GetParam().kind, const_1, const_2);
-    bb.emplace_back<bjac::ReturnInstruction>(icmp);
+
+    { // Use scope to discourage usage of variables defined within after the optimization pass
+        auto &const_1 = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, GetParam().lhs);
+        auto &const_2 = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, GetParam().rhs);
+        auto &icmp = bb.emplace_back<bjac::ICmpInstruction>(GetParam().kind, const_1, const_2);
+        bb.emplace_back<bjac::ReturnInstruction>(icmp);
+    }
 
     // Act
     bjac::ConstantFoldingPass{}.run(foo);
 
     // Assert
+    EXPECT_EQ(foo.size(), 1) << foo;
+    EXPECT_EQ(bb.get_parent(), std::addressof(foo)) << foo;
+
     EXPECT_EQ(bb.size(), 4) << foo;
 
-    EXPECT_EQ(std::next(bb.begin(), 0)->get_type(), bjac::Type::kI64) << foo;
-    EXPECT_EQ(std::next(bb.begin(), 0)->users_count(), 0) << foo;
-    ASSERT_EQ(std::next(bb.begin(), 0)->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
-    EXPECT_EQ(static_cast<bjac::ConstInstruction &>(*std::next(bb.begin(), 0)).get_value(),
-              GetParam().lhs)
+    const auto instrs = get_instructions(bb);
+
+    EXPECT_EQ(instrs[0]->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs[0]->users_count(), 0) << foo;
+    ASSERT_EQ(instrs[0]->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
+    EXPECT_EQ(static_cast<const bjac::ConstInstruction *>(instrs[0])->get_value(), GetParam().lhs)
         << foo;
 
-    EXPECT_EQ(std::next(bb.begin(), 1)->get_type(), bjac::Type::kI64) << foo;
-    EXPECT_EQ(std::next(bb.begin(), 1)->users_count(), 0) << foo;
-    ASSERT_EQ(std::next(bb.begin(), 1)->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
-    EXPECT_EQ(static_cast<bjac::ConstInstruction &>(*std::next(bb.begin(), 1)).get_value(),
-              GetParam().rhs)
+    EXPECT_EQ(instrs[1]->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs[1]->users_count(), 0) << foo;
+    ASSERT_EQ(instrs[1]->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
+    EXPECT_EQ(static_cast<const bjac::ConstInstruction *>(instrs[1])->get_value(), GetParam().rhs)
         << foo;
 
-    EXPECT_EQ(std::next(bb.begin(), 2)->get_type(), bjac::Type::kI1) << foo;
-    EXPECT_EQ(std::next(bb.begin(), 2)->users_count(), 1) << foo;
-    EXPECT_TRUE(
-        std::ranges::contains(std::next(bb.begin(), 2)->get_users(), &*std::next(bb.begin(), 3)))
-        << foo;
-    ASSERT_EQ(std::next(bb.begin(), 2)->get_opcode(), bjac::Instruction::Opcode::kConst);
-    EXPECT_EQ(static_cast<bjac::ConstInstruction &>(*std::next(bb.begin(), 2)).get_value(),
-              GetParam().res)
+    EXPECT_EQ(instrs[2]->get_type(), bjac::Type::kI1) << foo;
+    EXPECT_EQ(instrs[2]->users_count(), 1) << foo;
+    EXPECT_TRUE(instrs[2]->has_user(instrs[3])) << foo;
+    ASSERT_EQ(instrs[2]->get_opcode(), bjac::Instruction::Opcode::kConst);
+    EXPECT_EQ(static_cast<const bjac::ConstInstruction *>(instrs[2])->get_value(), GetParam().res)
         << foo;
 
-    EXPECT_EQ(std::next(bb.begin(), 3)->users_count(), 0) << foo;
-    ASSERT_EQ(std::next(bb.begin(), 3)->get_opcode(), bjac::Instruction::Opcode::kRet) << foo;
-    EXPECT_EQ(static_cast<bjac::ReturnInstruction &>(*std::next(bb.begin(), 3)).get_ret_value(),
-              &static_cast<bjac::ConstInstruction &>(*std::next(bb.begin(), 2)))
+    EXPECT_EQ(instrs[3]->users_count(), 0) << foo;
+    ASSERT_EQ(instrs[3]->get_opcode(), bjac::Instruction::Opcode::kRet) << foo;
+    EXPECT_EQ(static_cast<const bjac::ReturnInstruction *>(instrs[3])->get_ret_value(),
+              static_cast<const bjac::ConstInstruction *>(instrs[2]))
         << foo;
 }
 
@@ -243,52 +254,56 @@ INSTANTIATE_TEST_SUITE_P(
 
 TEST(ConstantFolding, Combination) {
     // Assign
-    bjac::Function foo{"foo", bjac::Type::kI64, {}};
+    bjac::Function foo{"foo", bjac::Type::kI64};
 
     auto &bb = foo.emplace_back();
-    auto &const_1 = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, 1);
-    auto &const_2 = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, 2);
-    auto &add =
-        bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kAdd, const_1, const_2);
-    auto &const_3 = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, 8);
-    auto &const_4 = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, 3);
-    auto &sub =
-        bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kSub, const_3, const_4);
-    auto &mul = bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kMul, add, sub);
-    bb.emplace_back<bjac::ReturnInstruction>(mul);
+
+    { // Use scope to discourage usage of variables defined within after the optimization pass
+        auto &const_1 = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, 1);
+        auto &const_2 = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, 2);
+        auto &add = bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kAdd, const_1,
+                                                          const_2);
+        auto &const_3 = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, 8);
+        auto &const_4 = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, 3);
+        auto &sub = bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kSub, const_3,
+                                                          const_4);
+        auto &mul =
+            bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kMul, add, sub);
+        bb.emplace_back<bjac::ReturnInstruction>(mul);
+    }
 
     // Act
     bjac::ConstantFoldingPass{}.run(foo);
 
     // Assert
+    EXPECT_EQ(foo.size(), 1) << foo;
+    EXPECT_EQ(bb.get_parent(), std::addressof(foo)) << foo;
+
     EXPECT_EQ(bb.size(), 8) << foo;
 
-    for (auto [i, n] : std::array<std::pair<int, int>, 6>{
-             {{0, 1}, {1, 2}, {2, 1 + 2}, {3, 8}, {4, 3}, {5, 8 - 3}}}) {
-        EXPECT_EQ(std::next(bb.begin(), i)->get_type(), bjac::Type::kI64) << "i = " << i << '\n'
-                                                                          << foo;
-        EXPECT_EQ(std::next(bb.begin(), i)->users_count(), 0) << "i = " << i << '\n' << foo;
-        ASSERT_EQ(std::next(bb.begin(), i)->get_opcode(), bjac::Instruction::Opcode::kConst)
-            << "i = " << i << '\n'
-            << foo;
-        EXPECT_EQ(static_cast<bjac::ConstInstruction &>(*std::next(bb.begin(), i)).get_value(), n)
+    const auto instrs = get_instructions(bb);
+
+    for (auto [i, n] : std::views::enumerate(std::array{1, 2, 1 + 2, 8, 3, 8 - 3})) {
+        EXPECT_EQ(instrs[i]->get_type(), bjac::Type::kI64) << "i = " << i << '\n' << foo;
+        EXPECT_EQ(instrs[i]->users_count(), 0) << "i = " << i << '\n' << foo;
+        ASSERT_EQ(instrs[i]->get_opcode(), bjac::Instruction::Opcode::kConst) << "i = " << i << '\n'
+                                                                              << foo;
+        EXPECT_EQ(static_cast<const bjac::ConstInstruction *>(instrs[i])->get_value(), n)
             << "i = " << i << '\n'
             << foo;
     }
 
-    EXPECT_EQ(std::next(bb.begin(), 6)->get_type(), bjac::Type::kI64) << foo;
-    EXPECT_EQ(std::next(bb.begin(), 6)->users_count(), 1) << foo;
-    EXPECT_TRUE(
-        std::ranges::contains(std::next(bb.begin(), 6)->get_users(), &*std::next(bb.begin(), 7)))
-        << foo;
-    ASSERT_EQ(std::next(bb.begin(), 6)->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
-    EXPECT_EQ(static_cast<bjac::ConstInstruction &>(*std::next(bb.begin(), 6)).get_value(),
+    EXPECT_EQ(instrs[6]->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs[6]->users_count(), 1) << foo;
+    EXPECT_TRUE(instrs[6]->has_user(instrs[7])) << foo;
+    ASSERT_EQ(instrs[6]->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
+    EXPECT_EQ(static_cast<const bjac::ConstInstruction *>(instrs[6])->get_value(),
               (1 + 2) * (8 - 3))
         << foo;
 
-    EXPECT_EQ(std::next(bb.begin(), 7)->users_count(), 0) << foo;
-    ASSERT_EQ(std::next(bb.begin(), 7)->get_opcode(), bjac::Instruction::Opcode::kRet) << foo;
-    EXPECT_EQ(static_cast<bjac::ReturnInstruction &>(*std::next(bb.begin(), 7)).get_ret_value(),
-              &static_cast<bjac::ConstInstruction &>(*std::next(bb.begin(), 6)))
+    EXPECT_EQ(instrs[7]->users_count(), 0) << foo;
+    ASSERT_EQ(instrs[7]->get_opcode(), bjac::Instruction::Opcode::kRet) << foo;
+    EXPECT_EQ(static_cast<const bjac::ReturnInstruction *>(instrs[7])->get_ret_value(),
+              static_cast<const bjac::ConstInstruction *>(instrs[6]))
         << foo;
 }
