@@ -54,6 +54,23 @@ class ConstInstruction final : public Instruction {
 
     std::uintmax_t get_value() const noexcept { return value_; }
 
+    std::uintmax_t max_value() const {
+        switch (get_type()) {
+        case Type::kI1:
+            return IRTypeToMaxValue<Type::kI1>::kMax;
+        case Type::kI8:
+            return IRTypeToMaxValue<Type::kI8>::kMax;
+        case Type::kI16:
+            return IRTypeToMaxValue<Type::kI16>::kMax;
+        case Type::kI32:
+            return IRTypeToMaxValue<Type::kI32>::kMax;
+        case Type::kI64:
+            return IRTypeToMaxValue<Type::kI64>::kMax;
+        default:
+            std::unreachable();
+        }
+    }
+
     std::string to_string() const override;
 
   private:
