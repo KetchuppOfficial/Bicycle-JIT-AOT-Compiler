@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <format>
 #include <memory>
 #include <ranges>
@@ -20,6 +21,45 @@ namespace bjac {
 Instruction::Instruction(BasicBlock &parent, Opcode opcode, Type type)
     : Value{type}, opcode_{opcode}, parent_{std::addressof(parent)},
       id_{parent.get_next_instr_id()} {}
+
+void Instruction::replace_for_users_with(Instruction &other) {
+    for (auto *user : users_) {
+        other.add_user(user);
+        if (user->is_binary_op()) {
+            auto *bin_op = static_cast<BinaryOperator *>(user);
+            if (bin_op->get_lhs() == this) {
+                bin_op->set_lhs(other);
+            }
+            if (bin_op->get_rhs() == this) {
+                bin_op->set_rhs(other);
+            }
+        } else {
+            switch (user->get_opcode()) {
+            case Opcode::kICmp: {
+                auto *icmp = static_cast<ICmpInstruction *>(user);
+                if (icmp->get_lhs() == this) {
+                    icmp->set_lhs(other);
+                }
+                if (icmp->get_rhs() == this) {
+                    icmp->set_rhs(other);
+                }
+                break;
+            }
+            case Opcode::kRet:
+                static_cast<ReturnInstruction *>(user)->set_ret_value(other);
+                break;
+            case Opcode::kBr:
+                static_cast<BranchInstruction *>(user)->set_condition(other);
+                break;
+            case Opcode::kPHI:
+                std::ranges::replace(static_cast<PHIInstruction *>(user)->get_values(), this,
+                                     std::addressof(other));
+            default:
+                break;
+            }
+        }
+    }
+}
 
 namespace {
 

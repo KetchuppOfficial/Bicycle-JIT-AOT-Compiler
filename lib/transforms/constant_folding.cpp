@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <functional>
@@ -10,8 +9,6 @@
 #include "bjac/IR/branch_instruction.hpp"
 #include "bjac/IR/constant_instruction.hpp"
 #include "bjac/IR/icmp_instruction.hpp"
-#include "bjac/IR/phi_instruction.hpp"
-#include "bjac/IR/ret_instruction.hpp"
 
 #include "bjac/graphs/dfs.hpp"
 
@@ -128,46 +125,6 @@ static bool fold_icmp(const ICmpInstruction &icmp) {
     }
 }
 
-void replace_uses(Instruction &from, Instruction &to) {
-    for (auto *user : from.get_users()) {
-        to.add_user(user);
-        if (user->is_binary_op()) {
-            auto &bin_op = static_cast<BinaryOperator &>(*user);
-            if (bin_op.get_lhs() == std::addressof(from)) {
-                bin_op.set_lhs(to);
-            }
-            if (bin_op.get_rhs() == std::addressof(from)) {
-                bin_op.set_rhs(to);
-            }
-        } else {
-            using enum Instruction::Opcode;
-            switch (user->get_opcode()) {
-            case kICmp: {
-                auto &icmp = static_cast<ICmpInstruction &>(*user);
-                if (icmp.get_lhs() == std::addressof(from)) {
-                    icmp.set_lhs(to);
-                }
-                if (icmp.get_rhs() == std::addressof(from)) {
-                    icmp.set_rhs(to);
-                }
-                break;
-            }
-            case kRet:
-                static_cast<ReturnInstruction *>(user)->set_ret_value(to);
-                break;
-            case kBr:
-                static_cast<BranchInstruction *>(user)->set_condition(to);
-                break;
-            case kPHI:
-                std::ranges::replace(static_cast<PHIInstruction *>(user)->get_values(),
-                                     std::addressof(from), std::addressof(to));
-            default:
-                break;
-            }
-        }
-    }
-}
-
 } // unnamed namespace
 
 void ConstantFoldingPass::run(Function &f) {
@@ -209,7 +166,7 @@ void ConstantFoldingPass::run(Function &f) {
             }();
 
             if (new_it != it) {
-                replace_uses(*it, *new_it);
+                it->replace_for_users_with(*new_it);
                 bb->erase(it);
                 it = new_it;
             }

@@ -90,6 +90,8 @@ class Instruction : public Value, public ilist_node<Instruction> {
                             [](Instruction *i) static -> const Instruction * { return i; });
     }
 
+    void replace_for_users_with(Instruction &other);
+
     virtual std::string to_string() const = 0;
 
   private:
