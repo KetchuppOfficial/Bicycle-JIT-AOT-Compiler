@@ -107,7 +107,7 @@ class Instruction : public Value, public ilist_node<Instruction> {
     Opcode opcode_;
     BasicBlock *parent_;
     unsigned id_;
-    std::set<Instruction *, std::less<>> users_;
+    std::multiset<Instruction *, std::less<>> users_;
 };
 
 inline std::string_view to_string_view(Instruction::Opcode opcode) noexcept {
