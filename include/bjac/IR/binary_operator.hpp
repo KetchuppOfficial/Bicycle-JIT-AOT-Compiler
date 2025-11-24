@@ -28,7 +28,9 @@ class BinaryOperator final : public Instruction {
         if (lhs.get_type() != get_type()) {
             throw OperandsTypeMismatch{opcode_, lhs.get_type(), get_type()};
         }
+        lhs_->remove_user(this);
         lhs_ = std::addressof(lhs);
+        lhs_->add_user(this);
     }
 
     template <typename Self>
@@ -40,7 +42,9 @@ class BinaryOperator final : public Instruction {
         if (rhs.get_type() != get_type()) {
             throw OperandsTypeMismatch{opcode_, get_type(), rhs.get_type()};
         }
+        rhs_->remove_user(this);
         rhs_ = std::addressof(rhs);
+        rhs_->add_user(this);
     }
 
     std::string to_string() const override;
@@ -70,6 +74,11 @@ class BinaryOperator final : public Instruction {
         } else {
             throw OperandsTypeMismatch{opcode_, lhs_type, rhs_type};
         }
+    }
+
+    void remove_as_user() override {
+        lhs_->remove_user(this);
+        rhs_->remove_user(this);
     }
 
     Instruction *lhs_;

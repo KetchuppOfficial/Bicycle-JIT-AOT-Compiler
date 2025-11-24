@@ -36,6 +36,16 @@ class PHIInstruction final : public Instruction {
         }
     }
 
+    void replace_value(Instruction &from, Instruction &to) {
+        for (auto &instr : records_ | std::views::values) {
+            if (instr == std::addressof(from)) {
+                instr->remove_user(this);
+                instr = std::addressof(to);
+                instr->add_user(this);
+            }
+        }
+    }
+
     template <typename Self>
     auto *get_value(this Self &&self, BasicBlock &bb) {
         if (auto it = self.records_.find(std::addressof(bb)); it != self.records_.end()) {
@@ -66,6 +76,12 @@ class PHIInstruction final : public Instruction {
     friend class BasicBlock;
 
     PHIInstruction(BasicBlock &parent, Type type) : Instruction(parent, Opcode::kPHI, type) {}
+
+    void remove_as_user() override {
+        for (auto *value : records_ | std::views::values) {
+            value->remove_user(this);
+        }
+    }
 
     std::map<BasicBlock *, Instruction *> records_;
 };

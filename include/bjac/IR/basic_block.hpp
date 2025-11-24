@@ -93,6 +93,10 @@ class BasicBlock final : public Value, public ilist_node<BasicBlock>, private il
         return static_cast<T &>(*emplace<T>(end(), std::forward<Args>(args)...));
     }
 
+    // 1. Substitutes *from with *to for all users and arguments of *from
+    // 2. Erases *from from this block, hence from is invalidated
+    void replace_instruction(iterator from, Instruction &to);
+
     void print(std::ostream &os) const;
     friend std::ostream &operator<<(std::ostream &os, const BasicBlock &bb);
 

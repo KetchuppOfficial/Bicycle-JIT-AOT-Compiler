@@ -25,14 +25,28 @@ class ICmpInstruction final : public Instruction {
         return std::addressof(std::forward_like<Self>(*self.lhs_));
     }
 
-    void set_lhs(Instruction &lhs) noexcept { lhs_ = std::addressof(lhs); }
+    void set_lhs(Instruction &lhs) {
+        if (lhs.get_type() != lhs_->get_type()) {
+            throw OperandsTypeMismatch{opcode_, lhs_->get_type(), lhs.get_type()};
+        }
+        lhs_->remove_user(this);
+        lhs_ = std::addressof(lhs);
+        lhs_->add_user(this);
+    }
 
     template <typename Self>
     auto *get_rhs(this Self &&self) noexcept {
         return std::addressof(std::forward_like<Self>(*self.rhs_));
     }
 
-    void set_rhs(Instruction &rhs) noexcept { rhs_ = std::addressof(rhs); }
+    void set_rhs(Instruction &rhs) {
+        if (rhs.get_type() != rhs_->get_type()) {
+            throw OperandsTypeMismatch{opcode_, rhs_->get_type(), rhs.get_type()};
+        }
+        rhs_->remove_user(this);
+        rhs_ = std::addressof(rhs);
+        rhs_->add_user(this);
+    }
 
     std::string to_string() const override;
 
@@ -50,6 +64,11 @@ class ICmpInstruction final : public Instruction {
 
         lhs.add_user(this);
         rhs.add_user(this);
+    }
+
+    void remove_as_user() override {
+        lhs_->remove_user(this);
+        rhs_->remove_user(this);
     }
 
     Kind kind_;

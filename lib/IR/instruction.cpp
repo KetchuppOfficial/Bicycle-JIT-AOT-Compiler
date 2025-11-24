@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <format>
 #include <memory>
 #include <ranges>
@@ -22,39 +21,58 @@ Instruction::Instruction(BasicBlock &parent, Opcode opcode, Type type)
     : Value{type}, opcode_{opcode}, parent_{std::addressof(parent)},
       id_{parent.get_next_instr_id()} {}
 
-void Instruction::replace_for_users_with(Instruction &other) {
-    for (auto *user : users_) {
-        other.add_user(user);
+void Instruction::replace_with(Instruction &other) {
+    for (auto it = users_.begin(), ite = users_.end(); it != ite;) {
+        auto *user = *it;
         if (user->is_binary_op()) {
-            auto *bin_op = static_cast<BinaryOperator *>(user);
-            if (bin_op->get_lhs() == this) {
-                bin_op->set_lhs(other);
-            }
-            if (bin_op->get_rhs() == this) {
+            if (auto *bin_op = static_cast<BinaryOperator *>(user); bin_op->get_lhs() == this) {
+                if (bin_op->get_rhs() == this) {
+                    it = std::next(it, 2);
+                    bin_op->set_lhs(other);
+                    bin_op->set_rhs(other);
+                } else {
+                    ++it;
+                    bin_op->set_lhs(other);
+                }
+            } else if (bin_op->get_rhs() == this) {
+                ++it;
                 bin_op->set_rhs(other);
+            } else {
+                ++it;
             }
         } else {
             switch (user->get_opcode()) {
-            case Opcode::kICmp: {
-                auto *icmp = static_cast<ICmpInstruction *>(user);
-                if (icmp->get_lhs() == this) {
-                    icmp->set_lhs(other);
-                }
-                if (icmp->get_rhs() == this) {
+            case Opcode::kICmp:
+                if (auto *icmp = static_cast<ICmpInstruction *>(user); icmp->get_lhs() == this) {
+                    if (icmp->get_rhs() == this) {
+                        it = std::next(it, 2);
+                        icmp->set_lhs(other);
+                        icmp->set_rhs(other);
+                    } else {
+                        ++it;
+                        icmp->set_lhs(other);
+                    }
+                } else if (icmp->get_rhs() == this) {
+                    ++it;
                     icmp->set_rhs(other);
+                } else {
+                    ++it;
                 }
                 break;
-            }
             case Opcode::kRet:
+                ++it;
                 static_cast<ReturnInstruction *>(user)->set_ret_value(other);
                 break;
             case Opcode::kBr:
+                ++it;
                 static_cast<BranchInstruction *>(user)->set_condition(other);
                 break;
             case Opcode::kPHI:
-                std::ranges::replace(static_cast<PHIInstruction *>(user)->get_values(), this,
-                                     std::addressof(other));
+                ++it;
+                static_cast<PHIInstruction *>(user)->replace_value(*this, other);
+                break;
             default:
+                ++it;
                 break;
             }
         }

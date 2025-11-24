@@ -28,7 +28,13 @@ class BranchInstruction final : public Instruction {
 
     Instruction *get_condition() noexcept { return condition_; }
     const Instruction *get_condition() const noexcept { return condition_; }
-    void set_condition(Instruction &cond) noexcept { condition_ = check_condition(cond); }
+    void set_condition(Instruction &cond) noexcept {
+        auto *new_condition = check_condition(cond);
+
+        condition_->remove_user(this);
+        condition_ = new_condition;
+        condition_->add_user(this);
+    }
 
     template <typename Self>
     auto *get_true_path(this Self &&self) noexcept {
@@ -76,6 +82,8 @@ class BranchInstruction final : public Instruction {
         }
         return std::addressof(cond);
     }
+
+    void remove_as_user() override { condition_->remove_user(this); }
 
     Instruction *condition_;
     std::array<BasicBlock *, 2> paths_;

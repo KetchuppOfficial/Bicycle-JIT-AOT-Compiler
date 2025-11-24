@@ -1,6 +1,7 @@
 #include <cassert>
 #include <cstdint>
 #include <functional>
+#include <optional>
 #include <utility>
 
 #include "bjac/transforms/constant_folding.hpp"
@@ -18,17 +19,16 @@ namespace {
 
 template <typename F>
 static std::uintmax_t apply_bin_op(F op, Type type, std::uintmax_t lhs, std::uintmax_t rhs) {
-    using enum Type;
     switch (type) {
-    case kI1:
+    case Type::kI1:
         return op(static_cast<bool>(lhs), static_cast<bool>(rhs));
-    case kI8:
+    case Type::kI8:
         return op(static_cast<std::uint8_t>(lhs), static_cast<std::uint8_t>(rhs));
-    case kI16:
+    case Type::kI16:
         return op(static_cast<std::uint16_t>(lhs), static_cast<std::uint16_t>(rhs));
-    case kI32:
+    case Type::kI32:
         return op(static_cast<std::uint32_t>(lhs), static_cast<std::uint32_t>(rhs));
-    case kI64:
+    case Type::kI64:
         return op(static_cast<std::uint64_t>(lhs), static_cast<std::uint64_t>(rhs));
     default:
         std::unreachable();
@@ -36,14 +36,15 @@ static std::uintmax_t apply_bin_op(F op, Type type, std::uintmax_t lhs, std::uin
 }
 
 static std::uintmax_t fold_binary_operator(const BinaryOperator &bin_op) {
-    assert(bin_op.get_lhs()->get_opcode() == Instruction::Opcode::kConst);
-    assert(bin_op.get_rhs()->get_opcode() == Instruction::Opcode::kConst);
+    using enum Instruction::Opcode;
+
+    assert(bin_op.get_lhs()->get_opcode() == kConst);
+    assert(bin_op.get_rhs()->get_opcode() == kConst);
 
     Type type = bin_op.get_type();
     auto lhs = static_cast<const ConstInstruction *>(bin_op.get_lhs())->get_value();
     auto rhs = static_cast<const ConstInstruction *>(bin_op.get_rhs())->get_value();
 
-    using enum Instruction::Opcode;
     switch (bin_op.get_opcode()) {
     case kAdd:
         return apply_bin_op(std::plus{}, type, lhs, rhs);
@@ -131,29 +132,21 @@ void ConstantFoldingPass::run(Function &f) {
     const DFS<MutFunctionGraphTraits> dfs{f};
     for (auto *bb : dfs.post_order() | std::views::reverse) {
         for (auto it = bb->begin(), ite = bb->end(); it != ite; ++it) {
-            auto new_it = [it, bb] {
+            auto maybe_constant = [&instr = std::as_const(*it)] -> std::optional<std::uintmax_t> {
                 using enum Instruction::Opcode;
-                if (it->is_binary_op()) {
-                    auto &bin_op = static_cast<BinaryOperator &>(*it);
-                    auto *lhs = bin_op.get_lhs();
-                    auto *rhs = bin_op.get_rhs();
-                    if (lhs->get_opcode() == kConst && rhs->get_opcode() == kConst) {
-                        const auto res = fold_binary_operator(bin_op);
-                        lhs->remove_user(std::addressof(bin_op));
-                        rhs->remove_user(std::addressof(bin_op));
-                        return bb->emplace<ConstInstruction>(it, bin_op.get_type(), res);
+                if (instr.is_binary_op()) {
+                    auto &bin_op = static_cast<const BinaryOperator &>(instr);
+                    if (bin_op.get_lhs()->get_opcode() == kConst &&
+                        bin_op.get_rhs()->get_opcode() == kConst) {
+                        return fold_binary_operator(bin_op);
                     }
                 } else {
-                    switch (it->get_opcode()) {
+                    switch (instr.get_opcode()) {
                     case kICmp: {
-                        auto &icmp = static_cast<ICmpInstruction &>(*it);
-                        auto *lhs = icmp.get_lhs();
-                        auto *rhs = icmp.get_rhs();
-                        if (lhs->get_opcode() == kConst && rhs->get_opcode() == kConst) {
-                            const auto res = fold_icmp(icmp);
-                            lhs->remove_user(std::addressof(icmp));
-                            rhs->remove_user(std::addressof(icmp));
-                            return bb->emplace<ConstInstruction>(it, Type::kI1, res);
+                        auto &icmp = static_cast<const ICmpInstruction &>(instr);
+                        if (icmp.get_lhs()->get_opcode() == kConst &&
+                            icmp.get_rhs()->get_opcode() == kConst) {
+                            return fold_icmp(icmp);
                         }
                         break;
                     }
@@ -162,12 +155,12 @@ void ConstantFoldingPass::run(Function &f) {
                     }
                 }
 
-                return it;
+                return std::nullopt;
             }();
 
-            if (new_it != it) {
-                it->replace_for_users_with(*new_it);
-                bb->erase(it);
+            if (maybe_constant.has_value()) {
+                auto new_it = bb->emplace<ConstInstruction>(it, it->get_type(), *maybe_constant);
+                bb->replace_instruction(it, *new_it);
                 it = new_it;
             }
         }

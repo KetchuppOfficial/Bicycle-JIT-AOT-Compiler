@@ -113,6 +113,8 @@ class ConstInstruction final : public Instruction {
         }
     }
 
+    virtual void remove_as_user() override { /* no-op */ }
+
     std::uintmax_t value_;
 };
 

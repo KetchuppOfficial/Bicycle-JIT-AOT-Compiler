@@ -90,8 +90,6 @@ class Instruction : public Value, public ilist_node<Instruction> {
                             [](Instruction *i) static -> const Instruction * { return i; });
     }
 
-    void replace_for_users_with(Instruction &other);
-
     virtual std::string to_string() const = 0;
 
   private:
@@ -105,6 +103,12 @@ class Instruction : public Value, public ilist_node<Instruction> {
 
   protected:
     Instruction(BasicBlock &parent, Opcode opcode, Type type);
+
+    // Replaces this instruction as an argument of all its users
+    void replace_with(Instruction &other);
+
+    // Removes this instruction from users list of its arguments
+    virtual void remove_as_user() = 0;
 
     Opcode opcode_;
     BasicBlock *parent_;

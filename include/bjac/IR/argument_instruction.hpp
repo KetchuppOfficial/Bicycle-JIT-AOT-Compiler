@@ -27,6 +27,8 @@ class ArgumentInstruction final : public Instruction {
 
     ArgumentInstruction(BasicBlock &parent, const Function &f, unsigned pos);
 
+    virtual void remove_as_user() override { /* no-op */ }
+
     unsigned pos_;
 };
 
