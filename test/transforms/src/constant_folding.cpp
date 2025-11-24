@@ -78,8 +78,7 @@ TEST_P(ConstantFoldingForBinaryOperation, /* no test name */) {
 
     EXPECT_EQ(instrs[3]->users_count(), 0) << foo;
     ASSERT_EQ(instrs[3]->get_opcode(), bjac::Instruction::Opcode::kRet) << foo;
-    EXPECT_EQ(static_cast<const bjac::ReturnInstruction *>(instrs[3])->get_ret_value(),
-              static_cast<const bjac::ConstInstruction *>(instrs[2]))
+    EXPECT_EQ(static_cast<const bjac::ReturnInstruction *>(instrs[3])->get_ret_value(), instrs[2])
         << foo;
 }
 
@@ -170,8 +169,7 @@ TEST_P(ConstantFoldingForICmp, /* no test name */) {
 
     EXPECT_EQ(instrs[3]->users_count(), 0) << foo;
     ASSERT_EQ(instrs[3]->get_opcode(), bjac::Instruction::Opcode::kRet) << foo;
-    EXPECT_EQ(static_cast<const bjac::ReturnInstruction *>(instrs[3])->get_ret_value(),
-              static_cast<const bjac::ConstInstruction *>(instrs[2]))
+    EXPECT_EQ(static_cast<const bjac::ReturnInstruction *>(instrs[3])->get_ret_value(), instrs[2])
         << foo;
 }
 
@@ -303,8 +301,7 @@ TEST(ConstantFolding, ArithmeticCombination) {
 
     EXPECT_EQ(instrs[7]->users_count(), 0) << foo;
     ASSERT_EQ(instrs[7]->get_opcode(), bjac::Instruction::Opcode::kRet) << foo;
-    EXPECT_EQ(static_cast<const bjac::ReturnInstruction *>(instrs[7])->get_ret_value(),
-              static_cast<const bjac::ConstInstruction *>(instrs[6]))
+    EXPECT_EQ(static_cast<const bjac::ReturnInstruction *>(instrs[7])->get_ret_value(), instrs[6])
         << foo;
 }
 
@@ -359,7 +356,6 @@ TEST(ConstantFolding, ArithmeticCombinationWithLogic) {
 
     EXPECT_EQ(instrs[7]->users_count(), 0) << foo;
     ASSERT_EQ(instrs[7]->get_opcode(), bjac::Instruction::Opcode::kRet) << foo;
-    EXPECT_EQ(static_cast<const bjac::ReturnInstruction *>(instrs[7])->get_ret_value(),
-              static_cast<const bjac::ConstInstruction *>(instrs[6]))
+    EXPECT_EQ(static_cast<const bjac::ReturnInstruction *>(instrs[7])->get_ret_value(), instrs[6])
         << foo;
 }
