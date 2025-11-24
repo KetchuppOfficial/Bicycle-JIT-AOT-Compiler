@@ -1,5 +1,6 @@
 add_executable(bjac_transforms_tests
     src/constant_folding.cpp
+    src/peepholes.cpp
 )
 
 target_link_libraries(bjac_transforms_tests

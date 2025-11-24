@@ -85,6 +85,7 @@ FILES
 add_library(bjac_transforms STATIC
     lib/transforms/constant_folding.cpp
     lib/transforms/dce.cpp
+    lib/transforms/peepholes.cpp
 )
 add_library(bjac::transforms ALIAS bjac_transforms)
 target_link_libraries(bjac_transforms
@@ -102,6 +103,7 @@ BASE_DIRS
 FILES
     include/bjac/transforms/constant_folding.hpp
     include/bjac/transforms/dce.hpp
+    include/bjac/transforms/peepholes.hpp
 )
 
 if (BJAC_BUILD_TESTS)
