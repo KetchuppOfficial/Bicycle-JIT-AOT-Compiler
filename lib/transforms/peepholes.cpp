@@ -17,6 +17,56 @@ namespace bjac {
 
 namespace {
 
+auto process_add(std::bidirectional_iterator auto it) -> decltype(it) {
+    using enum Instruction::Opcode;
+
+    auto &add_instr = static_cast<BinaryOperator &>(*it);
+    assert(add_instr.get_opcode() == kAdd);
+
+    auto *bb = it->get_parent();
+    auto next_it = std::next(it);
+
+    auto *lhs = add_instr.get_lhs();
+    auto *rhs = add_instr.get_rhs();
+
+    if (lhs->get_opcode() == kConst) {
+        if (static_cast<ConstInstruction *>(lhs)->get_value() == 0) { // 0 + x -> x
+            bb->replace_instruction(it, *rhs);
+        }
+    } else if (rhs->get_opcode() == kConst) {
+        if (static_cast<ConstInstruction *>(rhs)->get_value() == 0) { // x + 0 -> x
+            bb->replace_instruction(it, *lhs);
+        }
+    }
+
+    return next_it;
+}
+
+auto process_shrl(std::bidirectional_iterator auto it) -> decltype(it) {
+    using enum Instruction::Opcode;
+
+    auto &shrl_instr = static_cast<BinaryOperator &>(*it);
+    assert(shrl_instr.get_opcode() == kShrL);
+
+    auto *bb = it->get_parent();
+    auto next_it = std::next(it);
+
+    auto *lhs = shrl_instr.get_lhs();
+    auto *rhs = shrl_instr.get_rhs();
+
+    if (lhs->get_opcode() == kConst) {
+        if (static_cast<ConstInstruction *>(lhs)->get_value() == 0) { // 0 >> x -> 0
+            bb->replace_instruction(it, *lhs);
+        }
+    } else if (rhs->get_opcode() == kConst) {
+        if (static_cast<ConstInstruction *>(rhs)->get_value() == 0) { // x >> 0 -> x
+            bb->replace_instruction(it, *lhs);
+        }
+    }
+
+    return next_it;
+}
+
 /*
  * Case 1:
  * ----------------------------------------------
@@ -252,9 +302,9 @@ auto process_instruction(std::bidirectional_iterator auto it) -> decltype(it) {
     using enum Instruction::Opcode;
     switch (it->get_opcode()) {
     case kAdd:
-        return std::next(it);
+        return process_add(it);
     case kShrL:
-        return std::next(it);
+        return process_shrl(it);
     case kAnd:
         return process_and(it);
     case kOr:
