@@ -87,7 +87,7 @@ TEST_P(PeepholesForAndWithConstant, ValueWithZero) {
     EXPECT_EQ(instrs.at(2)->users_count(), 0) << foo;
     ASSERT_EQ(instrs.at(2)->get_opcode(), bjac::Instruction::Opcode::kRet) << foo;
     EXPECT_EQ(static_cast<const bjac::ReturnInstruction *>(instrs.at(2))->get_ret_value(),
-              static_cast<const bjac::ConstInstruction *>(instrs.at(1)))
+              instrs.at(1))
         << foo;
 }
 
@@ -152,7 +152,7 @@ TEST_P(PeepholesForAndWithConstant, ValueWithAllOnes) {
     EXPECT_EQ(instrs.at(2)->users_count(), 0) << foo;
     ASSERT_EQ(instrs.at(2)->get_opcode(), bjac::Instruction::Opcode::kRet) << foo;
     EXPECT_EQ(static_cast<const bjac::ReturnInstruction *>(instrs.at(2))->get_ret_value(),
-              static_cast<const bjac::ArgumentInstruction *>(instrs.at(0)))
+              instrs.at(0))
         << foo;
 }
 
@@ -207,7 +207,108 @@ TEST(PeepholesForAnd, BothArgumentsAreTheSameInstruction) {
     EXPECT_EQ(instrs.at(1)->users_count(), 0) << foo;
     ASSERT_EQ(instrs.at(1)->get_opcode(), bjac::Instruction::Opcode::kRet) << foo;
     EXPECT_EQ(static_cast<const bjac::ReturnInstruction *>(instrs.at(1))->get_ret_value(),
-              static_cast<const bjac::ArgumentInstruction *>(instrs.at(0)))
+              instrs.at(0))
+        << foo;
+}
+
+/*
+ * Before:
+ * i64 foo(i64)
+ * %bb0:
+ *     %0.0 = i64 arg [0] ; used by: %0.2
+ *     %0.1 = i64 constant 0x0ff ; used by: %0.2
+ *     %0.2 = i64 and %0.1, %0.0 ; used by: %0.4
+ *     %0.3 = i64 constant 0xff0 ; used by: %0.4
+ *     %0.4 = i64 and %0.3, %0.2 ; used by: %0.5
+ *     %0.5 ret i64 %0.4
+ *
+ * After:
+ * i64 foo(i64)
+ * %bb0:
+ *     %0.0 = i64 arg [0] ; used by: %0.2, %0.4
+ *     %0.1 = i64 constant 0x0ff ; used by: %0.2
+ *     %0.2 = i64 and %0.1, %0.0
+ *     %0.6 = i64 constant 0x0f0 ; used by: %0.4
+ *     %0.3 = i64 constant 0xff0
+ *     %0.4 = i64 and %0.0, %0.6 ; used by: %0.5
+ *     %0.5 ret i64 %0.4
+ */
+TEST(PeepholesForAnd, ChainingConstantOnLeftLeft) {
+    // Assign
+    bjac::Function foo{"foo", bjac::Type::kI64, {bjac::Type::kI64}};
+
+    auto &bb = foo.emplace_back();
+
+    { // Use scope to discourage usage of variables defined within after the optimization pass
+        auto &arg = bb.emplace_back<bjac::ArgumentInstruction>(foo, 0);
+        auto &const_1 =
+            bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, std::uint64_t{0x0ff});
+        auto &op_1 =
+            bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kAnd, const_1, arg);
+        auto &const_2 =
+            bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, std::uint64_t{0xff0});
+        auto &op_2 =
+            bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kAnd, const_2, op_1);
+        bb.emplace_back<bjac::ReturnInstruction>(op_2);
+    }
+
+    // Act
+    bjac::PeepholePass{}.run(foo);
+
+    // Assert
+    EXPECT_EQ(foo.size(), 1) << foo;
+    EXPECT_EQ(bb.get_parent(), std::addressof(foo)) << foo;
+
+    EXPECT_EQ(bb.size(), 7) << foo;
+
+    const auto instrs = get_instructions(bb);
+
+    EXPECT_EQ(instrs.at(0)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(0)->users_count(), 2) << foo;
+    EXPECT_TRUE(instrs.at(0)->has_user(instrs.at(2))) << foo;
+    EXPECT_TRUE(instrs.at(0)->has_user(instrs.at(5))) << foo;
+    ASSERT_EQ(instrs.at(0)->get_opcode(), bjac::Instruction::Opcode::kArg) << foo;
+    EXPECT_EQ(static_cast<const bjac::ArgumentInstruction *>(instrs.at(0))->get_position(), 0)
+        << foo;
+
+    EXPECT_EQ(instrs.at(1)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(1)->users_count(), 1) << foo;
+    EXPECT_TRUE(instrs.at(1)->has_user(instrs.at(2))) << foo;
+    ASSERT_EQ(instrs.at(1)->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
+    EXPECT_EQ(static_cast<const bjac::ConstInstruction *>(instrs.at(1))->get_value(), 0x0ff) << foo;
+
+    EXPECT_EQ(instrs.at(2)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(2)->users_count(), 0) << foo;
+    ASSERT_EQ(instrs.at(2)->get_opcode(), bjac::Instruction::Opcode::kAnd) << foo;
+    EXPECT_EQ(static_cast<const bjac::BinaryOperator *>(instrs.at(2))->get_lhs(), instrs.at(1))
+        << foo;
+    EXPECT_EQ(static_cast<const bjac::BinaryOperator *>(instrs.at(2))->get_rhs(), instrs.at(0))
+        << foo;
+
+    EXPECT_EQ(instrs.at(3)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(3)->users_count(), 1) << foo;
+    EXPECT_TRUE(instrs.at(3)->has_user(instrs.at(5))) << foo;
+    ASSERT_EQ(instrs.at(3)->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
+    EXPECT_EQ(static_cast<const bjac::ConstInstruction *>(instrs.at(3))->get_value(), 0x0f0) << foo;
+
+    EXPECT_EQ(instrs.at(4)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(4)->users_count(), 0) << foo;
+    ASSERT_EQ(instrs.at(4)->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
+    EXPECT_EQ(static_cast<const bjac::ConstInstruction *>(instrs.at(4))->get_value(), 0xff0) << foo;
+
+    EXPECT_EQ(instrs.at(5)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(5)->users_count(), 1) << foo;
+    EXPECT_TRUE(instrs.at(5)->has_user(instrs.at(6))) << foo;
+    ASSERT_EQ(instrs.at(5)->get_opcode(), bjac::Instruction::Opcode::kAnd) << foo;
+    EXPECT_EQ(static_cast<const bjac::BinaryOperator *>(instrs.at(5))->get_lhs(), instrs.at(0))
+        << foo;
+    EXPECT_EQ(static_cast<const bjac::BinaryOperator *>(instrs.at(5))->get_rhs(), instrs.at(3))
+        << foo;
+
+    EXPECT_EQ(instrs.at(6)->users_count(), 0) << foo;
+    ASSERT_EQ(instrs.at(6)->get_opcode(), bjac::Instruction::Opcode::kRet) << foo;
+    EXPECT_EQ(static_cast<const bjac::ReturnInstruction *>(instrs.at(6))->get_ret_value(),
+              instrs.at(5))
         << foo;
 }
 
@@ -256,7 +357,7 @@ TEST_P(PeepholesForAddWithZero, /* no test name */) {
     EXPECT_EQ(instrs.at(2)->users_count(), 0) << foo;
     ASSERT_EQ(instrs.at(2)->get_opcode(), bjac::Instruction::Opcode::kRet) << foo;
     EXPECT_EQ(static_cast<const bjac::ReturnInstruction *>(instrs.at(2))->get_ret_value(),
-              static_cast<const bjac::ArgumentInstruction *>(instrs.at(0)))
+              instrs.at(0))
         << foo;
 }
 
@@ -304,7 +405,7 @@ TEST(PeepholesForShrLWithZero, ShiftForZeroBits) {
     EXPECT_EQ(instrs.at(2)->users_count(), 0) << foo;
     ASSERT_EQ(instrs.at(2)->get_opcode(), bjac::Instruction::Opcode::kRet) << foo;
     EXPECT_EQ(static_cast<const bjac::ReturnInstruction *>(instrs.at(2))->get_ret_value(),
-              static_cast<const bjac::ArgumentInstruction *>(instrs.at(0)))
+              instrs.at(0))
         << foo;
 }
 
@@ -348,6 +449,6 @@ TEST(PeepholesForShrLWithZero, ShiftZeroForAnyNumberOfBits) {
     EXPECT_EQ(instrs.at(2)->users_count(), 0) << foo;
     ASSERT_EQ(instrs.at(2)->get_opcode(), bjac::Instruction::Opcode::kRet) << foo;
     EXPECT_EQ(static_cast<const bjac::ReturnInstruction *>(instrs.at(2))->get_ret_value(),
-              static_cast<const bjac::ConstInstruction *>(instrs.at(1)))
+              instrs.at(1))
         << foo;
 }
