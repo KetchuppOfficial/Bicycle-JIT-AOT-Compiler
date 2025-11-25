@@ -37,6 +37,26 @@ auto process_add(std::bidirectional_iterator auto it) -> decltype(it) {
         if (static_cast<ConstInstruction *>(rhs)->get_value() == 0) { // x + 0 -> x
             bb->replace_instruction(it, *lhs);
         }
+    } else {
+        auto [sub, other] = [lhs, rhs] -> std::pair<BinaryOperator *, Instruction *> {
+            if (lhs->get_opcode() == kSub) {
+                return {static_cast<BinaryOperator *>(lhs), rhs};
+            } else if (rhs->get_opcode() == kSub) {
+                return {static_cast<BinaryOperator *>(rhs), lhs};
+            }
+            return {};
+        }();
+
+        if (!sub) {
+            return next_it;
+        }
+
+        if (sub->get_lhs()->get_opcode() == kConst &&
+            static_cast<ConstInstruction *>(sub->get_lhs())->get_value() == 0) {
+            auto new_it = bb->template emplace<BinaryOperator>(it, kSub, *other, *sub->get_rhs());
+            bb->replace_instruction(it, *new_it);
+            return new_it;
+        }
     }
 
     return next_it;

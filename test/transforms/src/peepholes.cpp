@@ -20,10 +20,10 @@ static auto get_instructions(const bjac::BasicBlock &bb) {
         bb | std::views::transform([](const auto &instr) { return std::addressof(instr); })};
 }
 
-enum class ArgsOrder : bool { kConstOnLeft, kConstOnRight };
+enum class ArgsOrder : bool { kSelectedArgOnLeft, kSelectedArgOnRight };
 
 std::ostream &operator<<(std::ostream &os, ArgsOrder order) {
-    return os << (order == ArgsOrder::kConstOnLeft ? "const-on-left" : "const-on-right");
+    return os << (order == ArgsOrder::kSelectedArgOnLeft ? "const-on-left" : "const-on-right");
 }
 
 class PeepholesForAndWithConstant : public ::testing::TestWithParam<ArgsOrder> {};
@@ -53,7 +53,7 @@ TEST_P(PeepholesForAndWithConstant, ValueWithZero) {
     { // Use scope to discourage usage of variables defined within after the optimization pass
         auto &arg = bb.emplace_back<bjac::ArgumentInstruction>(foo, 0);
         auto &constant = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, 0);
-        auto &op = (GetParam() == ArgsOrder::kConstOnLeft)
+        auto &op = (GetParam() == ArgsOrder::kSelectedArgOnLeft)
                        ? bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kAnd,
                                                                constant, arg)
                        : bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kAnd, arg,
@@ -117,7 +117,7 @@ TEST_P(PeepholesForAndWithConstant, ValueWithAllOnes) {
         auto &arg = bb.emplace_back<bjac::ArgumentInstruction>(foo, 0);
         auto &constant =
             bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, ~std::uint64_t{0});
-        auto &op = (GetParam() == ArgsOrder::kConstOnLeft)
+        auto &op = (GetParam() == ArgsOrder::kSelectedArgOnLeft)
                        ? bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kAnd,
                                                                constant, arg)
                        : bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kAnd, arg,
@@ -158,7 +158,7 @@ TEST_P(PeepholesForAndWithConstant, ValueWithAllOnes) {
 
 INSTANTIATE_TEST_SUITE_P(
     /* no instantiation name */, PeepholesForAndWithConstant,
-    ::testing::Values(ArgsOrder::kConstOnLeft, ArgsOrder::kConstOnRight));
+    ::testing::Values(ArgsOrder::kSelectedArgOnLeft, ArgsOrder::kSelectedArgOnRight));
 
 /*
  * Before:
@@ -312,9 +312,9 @@ TEST(PeepholesForAnd, ChainingConstantOnLeftLeft) {
         << foo;
 }
 
-class PeepholesForAddWithZero : public ::testing::TestWithParam<ArgsOrder> {};
+class PeepholesForAdd : public ::testing::TestWithParam<ArgsOrder> {};
 
-TEST_P(PeepholesForAddWithZero, /* no test name */) {
+TEST_P(PeepholesForAdd, OneOfArgumentsIsZero) {
     // Assign
     bjac::Function foo{"foo", bjac::Type::kI64, {bjac::Type::kI64}};
 
@@ -323,7 +323,7 @@ TEST_P(PeepholesForAddWithZero, /* no test name */) {
     { // Use scope to discourage usage of variables defined within after the optimization pass
         auto &arg = bb.emplace_back<bjac::ArgumentInstruction>(foo, 0);
         auto &constant = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, 0);
-        auto &op = (GetParam() == ArgsOrder::kConstOnLeft)
+        auto &op = (GetParam() == ArgsOrder::kSelectedArgOnLeft)
                        ? bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kAdd,
                                                                constant, arg)
                        : bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kAdd, arg,
@@ -361,9 +361,106 @@ TEST_P(PeepholesForAddWithZero, /* no test name */) {
         << foo;
 }
 
+/*
+ * Before (arguments of <and> appear in both orders):
+ * i64 foo(i64, i64)
+ * %bb0:
+ *     %0.0 = i64 arg [0] ; used by: %0.2
+ *     %0.1 = i64 constant 0 ; used by: %0.2
+ *     %0.2 = i64 sub %0.1, %0.0 ; used by: %0.4
+ *     %0.3 = i64 arg [1] ; used by: %0.4
+ *     %0.4 = i64 add %0.3, %0.2 ; used by: %0.5
+ *     %0.5 ret i64 %0.4
+ *
+ * After:
+ * i64 foo(i64, i64)
+ * %bb0:
+ *     %0.0 = i64 arg [0] ; used by: %0.2, %0.6
+ *     %0.1 = i64 constant 0 ; used by: %0.2
+ *     %0.2 = i64 sub %0.1, %0.0
+ *     %0.3 = i64 arg [1] ; used by: %0.6
+ *     %0.6 = i64 sub %0.3, %0.0 ; used by: %0.5
+ *     %0.5 ret i64 %0.6
+ */
+TEST_P(PeepholesForAdd, LeftArgumentIsSubFromZero) {
+    // Assign
+    bjac::Function foo{"foo", bjac::Type::kI64, {bjac::Type::kI64, bjac::Type::kI64}};
+
+    auto &bb = foo.emplace_back();
+
+    { // Use scope to discourage usage of variables defined within after the optimization pass
+        auto &arg_1 = bb.emplace_back<bjac::ArgumentInstruction>(foo, 0);
+        auto &const_1 = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, 0);
+        auto &sub =
+            bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kSub, const_1, arg_1);
+        auto &arg_2 = bb.emplace_back<bjac::ArgumentInstruction>(foo, 1);
+        auto &add =
+            (GetParam() == ArgsOrder::kSelectedArgOnLeft)
+                ? bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kAdd, sub, arg_2)
+                : bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kAdd, arg_2,
+                                                        sub);
+        bb.emplace_back<bjac::ReturnInstruction>(add);
+    }
+
+    // Act
+    bjac::PeepholePass{}.run(foo);
+
+    // Assert
+    EXPECT_EQ(foo.size(), 1) << foo;
+    EXPECT_EQ(bb.get_parent(), std::addressof(foo)) << foo;
+
+    EXPECT_EQ(bb.size(), 6) << foo;
+
+    const auto instrs = get_instructions(bb);
+
+    EXPECT_EQ(instrs.at(0)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(0)->users_count(), 2) << foo;
+    EXPECT_TRUE(instrs.at(0)->has_user(instrs.at(2))) << foo;
+    EXPECT_TRUE(instrs.at(0)->has_user(instrs.at(4))) << foo;
+    ASSERT_EQ(instrs.at(0)->get_opcode(), bjac::Instruction::Opcode::kArg) << foo;
+    EXPECT_EQ(static_cast<const bjac::ArgumentInstruction *>(instrs.at(0))->get_position(), 0)
+        << foo;
+
+    EXPECT_EQ(instrs.at(1)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(1)->users_count(), 1) << foo;
+    EXPECT_TRUE(instrs.at(1)->has_user(instrs.at(2))) << foo;
+    ASSERT_EQ(instrs.at(1)->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
+    EXPECT_EQ(static_cast<const bjac::ConstInstruction *>(instrs.at(1))->get_value(), 0) << foo;
+
+    EXPECT_EQ(instrs.at(2)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(2)->users_count(), 0) << foo;
+    ASSERT_EQ(instrs.at(2)->get_opcode(), bjac::Instruction::Opcode::kSub) << foo;
+    EXPECT_EQ(static_cast<const bjac::BinaryOperator *>(instrs.at(2))->get_lhs(), instrs.at(1))
+        << foo;
+    EXPECT_EQ(static_cast<const bjac::BinaryOperator *>(instrs.at(2))->get_rhs(), instrs.at(0))
+        << foo;
+
+    EXPECT_EQ(instrs.at(3)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(3)->users_count(), 1) << foo;
+    EXPECT_TRUE(instrs.at(3)->has_user(instrs.at(4))) << foo;
+    ASSERT_EQ(instrs.at(3)->get_opcode(), bjac::Instruction::Opcode::kArg) << foo;
+    EXPECT_EQ(static_cast<const bjac::ArgumentInstruction *>(instrs.at(3))->get_position(), 1)
+        << foo;
+
+    EXPECT_EQ(instrs.at(4)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(4)->users_count(), 1) << foo;
+    EXPECT_TRUE(instrs.at(4)->has_user(instrs.at(5))) << foo;
+    ASSERT_EQ(instrs.at(4)->get_opcode(), bjac::Instruction::Opcode::kSub) << foo;
+    EXPECT_EQ(static_cast<const bjac::BinaryOperator *>(instrs.at(4))->get_lhs(), instrs.at(3))
+        << foo;
+    EXPECT_EQ(static_cast<const bjac::BinaryOperator *>(instrs.at(4))->get_rhs(), instrs.at(0))
+        << foo;
+
+    EXPECT_EQ(instrs.at(5)->users_count(), 0) << foo;
+    ASSERT_EQ(instrs.at(5)->get_opcode(), bjac::Instruction::Opcode::kRet) << foo;
+    EXPECT_EQ(static_cast<const bjac::ReturnInstruction *>(instrs.at(5))->get_ret_value(),
+              instrs.at(4))
+        << foo;
+}
+
 INSTANTIATE_TEST_SUITE_P(
-    /* no instantiation name */, PeepholesForAddWithZero,
-    ::testing::Values(ArgsOrder::kConstOnLeft, ArgsOrder::kConstOnRight));
+    /* no instantiation name */, PeepholesForAdd,
+    ::testing::Values(ArgsOrder::kSelectedArgOnLeft, ArgsOrder::kSelectedArgOnRight));
 
 TEST(PeepholesForShrLWithZero, ShiftForZeroBits) {
     // Assign
