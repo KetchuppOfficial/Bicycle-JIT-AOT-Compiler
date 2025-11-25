@@ -182,8 +182,7 @@ void bitwise_instr_chaining(std::bidirectional_iterator auto it, auto op) {
     if (instr != nullptr) {
         auto *bb = it->get_parent();
         assert(it != bb->begin());
-        auto new_it =
-            bb->template emplace<ConstInstruction>(std::prev(it), bit_instr->get_type(), constant);
+        auto new_it = bb->template emplace<ConstInstruction>(it, bit_instr->get_type(), constant);
         bit_instr->set_lhs(*instr);
         bit_instr->set_rhs(*new_it);
     }

@@ -228,8 +228,8 @@ TEST(PeepholesForAnd, BothArgumentsAreTheSameInstruction) {
  *     %0.0 = i64 arg [0] ; used by: %0.2, %0.4
  *     %0.1 = i64 constant 0x0ff ; used by: %0.2
  *     %0.2 = i64 and %0.1, %0.0
- *     %0.6 = i64 constant 0x0f0 ; used by: %0.4
  *     %0.3 = i64 constant 0xff0
+ *     %0.6 = i64 constant 0x0f0 ; used by: %0.4
  *     %0.4 = i64 and %0.0, %0.6 ; used by: %0.5
  *     %0.5 ret i64 %0.4
  */
@@ -286,15 +286,15 @@ TEST(PeepholesForAnd, ChainingConstantOnLeftLeft) {
         << foo;
 
     EXPECT_EQ(instrs.at(3)->get_type(), bjac::Type::kI64) << foo;
-    EXPECT_EQ(instrs.at(3)->users_count(), 1) << foo;
-    EXPECT_TRUE(instrs.at(3)->has_user(instrs.at(5))) << foo;
+    EXPECT_EQ(instrs.at(3)->users_count(), 0) << foo;
     ASSERT_EQ(instrs.at(3)->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
-    EXPECT_EQ(static_cast<const bjac::ConstInstruction *>(instrs.at(3))->get_value(), 0x0f0) << foo;
+    EXPECT_EQ(static_cast<const bjac::ConstInstruction *>(instrs.at(3))->get_value(), 0xff0) << foo;
 
     EXPECT_EQ(instrs.at(4)->get_type(), bjac::Type::kI64) << foo;
-    EXPECT_EQ(instrs.at(4)->users_count(), 0) << foo;
+    EXPECT_EQ(instrs.at(4)->users_count(), 1) << foo;
+    EXPECT_TRUE(instrs.at(4)->has_user(instrs.at(5))) << foo;
     ASSERT_EQ(instrs.at(4)->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
-    EXPECT_EQ(static_cast<const bjac::ConstInstruction *>(instrs.at(4))->get_value(), 0xff0) << foo;
+    EXPECT_EQ(static_cast<const bjac::ConstInstruction *>(instrs.at(4))->get_value(), 0x0f0) << foo;
 
     EXPECT_EQ(instrs.at(5)->get_type(), bjac::Type::kI64) << foo;
     EXPECT_EQ(instrs.at(5)->users_count(), 1) << foo;
@@ -302,7 +302,7 @@ TEST(PeepholesForAnd, ChainingConstantOnLeftLeft) {
     ASSERT_EQ(instrs.at(5)->get_opcode(), bjac::Instruction::Opcode::kAnd) << foo;
     EXPECT_EQ(static_cast<const bjac::BinaryOperator *>(instrs.at(5))->get_lhs(), instrs.at(0))
         << foo;
-    EXPECT_EQ(static_cast<const bjac::BinaryOperator *>(instrs.at(5))->get_rhs(), instrs.at(3))
+    EXPECT_EQ(static_cast<const bjac::BinaryOperator *>(instrs.at(5))->get_rhs(), instrs.at(4))
         << foo;
 
     EXPECT_EQ(instrs.at(6)->users_count(), 0) << foo;
