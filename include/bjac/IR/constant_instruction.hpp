@@ -50,7 +50,7 @@ struct IRTypeToMaxValue<Type::kI64> {
 
 class ConstInstruction final : public Instruction {
   public:
-    ~ConstInstruction() = default;
+    ~ConstInstruction() override = default;
 
     std::uintmax_t get_value() const noexcept { return value_; }
 
