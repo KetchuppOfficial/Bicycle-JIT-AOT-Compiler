@@ -17,6 +17,23 @@ enum class Type {
     kI64
 };
 
+inline unsigned width(Type type) {
+    switch (type) {
+    case Type::kI1:
+        return 1u;
+    case Type::kI8:
+        return 8u;
+    case Type::kI16:
+        return 16u;
+    case Type::kI32:
+        return 32u;
+    case Type::kI64:
+        return 64u;
+    default:
+        std::unreachable();
+    }
+}
+
 inline std::string_view to_string_view(Type type) {
     switch (type) {
     case Type::kNone:
