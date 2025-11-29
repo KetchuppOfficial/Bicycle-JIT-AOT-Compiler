@@ -35,7 +35,7 @@ static std::uintmax_t apply_bin_op(F op, Type type, std::uintmax_t lhs, std::uin
     }
 }
 
-static std::uintmax_t fold_binary_operator(const BinaryOperator &bin_op) {
+static std::optional<std::uintmax_t> fold_binary_operator(const BinaryOperator &bin_op) {
     using enum Instruction::Opcode;
 
     assert(bin_op.get_lhs()->get_opcode() == kConst);
@@ -53,8 +53,14 @@ static std::uintmax_t fold_binary_operator(const BinaryOperator &bin_op) {
     case kMul:
         return apply_bin_op(std::multiplies{}, type, lhs, rhs);
     case kUDiv:
+        if (rhs == 0) { // do not optimize if encounter division by 0
+            return std::nullopt;
+        }
         return apply_bin_op(std::divides{}, type, lhs, rhs);
     case kSDiv:
+        if (rhs == 0) { // do not optimize if encounter division by 0
+            return std::nullopt;
+        }
         return apply_bin_op(
             [](std::uintmax_t l, std::uintmax_t r) -> std::uintmax_t {
                 return static_cast<std::intmax_t>(l) / static_cast<std::intmax_t>(r);
@@ -62,23 +68,38 @@ static std::uintmax_t fold_binary_operator(const BinaryOperator &bin_op) {
             type, lhs, rhs);
 
     case kURem:
+        if (rhs == 0) { // do not optimize if encounter division by 0
+            return std::nullopt;
+        }
         return apply_bin_op(std::modulus{}, type, lhs, rhs);
     case kSRem:
+        if (rhs == 0) { // do not optimize if encounter division by 0
+            return std::nullopt;
+        }
         return apply_bin_op(
             [](std::uintmax_t l, std::uintmax_t r) -> std::uintmax_t {
                 return static_cast<std::intmax_t>(l) % static_cast<std::intmax_t>(r);
             },
             type, lhs, rhs);
     case kShl:
+        if (rhs >= width(bin_op.get_type())) { // do not optimize shifts for more than type's width
+            return std::nullopt;
+        }
         return apply_bin_op([](std::uintmax_t l, std::uintmax_t r) { return l << r; }, type, lhs,
                             rhs);
     case kShrA:
+        if (rhs >= width(bin_op.get_type())) { // do not optimize shifts for more than type's width
+            return std::nullopt;
+        }
         return apply_bin_op(
             [](std::uintmax_t l, std::uintmax_t r) -> std::uintmax_t {
                 return static_cast<std::intmax_t>(l) >> r;
             },
             type, lhs, rhs);
     case kShrL:
+        if (rhs >= width(bin_op.get_type())) { // do not optimize shifts for more than type's width
+            return std::nullopt;
+        }
         return apply_bin_op([](std::uintmax_t l, std::uintmax_t r) { return l >> r; }, type, lhs,
                             rhs);
     case kAnd:
