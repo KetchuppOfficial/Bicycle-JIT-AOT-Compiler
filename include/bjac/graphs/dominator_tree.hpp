@@ -117,15 +117,15 @@ class DominatorTree final {
     void compute_idoms(const DFS<Traits> &dfs, const VertexToSDomContainer &v_to_sdom) {
         v_to_idom_.reserve(dfs.size());
 
-        auto pre_order = dfs.pre_order();
+        auto pre_order = dfs.pre_order() | std::views::drop(1);        // drop entry block
+        static_assert(std::ranges::common_range<decltype(pre_order)>); // to guarantee O(1) reverse
 
-        for (vertex_handler w :
-             pre_order | std::views::reverse | std::views::take(dfs.size() - 1)) {
+        for (vertex_handler w : pre_order | std::views::reverse) {
             auto w_it = v_to_sdom.find(w);
             assert(w_it != v_to_sdom.end());
             vertex_handler sdom_w = w_it->second.vertex;
-            auto it = std::ranges::min_element(dfs.st_begin(w), dfs.st_begin(sdom_w),
-                                               std::ranges::less{}, [&](const auto &info) {
+            auto it = std::ranges::min_element(dfs.st_begin(w), dfs.st_begin(sdom_w), {},
+                                               [&](const auto &info) {
                                                    auto it = v_to_sdom.find(info.get_vertex());
                                                    assert(it != v_to_sdom.end());
                                                    return it->second.time;
@@ -140,7 +140,7 @@ class DominatorTree final {
             }
         }
 
-        for (vertex_handler w : pre_order | std::views::drop(1)) {
+        for (vertex_handler w : pre_order) {
             auto w_it = v_to_idom_.find(w);
             assert(w_it != v_to_idom_.end());
             if (vertex_handler &idom = w_it->second; idom != v_to_sdom.at(w).vertex) {
