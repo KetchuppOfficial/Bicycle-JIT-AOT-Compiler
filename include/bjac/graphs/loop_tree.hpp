@@ -20,8 +20,14 @@ class LoopTree final {
     using graph_type = typename Traits::graph_type;
     using vertex_handler = typename Traits::vertex_handler;
 
-    explicit LoopTree(graph_type &g) {
-        for (const auto &[latch, header] : compute_back_edges(g)) {
+    explicit LoopTree(graph_type &g) : LoopTree{g, DFS<Traits>{g}} {}
+
+    explicit LoopTree(graph_type &g, const DFS<Traits> &dfs)
+        : LoopTree{g, dfs, DominatorTree<Traits>{g, dfs}} {}
+
+    explicit LoopTree(graph_type &g, const DFS<Traits> &dfs,
+                      const DominatorTree<Traits> &dom_tree) {
+        for (const auto &[latch, header] : compute_back_edges(g, dfs, dom_tree)) {
             const DFS<ReverseGraphTraits<Traits>> dfs(g, latch, {header});
 
             auto loop = std::make_unique<Loop<vertex_handler>>(header);
@@ -54,10 +60,8 @@ class LoopTree final {
     }
 
   private:
-    static auto compute_back_edges(graph_type &g) {
-        const DFS<Traits> dfs{g};
-        const DominatorTree<Traits> dom_tree{g, dfs};
-
+    static auto compute_back_edges(graph_type &g, const DFS<Traits> &dfs,
+                                   const DominatorTree<Traits> &dom_tree) {
         std::vector<std::pair<vertex_handler, vertex_handler>> back_edges_;
         for (vertex_handler v : dfs.pre_order()) {
             for (vertex_handler u : Traits::adjacent_vertices(g, v)) {
