@@ -30,8 +30,7 @@ TEST(DominatorTree, Mandatory_1) {
     bjac::DominatorTree<bjac::ConstFunctionGraphTraits> dom_tree{foo};
 
     // Assert
-    EXPECT_FALSE(dom_tree.contains(bb.at('A')));
-
+    EXPECT_EQ(dom_tree.idom(bb.at('A')), std::nullopt);
     EXPECT_EQ(dom_tree.idom(bb.at('B')), bb.at('A'));
     EXPECT_EQ(dom_tree.idom(bb.at('C')), bb.at('B'));
     EXPECT_EQ(dom_tree.idom(bb.at('D')), bb.at('B'));
@@ -66,8 +65,7 @@ TEST(DominatorTree, Mandatory_2) {
     bjac::DominatorTree<bjac::ConstFunctionGraphTraits> dom_tree{foo};
 
     // Assert
-    EXPECT_FALSE(dom_tree.contains(bb.at('A')));
-
+    EXPECT_EQ(dom_tree.idom(bb.at('A')), std::nullopt);
     EXPECT_EQ(dom_tree.idom(bb.at('B')), bb.at('A'));
     EXPECT_EQ(dom_tree.idom(bb.at('C')), bb.at('B'));
     EXPECT_EQ(dom_tree.idom(bb.at('D')), bb.at('C'));
@@ -104,8 +102,7 @@ TEST(DominatorTree, Mandatory_3) {
     bjac::DominatorTree<bjac::ConstFunctionGraphTraits> dom_tree{foo};
 
     // Assert
-    EXPECT_FALSE(dom_tree.contains(bb.at('A')));
-
+    EXPECT_EQ(dom_tree.idom(bb.at('A')), std::nullopt);
     EXPECT_EQ(dom_tree.idom(bb.at('B')), bb.at('A'));
     EXPECT_EQ(dom_tree.idom(bb.at('C')), bb.at('B'));
     EXPECT_EQ(dom_tree.idom(bb.at('D')), bb.at('B'));
