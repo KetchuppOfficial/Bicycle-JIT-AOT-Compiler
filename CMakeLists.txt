@@ -35,6 +35,22 @@ FILES
     include/bjac/utils/ilist.hpp
 )
 
+add_library(bjac_graphs INTERFACE)
+add_library(bjac::graphs ALIAS bjac_graphs)
+target_link_libraries(bjac_graphs INTERFACE bjac::defaults)
+target_sources(bjac_graphs INTERFACE
+FILE_SET
+    HEADERS
+BASE_DIRS
+    include
+FILES
+    include/bjac/graphs/dfs.hpp
+    include/bjac/graphs/dominator_tree.hpp
+    include/bjac/graphs/graph_traits.hpp
+    include/bjac/graphs/loop_tree.hpp
+    include/bjac/graphs/loop.hpp
+)
+
 add_library(bjac_ir STATIC
     lib/IR/basic_block.cpp
     lib/IR/function.cpp
