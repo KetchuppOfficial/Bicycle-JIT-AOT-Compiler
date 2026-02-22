@@ -82,22 +82,6 @@ PUBLIC
     bjac::defaults
 )
 
-add_library(bjac_graphs INTERFACE)
-add_library(bjac::graphs ALIAS bjac_graphs)
-target_link_libraries(bjac_graphs INTERFACE bjac::defaults)
-target_sources(bjac_graphs INTERFACE
-FILE_SET
-    HEADERS
-BASE_DIRS
-    include
-FILES
-    include/bjac/graphs/dfs.hpp
-    include/bjac/graphs/dominator_tree.hpp
-    include/bjac/graphs/graph_traits.hpp
-    include/bjac/graphs/loop_tree.hpp
-    include/bjac/graphs/loop.hpp
-)
-
 add_library(bjac_transforms STATIC
     lib/transforms/constant_folding.cpp
     lib/transforms/dce.cpp
@@ -120,6 +104,23 @@ FILES
     include/bjac/transforms/constant_folding.hpp
     include/bjac/transforms/dce.hpp
     include/bjac/transforms/peepholes.hpp
+)
+
+add_library(bjac_analysis STATIC
+    lib/analysis/liveness.cpp
+)
+add_library(bjac::analysis ALIAS bjac_analysis)
+target_link_libraries(bjac_analysis
+PUBLIC
+    bjac::defaults
+)
+target_sources(bjac_analysis PUBLIC
+FILE_SET
+    HEADERS
+BASE_DIRS
+    include
+FILES
+    include/bjac/analysis/liveness.hpp
 )
 
 if (BJAC_BUILD_TESTS)
