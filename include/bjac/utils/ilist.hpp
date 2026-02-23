@@ -34,9 +34,11 @@ class ilist {
     ilist &operator=(const ilist &) = delete;
 
     ilist(ilist &&rhs) noexcept
-        : sentinel_{rhs.empty() ? &sentinel_ : rhs.head(), rhs.empty() ? &sentinel_ : rhs.tail()},
+        : sentinel_{rhs.empty() ? node_type{&sentinel_, &sentinel_}
+                                : node_type{rhs.head(), rhs.tail()}},
           size_{std::exchange(rhs.size_, 0)} {
         fixup_head_and_tail();
+        rhs.sentinel_.reset();
     }
 
     ilist &operator=(ilist &&rhs) noexcept {
@@ -61,16 +63,12 @@ class ilist {
                 return;
             }
             swap_sentinels_one_of_which_is_empty(other);
-            fixup_head_and_tail();
             size_ = std::exchange(other.size_, 0);
         } else if (other.empty()) {
             other.swap_sentinels_one_of_which_is_empty(*this);
-            other.fixup_head_and_tail();
             other.size_ = std::exchange(size_, 0);
         } else {
-            sentinel_.swap(other.sentinel_);
-            fixup_head_and_tail();
-            other.fixup_head_and_tail();
+            swap_sentinels_none_of_which_is_empty(other);
             std::swap(size_, other.size_);
         }
     }
@@ -173,6 +171,12 @@ class ilist {
         return iterator{new_node};
     }
 
+    void swap_sentinels_none_of_which_is_empty(ilist &other) noexcept {
+        sentinel_.swap(other.sentinel_);
+        fixup_head_and_tail();
+        other.fixup_head_and_tail();
+    }
+
     void swap_sentinels_one_of_which_is_empty(ilist &other) noexcept {
         assert(empty());
         assert(!other.empty());
@@ -180,6 +184,8 @@ class ilist {
         sentinel_.set_next(other.sentinel_->next());
         sentinel_.set_prev(other.sentinel_->prev());
         other.sentinel_.reset();
+
+        fixup_head_and_tail();
     }
 
     void fixup_head_and_tail() noexcept {
