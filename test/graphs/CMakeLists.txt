@@ -1,5 +1,6 @@
 add_executable(bjac_graphs_tests
     src/dominator_tree.cpp
+    src/linear_order.cpp
     src/loop_tree.cpp
 )
 
