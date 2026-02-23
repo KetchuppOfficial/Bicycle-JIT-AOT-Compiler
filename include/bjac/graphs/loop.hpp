@@ -1,12 +1,13 @@
 #ifndef INCLUDE_BJAC_GRAPHS_LOOP_HPP
 #define INCLUDE_BJAC_GRAPHS_LOOP_HPP
 
+#include <algorithm>
 #include <concepts>
 #include <memory>
 #include <ranges>
 #include <unordered_map>
-#include <unordered_set>
 #include <utility>
+#include <vector>
 
 namespace bjac {
 
@@ -23,10 +24,9 @@ class Loop final {
     void set_parent_loop(Loop &parent) noexcept { parent_ = std::addressof(parent); }
 
     std::unsigned_integral auto vertices_count() const noexcept { return vertices_.size(); }
-    std::ranges::forward_range auto vertices() const { return std::ranges::subrange(vertices_); }
-    bool contains_vertex(VertexHandler v) const { return vertices_.contains(v); }
-    void add_vertex(VertexHandler v) { vertices_.insert(v); }
-    void remove_vertex(VertexHandler v) { vertices_.erase(v); }
+    std::ranges::random_access_range auto vertices() const { return std::views::all(vertices_); }
+    void add_vertex(VertexHandler v) { vertices_.push_back(v); }
+    void remove_vertex(VertexHandler v) { std::erase(vertices_, v); }
 
     std::unsigned_integral auto inner_loops_count() const noexcept { return inner_loops_.size(); }
     std::ranges::forward_range auto inner_loops() const {
@@ -45,7 +45,7 @@ class Loop final {
   private:
     VertexHandler header_;
     Loop *parent_;
-    std::unordered_set<VertexHandler> vertices_;
+    std::vector<VertexHandler> vertices_;
     std::unordered_map<VertexHandler, std::unique_ptr<Loop>> inner_loops_;
 };
 

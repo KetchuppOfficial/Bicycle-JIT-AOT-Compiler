@@ -1,4 +1,5 @@
-#include <unordered_map>
+#include <array>
+#include <ranges>
 
 #include <gtest/gtest.h>
 
@@ -8,15 +9,11 @@
 #include "bjac/IR/constant_instruction.hpp"
 #include "bjac/IR/function.hpp"
 
+#include "common.hpp"
+
 TEST(LoopTree, Mandatory_1) {
     // Assign
-    bjac::Function foo{"foo", bjac::Type::kVoid, {}};
-
-    std::unordered_map<char, bjac::BasicBlock *> bb;
-    for (char name : {'A', 'B', 'C', 'D', 'E'}) {
-        auto &BB = foo.emplace_back();
-        bb.emplace(name, &BB);
-    }
+    auto [foo, bb, names] = setup({'A', 'B', 'C', 'D', 'E'});
 
     auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(bjac::Type::kI1, 0);
 
@@ -26,7 +23,7 @@ TEST(LoopTree, Mandatory_1) {
     bb.at('E')->emplace_back<bjac::BranchInstruction>(*bb.at('B'));
 
     // Act
-    bjac::LoopTree<bjac::ConstFunctionGraphTraits> loop_tree{foo};
+    const bjac::LoopTree<bjac::ConstFunctionGraphTraits> loop_tree{foo};
 
     // Assert
     EXPECT_EQ(loop_tree.loops_count(), 1);
@@ -36,20 +33,12 @@ TEST(LoopTree, Mandatory_1) {
     EXPECT_EQ(loop.vertices_count(), 3);
     EXPECT_EQ(loop.inner_loops_count(), 0);
     EXPECT_EQ(loop.get_parent_loop(), nullptr);
-    for (auto c : {'B', 'D', 'E'}) {
-        EXPECT_TRUE(loop.contains_vertex(bb.at(c))) << "BB_" << c;
-    }
+    EXPECT_TRUE(matches(loop.vertices(), {std::array{bb.at('B'), bb.at('D'), bb.at('E')}}, names));
 }
 
 TEST(LoopTree, Mandatory_2) {
     // Assign
-    bjac::Function foo{"foo", bjac::Type::kVoid, {}};
-
-    std::unordered_map<char, bjac::BasicBlock *> bb;
-    for (char name : {'A', 'B', 'C', 'D', 'E', 'F'}) {
-        auto &BB = foo.emplace_back();
-        bb.emplace(name, &BB);
-    }
+    auto [foo, bb, names] = setup({'A', 'B', 'C', 'D', 'E', 'F'});
 
     auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(bjac::Type::kI1, 0);
 
@@ -60,7 +49,7 @@ TEST(LoopTree, Mandatory_2) {
     bb.at('E')->emplace_back<bjac::BranchInstruction>(*bb.at('B'));
 
     // Act
-    bjac::LoopTree<bjac::ConstFunctionGraphTraits> loop_tree{foo};
+    const bjac::LoopTree<bjac::ConstFunctionGraphTraits> loop_tree{foo};
 
     // Assert
     EXPECT_EQ(loop_tree.loops_count(), 1);
@@ -70,20 +59,13 @@ TEST(LoopTree, Mandatory_2) {
     EXPECT_EQ(loop.vertices_count(), 4);
     EXPECT_EQ(loop.inner_loops_count(), 0);
     EXPECT_EQ(loop.get_parent_loop(), nullptr);
-    for (auto c : {'B', 'C', 'D', 'E'}) {
-        EXPECT_TRUE(loop.contains_vertex(bb.at(c))) << "BB_" << c;
-    }
+    EXPECT_TRUE(matches(loop.vertices(),
+                        {std::array{bb.at('B'), bb.at('C'), bb.at('D'), bb.at('E')}}, names));
 }
 
 TEST(LoopTree, Mandatory_3) {
     // Assign
-    bjac::Function foo{"foo", bjac::Type::kVoid, {}};
-
-    std::unordered_map<char, bjac::BasicBlock *> bb;
-    for (char name : {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'}) {
-        auto &BB = foo.emplace_back();
-        bb.emplace(name, &BB);
-    }
+    auto [foo, bb, names] = setup({'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'});
 
     auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(bjac::Type::kI1, 0);
 
@@ -96,7 +78,7 @@ TEST(LoopTree, Mandatory_3) {
     bb.at('H')->emplace_back<bjac::BranchInstruction>(*bb.at('A'));
 
     // Act
-    bjac::LoopTree<bjac::ConstFunctionGraphTraits> loop_tree{foo};
+    const bjac::LoopTree<bjac::ConstFunctionGraphTraits> loop_tree{foo};
 
     // Assert
     EXPECT_EQ(loop_tree.loops_count(), 1);
@@ -106,29 +88,27 @@ TEST(LoopTree, Mandatory_3) {
     EXPECT_EQ(a_loop.vertices_count(), 7);
     EXPECT_EQ(a_loop.inner_loops_count(), 1);
     EXPECT_EQ(a_loop.get_parent_loop(), nullptr);
-    for (auto c : {'A', 'B', 'C', 'D', 'F', 'G', 'H'}) {
-        EXPECT_TRUE(a_loop.contains_vertex(bb.at(c))) << "BB_" << c;
-    }
+    EXPECT_TRUE(matches(a_loop.vertices(),
+                        {std::array{bb.at('A'), bb.at('B'), bb.at('C'), bb.at('D'), bb.at('F'),
+                                    bb.at('G'), bb.at('H')},
+                         std::array{bb.at('A'), bb.at('B'), bb.at('D'), bb.at('C'), bb.at('F'),
+                                    bb.at('G'), bb.at('H')}},
+                        names));
 
     const auto &b_loop = a_loop.get_inner_loop(bb.at('B'));
     EXPECT_EQ(b_loop.get_header(), bb.at('B'));
     EXPECT_EQ(b_loop.vertices_count(), 5);
     EXPECT_EQ(b_loop.inner_loops_count(), 0);
     EXPECT_EQ(b_loop.get_parent_loop(), &a_loop);
-    for (auto c : {'B', 'C', 'D', 'F', 'G'}) {
-        EXPECT_TRUE(b_loop.contains_vertex(bb.at(c))) << "BB_" << c;
-    }
+    EXPECT_TRUE(matches(b_loop.vertices(),
+                        {std::array{bb.at('B'), bb.at('C'), bb.at('D'), bb.at('F'), bb.at('G')},
+                         std::array{bb.at('B'), bb.at('D'), bb.at('C'), bb.at('F'), bb.at('G')}},
+                        names));
 }
 
 TEST(LoopTree, Mandatory_4) {
     // Assign
-    bjac::Function foo{"foo", bjac::Type::kVoid, {}};
-
-    std::unordered_map<char, bjac::BasicBlock *> bb;
-    for (char name : {'A', 'B', 'C', 'D', 'E', 'F', 'G'}) {
-        auto &BB = foo.emplace_back();
-        bb.emplace(name, &BB);
-    }
+    auto [foo, bb, names] = setup({'A', 'B', 'C', 'D', 'E', 'F', 'G'});
 
     auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(bjac::Type::kI1, 0);
 
@@ -140,7 +120,7 @@ TEST(LoopTree, Mandatory_4) {
     bb.at('G')->emplace_back<bjac::BranchInstruction>(*bb.at('D'));
 
     // Act
-    bjac::LoopTree<bjac::ConstFunctionGraphTraits> loop_tree{foo};
+    const bjac::LoopTree<bjac::ConstFunctionGraphTraits> loop_tree{foo};
 
     // Assert
     EXPECT_EQ(loop_tree.loops_count(), 0);
@@ -148,13 +128,7 @@ TEST(LoopTree, Mandatory_4) {
 
 TEST(LoopTree, Mandatory_5) {
     // Assign
-    bjac::Function foo{"foo", bjac::Type::kVoid, {}};
-
-    std::unordered_map<char, bjac::BasicBlock *> bb;
-    for (char name : {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'}) {
-        auto &BB = foo.emplace_back();
-        bb.emplace(name, &BB);
-    }
+    auto [foo, bb, names] = setup({'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'});
 
     auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(bjac::Type::kI1, 0);
 
@@ -170,7 +144,7 @@ TEST(LoopTree, Mandatory_5) {
     bb.at('J')->emplace_back<bjac::BranchInstruction>(*bb.at('C'));
 
     // Act
-    bjac::LoopTree<bjac::ConstFunctionGraphTraits> loop_tree{foo};
+    const bjac::LoopTree<bjac::ConstFunctionGraphTraits> loop_tree{foo};
 
     // Assert
     EXPECT_EQ(loop_tree.loops_count(), 1);
@@ -180,38 +154,31 @@ TEST(LoopTree, Mandatory_5) {
     EXPECT_EQ(b_loop.vertices_count(), 8);
     EXPECT_EQ(b_loop.inner_loops_count(), 2);
     EXPECT_EQ(b_loop.get_parent_loop(), nullptr);
-    for (auto c : {'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J'}) {
-        EXPECT_TRUE(b_loop.contains_vertex(bb.at(c))) << "BB_" << c;
-    }
+    EXPECT_TRUE(matches(b_loop.vertices(),
+                        {std::array{bb.at('B'), bb.at('C'), bb.at('J'), bb.at('D'), bb.at('E'),
+                                    bb.at('F'), bb.at('G'), bb.at('H')},
+                         std::array{bb.at('B'), bb.at('J'), bb.at('C'), bb.at('D'), bb.at('E'),
+                                    bb.at('F'), bb.at('G'), bb.at('H')}},
+                        names));
 
     const auto &c_loop = b_loop.get_inner_loop(bb.at('C'));
     EXPECT_EQ(c_loop.get_header(), bb.at('C'));
     EXPECT_EQ(c_loop.vertices_count(), 2);
     EXPECT_EQ(c_loop.inner_loops_count(), 0);
     EXPECT_EQ(c_loop.get_parent_loop(), &b_loop);
-    for (auto c : {'C', 'D'}) {
-        EXPECT_TRUE(c_loop.contains_vertex(bb.at(c))) << "BB_" << c;
-    }
+    EXPECT_TRUE(matches(c_loop.vertices(), {std::array{bb.at('C'), bb.at('D')}}, names));
 
     const auto &e_loop = b_loop.get_inner_loop(bb.at('E'));
     EXPECT_EQ(e_loop.get_header(), bb.at('E'));
     EXPECT_EQ(e_loop.vertices_count(), 2);
     EXPECT_EQ(e_loop.inner_loops_count(), 0);
     EXPECT_EQ(e_loop.get_parent_loop(), &b_loop);
-    for (auto c : {'E', 'F'}) {
-        EXPECT_TRUE(e_loop.contains_vertex(bb.at(c))) << "BB_" << c;
-    }
+    EXPECT_TRUE(matches(e_loop.vertices(), {std::array{bb.at('E'), bb.at('F')}}, names));
 }
 
 TEST(LoopTree, Mandatory_6) {
     // Assign
-    bjac::Function foo{"foo", bjac::Type::kVoid, {}};
-
-    std::unordered_map<char, bjac::BasicBlock *> bb;
-    for (char name : {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'}) {
-        auto &BB = foo.emplace_back();
-        bb.emplace(name, &BB);
-    }
+    auto [foo, bb, names] = setup({'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'});
 
     auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(bjac::Type::kI1, 0);
 
@@ -225,7 +192,7 @@ TEST(LoopTree, Mandatory_6) {
     bb.at('H')->emplace_back<bjac::BranchInstruction>(cond, *bb.at('G'), *bb.at('I'));
 
     // Act
-    bjac::LoopTree<bjac::ConstFunctionGraphTraits> loop_tree{foo};
+    const bjac::LoopTree<bjac::ConstFunctionGraphTraits> loop_tree{foo};
 
     // Assert
     EXPECT_EQ(loop_tree.loops_count(), 1);
@@ -235,7 +202,5 @@ TEST(LoopTree, Mandatory_6) {
     EXPECT_EQ(loop.vertices_count(), 3);
     EXPECT_EQ(loop.inner_loops_count(), 0);
     EXPECT_EQ(loop.get_parent_loop(), nullptr);
-    for (auto c : {'B', 'E', 'F'}) {
-        EXPECT_TRUE(loop.contains_vertex(bb.at(c))) << "BB_" << c;
-    }
+    EXPECT_TRUE(matches(loop.vertices(), {std::array{bb.at('B'), bb.at('E'), bb.at('F')}}, names));
 }
