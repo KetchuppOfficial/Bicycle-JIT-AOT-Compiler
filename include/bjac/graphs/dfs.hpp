@@ -1,11 +1,11 @@
 #ifndef INCLUDE_BJAC_GRAPHS_DFS_HPP
 #define INCLUDE_BJAC_GRAPHS_DFS_HPP
 
+#include <algorithm>
 #include <cstddef>
 #include <initializer_list>
 #include <memory>
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 namespace bjac {
@@ -83,38 +83,20 @@ class DFS final {
     using const_st_iterator = SpanningTreeAncestorIterator;
     using st_iterator = const_st_iterator;
 
-    // Note: vertices from already_visited appear only in post_order, not in pre_order
+    // Note: vertices from already_visited appear neither in in post_order, nor in pre_order
     DFS(graph_type &g, vertex_handler source,
         std::initializer_list<vertex_handler> already_visited = {})
         : source_(source) {
-        std::unordered_set<vertex_handler> visited_vertices{already_visited};
-
-        std::vector<vertex_handler> stack;
-        stack.reserve(Traits::n_vertices(g));
-
-        info_.emplace(source_, source_);
-        stack.push_back(source_);
-
-        for (time_type time = 0; !stack.empty();) {
-            vertex_handler u = stack.back();
-            auto &u_info = info_.find(u)->second;
-
-            if (visited_vertices.insert(u).second) {
-                u_info.discovery_time_ = ++time;
-                pre_order_.push_back(u);
-
-                for (vertex_handler v : Traits::adjacent_vertices(g, u)) {
-                    if (!visited_vertices.contains(v)) {
-                        info_.try_emplace(v, v, std::addressof(u_info));
-                        stack.push_back(v);
-                    }
-                }
-            } else {
-                stack.pop_back();
-                u_info.finished_time_ = ++time;
-                post_order_.push_back(u);
-            }
+        if (std::ranges::contains(already_visited, source)) {
+            throw std::invalid_argument{"DFS source shall not be already visited"};
         }
+
+        for (auto v : already_visited) {
+            info_.emplace(v, v);
+        }
+
+        // Intentionally ignore return value, because we don't need time parameter anymore
+        static_cast<void>(do_dfs(g, source_, nullptr, time_type{0}));
     }
 
     DFS(graph_type &g, std::initializer_list<vertex_handler> already_visited = {})
@@ -156,6 +138,25 @@ class DFS final {
     }
 
   private:
+    [[nodiscard]] time_type do_dfs(graph_type &g, vertex_handler u, InfoNode *parent,
+                                   time_type time) {
+        auto &u_info = info_.try_emplace(u, u, parent).first->second;
+
+        u_info.discovery_time_ = ++time;
+        pre_order_.push_back(u);
+
+        for (vertex_handler v : Traits::adjacent_vertices(g, u)) {
+            if (!info_.contains(v)) {
+                time = do_dfs(g, v, std::addressof(u_info), time);
+            }
+        }
+
+        u_info.finished_time_ = ++time;
+        post_order_.push_back(u);
+
+        return time;
+    }
+
     vertex_handler source_;
     InfoContainer info_;
     std::vector<vertex_handler> pre_order_;
