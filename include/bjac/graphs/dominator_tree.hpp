@@ -121,7 +121,7 @@ class DominatorTree final {
                     return std::ranges::any_of(
                         preds, [&dfs, u](vertex_handler v) { return dfs.is_ancestor_of(v, u); });
                 }) |
-                std::views::transform([&v_to_sdom = v_to_sdom](vertex_handler u) {
+                std::views::transform([&v_to_sdom](vertex_handler u) {
                     auto it = v_to_sdom.find(u);
                     assert(it != v_to_sdom.end());
                     return it->second.vertex;
