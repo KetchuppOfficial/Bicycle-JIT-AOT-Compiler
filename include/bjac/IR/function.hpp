@@ -38,6 +38,9 @@ class Function final : public Value, private ilist<BasicBlock> {
     Function(std::string_view name, Type return_type, std::initializer_list<Type> ilist)
         : Value{Type::kNone}, name_(name), return_type_{return_type}, arguments_(ilist) {}
 
+    Function(Function &&rhs) = delete("resetting parents of basic blocks would be slow");
+    Function &operator=(Function &&rhs) = delete("resetting parents of basic blocks would be slow");
+
     std::string_view name() const noexcept { return name_; }
 
     Type return_type() const noexcept { return return_type_; }
@@ -63,7 +66,6 @@ class Function final : public Value, private ilist<BasicBlock> {
     }
 
     iterator insert(const_iterator pos, std::unique_ptr<BasicBlock> bb) {
-        bb->parent_ = this;
         bb->id_ = next_bb_id_;
         return basic_blocks::insert(pos, std::move(bb));
     }

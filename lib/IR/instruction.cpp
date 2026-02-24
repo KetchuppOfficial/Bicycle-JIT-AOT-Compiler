@@ -98,9 +98,10 @@ std::string users_to_string(const Instruction &instr) {
         return {};
     }
 
+    using namespace std::string_view_literals;
     auto values = users | std::views::transform(
                               [](const auto *user) static { return ssa_value_to_string(*user); });
-    return std::format(" ; used by: {:s}", std::views::join_with(values, ", "));
+    return std::format(" ; used by: {:s}", std::views::join_with(values, ", "sv));
 }
 
 } // unnamed namespace
@@ -152,8 +153,9 @@ std::string PHIInstruction::to_string() const {
             return std::format("[{}, %bb{}]", ssa_value_to_string(*r.second), r.first->get_id());
         });
 
+    using namespace std::string_view_literals;
     return std::format("{} = {} {} {:s}{}", ssa_value_to_string(*this), Opcode::kPHI, type_,
-                       std::views::join_with(phi_strings, ", "), users_to_string(*this));
+                       std::views::join_with(phi_strings, ", "sv), users_to_string(*this));
 }
 
 ReturnInstruction::ReturnInstruction(BasicBlock &parent)
@@ -166,6 +168,7 @@ ReturnInstruction::ReturnInstruction(BasicBlock &parent)
 
 ReturnInstruction::ReturnInstruction(BasicBlock &parent, Instruction &ret_val)
     : Instruction(parent, Opcode::kRet, Type::kVoid), ret_val_{std::addressof(ret_val)} {
+    assert(parent.get_parent());
     if (auto ret_type = parent.get_parent()->return_type(); ret_type != ret_val.get_type()) {
         throw std::invalid_argument{std::format("trying to create {} {} in a function returning {}",
                                                 Opcode::kRet, ret_val.get_type(), ret_type)};

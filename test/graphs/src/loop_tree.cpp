@@ -9,11 +9,12 @@
 #include "bjac/IR/constant_instruction.hpp"
 #include "bjac/IR/function.hpp"
 
-#include "common.hpp"
+#include "test/common.hpp"
 
 TEST(LoopTree, Mandatory_1) {
     // Assign
-    auto [foo, bb, names] = setup({'A', 'B', 'C', 'D', 'E'});
+    bjac::Function foo{"foo", bjac::Type::kVoid, {}};
+    auto [bb, names] = setup(foo, {'A', 'B', 'C', 'D', 'E'});
 
     auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(bjac::Type::kI1, 0);
 
@@ -38,7 +39,8 @@ TEST(LoopTree, Mandatory_1) {
 
 TEST(LoopTree, Mandatory_2) {
     // Assign
-    auto [foo, bb, names] = setup({'A', 'B', 'C', 'D', 'E', 'F'});
+    bjac::Function foo{"foo", bjac::Type::kVoid, {}};
+    auto [bb, names] = setup(foo, {'A', 'B', 'C', 'D', 'E', 'F'});
 
     auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(bjac::Type::kI1, 0);
 
@@ -65,7 +67,8 @@ TEST(LoopTree, Mandatory_2) {
 
 TEST(LoopTree, Mandatory_3) {
     // Assign
-    auto [foo, bb, names] = setup({'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'});
+    bjac::Function foo{"foo", bjac::Type::kVoid, {}};
+    auto [bb, names] = setup(foo, {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'});
 
     auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(bjac::Type::kI1, 0);
 
@@ -108,7 +111,8 @@ TEST(LoopTree, Mandatory_3) {
 
 TEST(LoopTree, Mandatory_4) {
     // Assign
-    auto [foo, bb, names] = setup({'A', 'B', 'C', 'D', 'E', 'F', 'G'});
+    bjac::Function foo{"foo", bjac::Type::kVoid, {}};
+    auto [bb, names] = setup(foo, {'A', 'B', 'C', 'D', 'E', 'F', 'G'});
 
     auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(bjac::Type::kI1, 0);
 
@@ -128,7 +132,8 @@ TEST(LoopTree, Mandatory_4) {
 
 TEST(LoopTree, Mandatory_5) {
     // Assign
-    auto [foo, bb, names] = setup({'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'});
+    bjac::Function foo{"foo", bjac::Type::kVoid, {}};
+    auto [bb, names] = setup(foo, {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'});
 
     auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(bjac::Type::kI1, 0);
 
@@ -178,7 +183,8 @@ TEST(LoopTree, Mandatory_5) {
 
 TEST(LoopTree, Mandatory_6) {
     // Assign
-    auto [foo, bb, names] = setup({'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'});
+    bjac::Function foo{"foo", bjac::Type::kVoid, {}};
+    auto [bb, names] = setup(foo, {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'});
 
     auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(bjac::Type::kI1, 0);
 

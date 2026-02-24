@@ -1,3 +1,4 @@
+#include <cassert>
 #include <cstddef>
 #include <memory>
 #include <ranges>
@@ -17,7 +18,7 @@ LivenessAnalysis::LivenessAnalysis(const Function &func) {
     using LiveIn = std::unordered_set<const Instruction *>;
     using Segment = Lifetime::Segment;
 
-    auto is_phi = [](const auto &instr) static { return instr.is_phi(); };
+    auto is_phi = [](const Instruction &instr) static { return instr.is_phi(); };
 
     const DFS<ConstFunctionGraphTraits> dfs{func};
     const DominatorTree<ConstFunctionGraphTraits> dom_tree{func, dfs};
@@ -29,7 +30,16 @@ LivenessAnalysis::LivenessAnalysis(const Function &func) {
 
     std::unordered_map<const Instruction *, std::size_t> numbering;
     for (std::size_t n = 0; const auto *bb : linear_order.blocks()) {
-        for (const auto &instr : *bb) {
+        auto begin = bb->begin();
+        auto end = bb->end();
+        auto first_non_phi = std::find_if_not(begin, end, is_phi);
+        for (const auto &instr : std::ranges::subrange{begin, first_non_phi}) {
+            numbering.emplace(std::addressof(instr), n);
+        }
+
+        n += (begin != first_non_phi);
+
+        for (const auto &instr : std::ranges::subrange{first_non_phi, end}) {
             numbering.emplace(std::addressof(instr), n++);
         }
     }
@@ -52,16 +62,33 @@ LivenessAnalysis::LivenessAnalysis(const Function &func) {
         const auto last_instr_n = numbering.at(std::addressof(bb->back()));
 
         for (const auto *instr : live_in) {
+            assert(instr);
             lifetimes_[instr].add(Segment{first_instr_n, last_instr_n});
         }
 
-        for (const auto &instr : *bb | std::views::reverse) {
+        for (const auto &instr : *bb | std::views::reverse | std::views::filter([](auto &instr) {
+                 return !instr.is_phi();
+             })) {
             const auto instr_n = numbering.at(std::addressof(instr));
 
-            lifetimes_[std::addressof(instr)].add(Segment{instr_n, last_instr_n});
-            live_in.erase(std::addressof(instr));
+            if (instr.get_type() != Type::kVoid) {
+                auto &lt = lifetimes_[std::addressof(instr)];
+                auto seg = Segment{instr_n, last_instr_n};
+                if (auto it = lt.find(seg); it == lt.end()) {
+                    lt.add(seg);
+                } else if (it->start() < instr_n) {
+                    const auto old_seg_end = it->end();
+                    lt.remove(it);
+                    lt.add(Segment{instr_n, old_seg_end});
+                } else {
+                    assert(it->start() == instr_n);
+                }
+
+                live_in.erase(std::addressof(instr));
+            }
 
             for (const auto *input : instr.inputs()) {
+                assert(input);
                 lifetimes_[input].add(Segment{first_instr_n, instr_n});
                 live_in.insert(input);
             }
@@ -75,6 +102,7 @@ LivenessAnalysis::LivenessAnalysis(const Function &func) {
             const auto &last_loop_instr = loop_tree.get_loop(bb).vertices().back()->back();
             const auto loop_end = numbering.at(std::addressof(last_loop_instr));
             for (const auto *instr : live_in) {
+                assert(instr);
                 lifetimes_[instr].add(Segment{first_instr_n, loop_end});
             }
         }

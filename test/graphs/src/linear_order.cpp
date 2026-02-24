@@ -6,11 +6,12 @@
 #include "bjac/IR/constant_instruction.hpp"
 #include "bjac/IR/function.hpp"
 
-#include "common.hpp"
+#include "test/common.hpp"
 
 TEST(LinearOrder, Mandatory_1) {
     // Assign
-    auto [foo, bb, names] = setup({'A', 'B', 'C', 'D', 'E'});
+    bjac::Function foo{"foo", bjac::Type::kVoid, {}};
+    auto [bb, names] = setup(foo, {'A', 'B', 'C', 'D', 'E'});
 
     auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(bjac::Type::kI1, 0);
 
@@ -30,7 +31,8 @@ TEST(LinearOrder, Mandatory_1) {
 
 TEST(LinearOrder, Mandatory_2) {
     // Assign
-    auto [foo, bb, names] = setup({'A', 'B', 'C', 'D', 'E', 'F'});
+    bjac::Function foo{"foo", bjac::Type::kVoid, {}};
+    auto [bb, names] = setup(foo, {'A', 'B', 'C', 'D', 'E', 'F'});
 
     auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(bjac::Type::kI1, 0);
 
@@ -52,7 +54,8 @@ TEST(LinearOrder, Mandatory_2) {
 
 TEST(LinearOrder, Mandatory_3) {
     // Assign
-    auto [foo, bb, names] = setup({'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'});
+    bjac::Function foo{"foo", bjac::Type::kVoid, {}};
+    auto [bb, names] = setup(foo, {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'});
 
     auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(bjac::Type::kI1, 0);
 
@@ -78,7 +81,8 @@ TEST(LinearOrder, Mandatory_3) {
 
 TEST(LinearOrder, Mandatory_5) {
     // Assign
-    auto [foo, bb, names] = setup({'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'});
+    bjac::Function foo{"foo", bjac::Type::kVoid, {}};
+    auto [bb, names] = setup(foo, {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'});
 
     auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(bjac::Type::kI1, 0);
 

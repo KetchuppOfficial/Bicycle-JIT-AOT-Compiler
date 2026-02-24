@@ -2,6 +2,7 @@
 #define INCLUDE_BJAC_ANALYSIS_LIVENESS_HPP
 
 #include <memory>
+#include <ranges>
 #include <unordered_map>
 
 #include "bjac/analysis/lifetime.hpp"
@@ -18,6 +19,8 @@ class LivenessAnalysis final {
     const Lifetime &at(const Instruction &instr) const {
         return lifetimes_.at(std::addressof(instr));
     }
+
+    std::ranges::forward_range auto lifetimes() const { return std::views::all(lifetimes_); }
 
   private:
     std::unordered_map<const Instruction *, Lifetime> lifetimes_;

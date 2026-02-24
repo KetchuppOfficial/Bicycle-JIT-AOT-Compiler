@@ -77,7 +77,6 @@ class BasicBlock final : public Value, public ilist_node<BasicBlock>, private il
             }
         }
 
-        instr->parent_ = this;
         ++next_instr_id_;
 
         return instructions::insert(pos, std::move(instr));

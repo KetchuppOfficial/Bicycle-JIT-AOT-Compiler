@@ -35,6 +35,21 @@ class Lifetime final {
         std::size_t end_;
     };
 
+  private:
+    struct Compare {
+        // This comparator enables treating intersecting and adjacent segments as equivalent, hence
+        // easily merging them
+        bool operator()(const Segment &lhs, const Segment &rhs) const noexcept {
+            return lhs.end() + 1 < rhs.start();
+        }
+    };
+
+  public:
+    using const_iterator = std::set<Segment, Compare>::const_iterator;
+    using iterator = const_iterator;
+    using const_reverse_iterator = std::set<Segment, Compare>::const_reverse_iterator;
+    using reverse_iterator = const_reverse_iterator;
+
     Lifetime() = default;
 
     Lifetime(std::initializer_list<Segment> ilist) {
@@ -42,6 +57,16 @@ class Lifetime final {
             add(seg);
         }
     }
+
+    const_iterator begin() const noexcept { return lt_segments_.begin(); }
+    const_iterator cbegin() const noexcept { return begin(); }
+    const_reverse_iterator rbegin() const noexcept { return lt_segments_.rbegin(); }
+    const_reverse_iterator crbegin() const noexcept { return rbegin(); }
+
+    const_iterator end() const noexcept { return lt_segments_.end(); }
+    const_iterator cend() const noexcept { return end(); }
+    const_reverse_iterator rend() const noexcept { return lt_segments_.rend(); }
+    const_reverse_iterator crend() const noexcept { return rend(); }
 
     // Checks whether given point/segment belongs to the lifetime set
     bool intersects(std::size_t point) const { return intersects(Segment{point, point}); }
@@ -55,7 +80,7 @@ class Lifetime final {
         return it != lt_segments_.end() && *it == seg;
     }
 
-    std::ranges::forward_range auto view() const { return std::views::all(lt_segments_); }
+    auto find(const Segment &seg) const { return lt_segments_.find(seg); }
 
     void add(Segment seg) {
         auto [first, last] = lt_segments_.equal_range(seg);
@@ -72,17 +97,13 @@ class Lifetime final {
         }
     }
 
+    void remove(const_iterator it) { lt_segments_.erase(it); }
+
+    bool operator==(const Lifetime &) const = default;
+
     friend std::ostream &operator<<(std::ostream &os, const Lifetime &lt);
 
   private:
-    struct Compare {
-        // This comparator enables treating intersecting segments as equivalent, hence easily
-        // merging them
-        bool operator()(const Segment &lhs, const Segment &rhs) const noexcept {
-            return lhs.end() < rhs.start();
-        }
-    };
-
     std::set<Segment, Compare> lt_segments_;
 };
 
@@ -108,9 +129,8 @@ struct formatter<::bjac::Lifetime> : formatter<string> {
     template <typename FmContext>
     typename FmContext::iterator format(const ::bjac::Lifetime &lt, FmContext &ctx) const {
         using namespace std::string_view_literals;
-        auto strings = lt.view() | std::views::transform([](const auto &seg) static {
-                           return std::format("{}", seg);
-                       });
+        auto strings = lt | std::views::transform(
+                                [](const auto &seg) static { return std::format("{}", seg); });
         return format_to(ctx.out(), "{:s}", std::views::join_with(strings, " U "sv));
     }
 };

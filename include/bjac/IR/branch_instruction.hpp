@@ -62,8 +62,18 @@ class BranchInstruction final : public Instruction {
 
     std::string to_string() const override;
 
-    std::vector<Instruction *> inputs() override { return {condition_}; }
-    std::vector<const Instruction *> inputs() const override { return {condition_}; }
+    std::vector<Instruction *> inputs() override {
+        if (condition_) {
+            return {condition_};
+        }
+        return {};
+    }
+    std::vector<const Instruction *> inputs() const override {
+        if (condition_) {
+            return {condition_};
+        }
+        return {};
+    }
 
   private:
     friend class BasicBlock;

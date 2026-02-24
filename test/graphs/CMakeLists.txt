@@ -4,13 +4,9 @@ add_executable(bjac_graphs_tests
     src/loop_tree.cpp
 )
 
-target_include_directories(bjac_graphs_tests PRIVATE include)
-
 target_link_libraries(bjac_graphs_tests
 PRIVATE
-    GTest::GTest
-    GTest::gtest_main
-    Threads::Threads
+    tests_common
     bjac::graphs
     bjac::ir
 )

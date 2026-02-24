@@ -1,5 +1,5 @@
-#ifndef TEST_GRAPHS_INCLUDE_COMMON_HPP
-#define TEST_GRAPHS_INCLUDE_COMMON_HPP
+#ifndef TEST_INCLUDE_TEST_COMMON_HPP
+#define TEST_INCLUDE_TEST_COMMON_HPP
 
 #include <algorithm>
 #include <format>
@@ -14,9 +14,7 @@
 
 #include "bjac/IR/function.hpp"
 
-inline auto setup(std::initializer_list<char> ilist) {
-    bjac::Function foo{"foo", bjac::Type::kVoid, {}};
-
+inline auto setup(bjac::Function &foo, std::initializer_list<char> ilist) {
     std::unordered_map<char, bjac::BasicBlock *> bb;
     bb.reserve(foo.size());
 
@@ -29,7 +27,7 @@ inline auto setup(std::initializer_list<char> ilist) {
         names.emplace(&BB, c);
     }
 
-    return std::tuple{std::move(foo), std::move(bb), std::move(names)};
+    return std::tuple{std::move(bb), std::move(names)};
 }
 
 inline std::string actual_names(const auto &names, std::ranges::forward_range auto vertices) {
@@ -58,4 +56,4 @@ template <std::ranges::forward_range R1>
     return ::testing::AssertionFailure() << actual_names(names, range);
 }
 
-#endif // TEST_GRAPHS_INCLUDE_COMMON_HPP
+#endif // TEST_INCLUDE_TEST_COMMON_HPP
