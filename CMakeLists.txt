@@ -120,6 +120,7 @@ FILE_SET
 BASE_DIRS
     include
 FILES
+    include/bjac/analysis/lifetime.hpp
     include/bjac/analysis/liveness.hpp
 )
 

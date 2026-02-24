@@ -1,5 +1,5 @@
 add_executable(bjac_analysis_tests
-    src/liveness.cpp
+    src/lifetime.cpp
 )
 
 target_link_libraries(bjac_analysis_tests

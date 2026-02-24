@@ -2,17 +2,17 @@
 
 #include <gtest/gtest.h>
 
-#include "bjac/analysis/liveness.hpp"
+#include "bjac/analysis/lifetime.hpp"
 
 using Segment = bjac::Lifetime::Segment;
 
-TEST(Liveness, Empty) {
+TEST(Lifetime, Empty) {
     bjac::Lifetime lt;
 
     EXPECT_EQ("", std::format("{}", lt));
 }
 
-TEST(Liveness, OneSegment) {
+TEST(Lifetime, OneSegment) {
     bjac::Lifetime lt;
 
     lt.add(bjac::Lifetime::Segment{1, 5});
@@ -21,7 +21,7 @@ TEST(Liveness, OneSegment) {
     EXPECT_EQ("[1; 5]", std::format("{}", lt));
 }
 
-TEST(Liveness, TwoNonOverlappingSegments) {
+TEST(Lifetime, TwoNonOverlappingSegments) {
     // Assign
     bjac::Lifetime lt{};
 
@@ -35,7 +35,7 @@ TEST(Liveness, TwoNonOverlappingSegments) {
     EXPECT_EQ("[1; 5] U [7; 9]", std::format("{}", lt));
 }
 
-TEST(Liveness, TwoOverlappingSegments) {
+TEST(Lifetime, TwoOverlappingSegments) {
     // Assign
     bjac::Lifetime lt{Segment{1, 5}};
 
@@ -47,7 +47,20 @@ TEST(Liveness, TwoOverlappingSegments) {
     EXPECT_EQ("[1; 9]", std::format("{}", lt));
 }
 
-TEST(Liveness, ThreeOverlappingSegments) {
+TEST(Lifetime, TwoSegmentsOverlappingByASinglePoint) {
+    // Assign
+    bjac::Lifetime lt;
+
+    // Act
+    lt.add(Segment{1, 5});
+    lt.add(Segment{5, 10});
+
+    // Assert
+    EXPECT_TRUE(lt.contains(Segment{1, 10}));
+    EXPECT_EQ("[1; 10]", std::format("{}", lt));
+}
+
+TEST(Lifetime, ThreeOverlappingSegments) {
     // Assign
     bjac::Lifetime lt{Segment{1, 5}, Segment{6, 10}};
 
