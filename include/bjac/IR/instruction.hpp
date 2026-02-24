@@ -77,6 +77,10 @@ class Instruction : public Value, public ilist_node<Instruction> {
 
     bool is_other_op() const noexcept { return Instruction::is_other_op(opcode_); }
 
+    static constexpr bool is_phi(Opcode opcode) noexcept { return opcode == Opcode::kPHI; }
+
+    constexpr bool is_phi() const noexcept { return Instruction::is_phi(opcode_); }
+
     void add_user(Instruction *value) { users_.insert(value); }
     void remove_user(Instruction *value) { users_.erase(value); }
 
