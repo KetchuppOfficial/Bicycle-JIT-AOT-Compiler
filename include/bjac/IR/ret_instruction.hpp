@@ -29,6 +29,9 @@ class ReturnInstruction final : public Instruction {
 
     std::string to_string() const override;
 
+    std::vector<Instruction *> inputs() override { return {ret_val_}; }
+    std::vector<const Instruction *> inputs() const override { return {ret_val_}; }
+
   private:
     friend class BasicBlock;
 

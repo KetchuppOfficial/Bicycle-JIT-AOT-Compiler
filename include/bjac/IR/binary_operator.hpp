@@ -1,6 +1,7 @@
 #ifndef INCLUDE_BJAC_IR_BINARY_OPERATOR_HPP
 #define INCLUDE_BJAC_IR_BINARY_OPERATOR_HPP
 
+#include <array>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -48,6 +49,9 @@ class BinaryOperator final : public Instruction {
     }
 
     std::string to_string() const override;
+
+    std::vector<Instruction *> inputs() override { return {lhs_, rhs_}; }
+    std::vector<const Instruction *> inputs() const override { return {lhs_, rhs_}; }
 
   private:
     friend class BasicBlock;

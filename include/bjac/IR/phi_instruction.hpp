@@ -47,7 +47,9 @@ class PHIInstruction final : public Instruction {
     }
 
     template <typename Self>
-    auto *get_value(this Self &&self, BasicBlock &bb) {
+    auto get_value(this Self &&self, BasicBlock &bb)
+        -> std::conditional_t<std::is_const_v<std::remove_reference_t<Self>>, const Instruction,
+                              Instruction> * {
         if (auto it = self.records_.find(std::addressof(bb)); it != self.records_.end()) {
             return std::addressof(std::forward_like<Self>(*it->second));
         }
@@ -71,6 +73,14 @@ class PHIInstruction final : public Instruction {
     }
 
     std::string to_string() const override;
+
+    std::vector<Instruction *> inputs() override {
+        return {std::from_range, records_ | std::views::values};
+    }
+
+    std::vector<const Instruction *> inputs() const override {
+        return {std::from_range, records_ | std::views::values};
+    }
 
   private:
     friend class BasicBlock;

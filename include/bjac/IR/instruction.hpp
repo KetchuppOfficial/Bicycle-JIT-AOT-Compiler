@@ -9,6 +9,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 #include "bjac/IR/type.hpp"
 #include "bjac/IR/value.hpp"
@@ -93,6 +94,9 @@ class Instruction : public Value, public ilist_node<Instruction> {
         return users_ | std::views::transform(
                             [](Instruction *i) static -> const Instruction * { return i; });
     }
+
+    virtual std::vector<Instruction *> inputs() { return {}; }
+    virtual std::vector<const Instruction *> inputs() const { return {}; }
 
     virtual std::string to_string() const = 0;
 
