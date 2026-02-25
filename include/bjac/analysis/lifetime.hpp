@@ -68,6 +68,8 @@ class Lifetime final {
     const_reverse_iterator rend() const noexcept { return lt_segments_.rend(); }
     const_reverse_iterator crend() const noexcept { return rend(); }
 
+    const_iterator find(const Segment &seg) const { return lt_segments_.find(seg); }
+
     // Checks whether given point/segment belongs to the lifetime set
     bool intersects(std::size_t point) const { return intersects(Segment{point, point}); }
     bool intersects(const Segment &seg) const { return lt_segments_.contains(seg); }
@@ -76,28 +78,26 @@ class Lifetime final {
     // belongs to the lifetime set for any positive value e (a == b for the case of a point)
     bool contains(std::size_t point) const { return contains(Segment{point, point}); }
     bool contains(const Segment &seg) const {
-        auto it = lt_segments_.find(seg);
-        return it != lt_segments_.end() && *it == seg;
+        auto it = find(seg);
+        return it != end() && *it == seg;
     }
 
-    auto find(const Segment &seg) const { return lt_segments_.find(seg); }
-
-    void add(Segment seg) {
+    const_iterator add(Segment seg) {
         auto [first, last] = lt_segments_.equal_range(seg);
         while (first != last) {
             seg = Segment{std::min(seg.start(), first->start()), std::max(seg.end(), first->end())};
-            lt_segments_.erase(std::exchange(first, std::next(first)));
+            remove(std::exchange(first, std::next(first)));
         }
-        lt_segments_.insert(seg);
-    }
-
-    void remove(Segment seg) {
-        if (auto it = lt_segments_.find(seg); it != lt_segments_.end() && *it == seg) {
-            lt_segments_.erase(it);
-        }
+        return lt_segments_.insert(seg).first;
     }
 
     void remove(const_iterator it) { lt_segments_.erase(it); }
+
+    void remove(const Segment &seg) {
+        if (auto it = find(seg); it != end() && *it == seg) {
+            remove(it);
+        }
+    }
 
     bool operator==(const Lifetime &) const = default;
 
