@@ -24,7 +24,7 @@ TEST(LinearOrder, Mandatory_1) {
     const bjac::LinearOrder<bjac::ConstFunctionGraphTraits> linear_order{foo};
 
     // Assert
-    EXPECT_TRUE(matches(linear_order.blocks(),
+    EXPECT_TRUE(matches(linear_order,
                         {std::array{bb.at('A'), bb.at('B'), bb.at('D'), bb.at('E'), bb.at('C')}},
                         names));
 }
@@ -47,7 +47,7 @@ TEST(LinearOrder, Mandatory_2) {
 
     // Assert
     EXPECT_TRUE(matches(
-        linear_order.blocks(),
+        linear_order,
         {std::array{bb.at('A'), bb.at('B'), bb.at('C'), bb.at('D'), bb.at('E'), bb.at('F')}},
         names));
 }
@@ -71,7 +71,7 @@ TEST(LinearOrder, Mandatory_3) {
     const bjac::LinearOrder<bjac::ConstFunctionGraphTraits> linear_order{foo};
 
     // Assert
-    EXPECT_TRUE(matches(linear_order.blocks(),
+    EXPECT_TRUE(matches(linear_order,
                         {std::array{bb.at('A'), bb.at('B'), bb.at('C'), bb.at('D'), bb.at('F'),
                                     bb.at('G'), bb.at('H'), bb.at('E')},
                          std::array{bb.at('A'), bb.at('B'), bb.at('D'), bb.at('C'), bb.at('F'),
@@ -102,7 +102,7 @@ TEST(LinearOrder, Mandatory_5) {
 
     // Assert
     EXPECT_TRUE(
-        matches(linear_order.blocks(),
+        matches(linear_order,
                 {std::array{bb.at('A'), bb.at('B'), bb.at('C'), bb.at('J'), bb.at('D'), bb.at('E'),
                             bb.at('F'), bb.at('G'), bb.at('H'), bb.at('I'), bb.at('K')},
                  std::array{bb.at('A'), bb.at('B'), bb.at('J'), bb.at('C'), bb.at('D'), bb.at('E'),

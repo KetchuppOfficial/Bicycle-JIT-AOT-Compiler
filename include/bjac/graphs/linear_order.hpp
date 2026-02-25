@@ -2,7 +2,6 @@
 #define INCLUDE_BJAC_GRAPHS_LINEAR_ORDER_HPP
 
 #include <queue>
-#include <ranges>
 #include <vector>
 
 #include "bjac/graphs/dfs.hpp"
@@ -12,15 +11,25 @@
 namespace bjac {
 
 template <typename Traits>
-class LinearOrder final {
+class LinearOrder final : private std::vector<typename Traits::vertex_handler> {
+    enum class Color : bool { white, black };
+
+    using base = std::vector<typename Traits::vertex_handler>;
+
   public:
     using graph_type = typename Traits::graph_type;
     using vertex_handler = typename Traits::vertex_handler;
 
-  private:
-    enum class Color : bool { white, black };
+    using base::begin;
+    using base::cbegin;
+    using base::cend;
+    using base::crbegin;
+    using base::crend;
+    using base::end;
+    using base::rbegin;
+    using base::rend;
+    using base::size;
 
-  public:
     explicit LinearOrder(graph_type &g) : LinearOrder{g, DFS<Traits>{g}} {}
 
     explicit LinearOrder(graph_type &g, const DFS<Traits> &dfs)
@@ -32,7 +41,7 @@ class LinearOrder final {
 
     explicit LinearOrder(graph_type &g, const DominatorTree<Traits> &dom_tree,
                          const LoopTree<Traits> &loop_tree) {
-        order_.reserve(Traits::n_vertices(g));
+        this->reserve(Traits::n_vertices(g));
 
         auto color_table = [&g] {
             std::unordered_map<vertex_handler, Color> color_table;
@@ -51,7 +60,7 @@ class LinearOrder final {
             const vertex_handler u = queue.front();
             queue.pop();
 
-            order_.push_back(u);
+            this->push_back(u);
 
             if (loop_tree.is_header(u)) {
                 for (auto v : loop_tree.get_loop(u).vertices()) {
@@ -71,11 +80,6 @@ class LinearOrder final {
             }
         }
     }
-
-    std::ranges::random_access_range auto blocks() const { return std::views::all(order_); }
-
-  private:
-    std::vector<vertex_handler> order_;
 };
 
 } // namespace bjac

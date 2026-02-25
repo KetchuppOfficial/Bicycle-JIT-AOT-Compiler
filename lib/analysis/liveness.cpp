@@ -29,7 +29,7 @@ LivenessAnalysis::LivenessAnalysis(const Function &func) {
     live_ins.reserve(func.size());
 
     std::unordered_map<const Instruction *, std::size_t> numbering;
-    for (std::size_t n = 0; const auto *bb : linear_order.blocks()) {
+    for (std::size_t n = 0; const auto *bb : linear_order) {
         auto begin = bb->begin();
         auto end = bb->end();
         auto first_non_phi = std::find_if_not(begin, end, is_phi);
@@ -44,7 +44,7 @@ LivenessAnalysis::LivenessAnalysis(const Function &func) {
         }
     }
 
-    for (const auto *bb : linear_order.blocks() | std::views::reverse) {
+    for (const auto *bb : linear_order | std::views::reverse) {
         auto &live_in = live_ins[bb];
 
         for (const auto *succ : bb->successors()) {
