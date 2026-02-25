@@ -10,6 +10,8 @@
 
 #include "bjac/IR/branch_instruction.hpp"
 #include "bjac/IR/instruction.hpp"
+#include "bjac/IR/phi_instruction.hpp"
+
 #include "bjac/utils/ilist.hpp"
 #include "bjac/utils/ilist_node.hpp"
 
@@ -68,6 +70,20 @@ class BasicBlock final : public Value, public ilist_node<BasicBlock>, private il
 
     template <typename T, typename... Args>
     iterator emplace(const_iterator pos, Args &&...args) {
+        if constexpr (std::is_same_v<T, BranchInstruction>) {
+            if (pos != end()) {
+                throw std::invalid_argument{
+                    "inserting branch instructions is only allowed at the end of basic blocks"};
+            }
+        }
+
+        if constexpr (std::is_same_v<T, PHIInstruction>) {
+            if (pos != begin() && std::prev(pos)->get_opcode() != Instruction::Opcode::kPHI) {
+                throw std::invalid_argument{
+                    "inserting PHI instruction is only allowed at the start of basic blocks"};
+            }
+        }
+
         std::unique_ptr<T> instr{new T(*this, std::forward<Args>(args)...)};
 
         if constexpr (std::is_same_v<T, BranchInstruction>) {
