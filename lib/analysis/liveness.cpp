@@ -18,8 +18,6 @@ LivenessAnalysis::LivenessAnalysis(const Function &func) {
     using LiveIn = std::unordered_set<const Instruction *>;
     using Segment = Lifetime::Segment;
 
-    auto is_phi = [](const Instruction &instr) static { return instr.is_phi(); };
-
     const DFS<ConstFunctionGraphTraits> dfs{func};
     const DominatorTree<ConstFunctionGraphTraits> dom_tree{func, dfs};
     const LoopTree<ConstFunctionGraphTraits> loop_tree{func, dfs, dom_tree};
@@ -30,16 +28,14 @@ LivenessAnalysis::LivenessAnalysis(const Function &func) {
 
     std::unordered_map<const Instruction *, std::size_t> numbering;
     for (std::size_t n = 0; const auto *bb : linear_order) {
-        auto begin = bb->begin();
-        auto end = bb->end();
-        auto first_non_phi = std::find_if_not(begin, end, is_phi);
-        for (const auto &instr : std::ranges::subrange{begin, first_non_phi}) {
+        auto phi_instruction = bb->phi_instructions();
+        for (const auto &instr : phi_instruction) {
             numbering.emplace(std::addressof(instr), n);
         }
 
-        n += (begin != first_non_phi);
+        n += !phi_instruction.empty();
 
-        for (const auto &instr : std::ranges::subrange{first_non_phi, end}) {
+        for (const auto &instr : bb->non_phi_instructions()) {
             numbering.emplace(std::addressof(instr), n++);
         }
     }
@@ -49,7 +45,7 @@ LivenessAnalysis::LivenessAnalysis(const Function &func) {
 
         for (const auto *succ : bb->successors()) {
             live_in.insert_range(live_ins[succ]);
-            for (const auto &phi : *succ | std::views::filter(is_phi)) {
+            for (const auto &phi : succ->phi_instructions()) {
                 // TODO: try to deal with constness issues and remove const_cast
                 auto *input = static_cast<const PHIInstruction &>(phi).get_value(
                     const_cast<BasicBlock &>(*bb));
@@ -66,9 +62,7 @@ LivenessAnalysis::LivenessAnalysis(const Function &func) {
             lifetimes_[instr].add(Segment{first_instr_n, last_instr_n});
         }
 
-        for (const auto &instr : *bb | std::views::reverse | std::views::filter([](auto &instr) {
-                 return !instr.is_phi();
-             })) {
+        for (const auto &instr : bb->non_phi_instructions() | std::views::reverse) {
             const auto instr_n = numbering.at(std::addressof(instr));
 
             if (instr.get_type() != Type::kVoid) {
@@ -94,7 +88,7 @@ LivenessAnalysis::LivenessAnalysis(const Function &func) {
             }
         }
 
-        for (const auto &phi : *bb | std::views::filter(is_phi)) {
+        for (const auto &phi : bb->phi_instructions()) {
             live_in.erase(std::addressof(phi));
         }
 

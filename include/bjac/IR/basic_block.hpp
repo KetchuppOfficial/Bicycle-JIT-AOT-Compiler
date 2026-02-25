@@ -95,6 +95,13 @@ class BasicBlock final : public Value, public ilist_node<BasicBlock>, private il
 
         ++next_instr_id_;
 
+        if constexpr (!std::is_same_v<T, PHIInstruction>) {
+            if (pos == begin() || std::prev(pos)->get_opcode() == Instruction::Opcode::kPHI) {
+                first_non_phi_ = instructions::insert(pos, std::move(instr));
+                return first_non_phi_;
+            }
+        }
+
         return instructions::insert(pos, std::move(instr));
     }
 
@@ -108,9 +115,35 @@ class BasicBlock final : public Value, public ilist_node<BasicBlock>, private il
         return static_cast<T &>(*emplace<T>(end(), std::forward<Args>(args)...));
     }
 
+    iterator erase(const_iterator pos) {
+        if (pos == first_non_phi_) {
+            ++first_non_phi_;
+        }
+        return instructions::erase(pos);
+    }
+
+    void pop_front() { erase(begin()); }
+    void pop_back() { erase(std::prev(end())); }
+
     // 1. Substitutes *from with *to for all users and arguments of *from
     // 2. Erases *from from this block, hence from is invalidated
     void replace_instruction(iterator from, Instruction &to);
+
+    std::ranges::bidirectional_range auto phi_instructions() {
+        return std::ranges::subrange{begin(), first_non_phi_};
+    }
+
+    std::ranges::bidirectional_range auto phi_instructions() const {
+        return std::ranges::subrange{begin(), first_non_phi_};
+    }
+
+    std::ranges::bidirectional_range auto non_phi_instructions() {
+        return std::ranges::subrange{first_non_phi_, end()};
+    }
+
+    std::ranges::bidirectional_range auto non_phi_instructions() const {
+        return std::ranges::subrange{first_non_phi_, end()};
+    }
 
     void print(std::ostream &os) const;
     friend std::ostream &operator<<(std::ostream &os, const BasicBlock &bb);
@@ -130,15 +163,12 @@ class BasicBlock final : public Value, public ilist_node<BasicBlock>, private il
     using instructions::rbegin;
     using instructions::rend;
 
-    using instructions::erase;
-    using instructions::pop_back;
-    using instructions::pop_front;
-
   private:
     friend class Function;
 
     BasicBlock(Function &parent);
 
+    iterator first_non_phi_;
     Function *parent_;
     unsigned id_;
     unsigned next_instr_id_;

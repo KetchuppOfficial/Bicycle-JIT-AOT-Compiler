@@ -10,8 +10,8 @@
 namespace bjac {
 
 BasicBlock::BasicBlock(Function &parent)
-    : Value{Type::kNone}, parent_{std::addressof(parent)}, id_{parent.get_next_bb_id()},
-      next_instr_id_{0} {}
+    : Value{Type::kNone}, first_non_phi_{end()}, parent_{std::addressof(parent)},
+      id_{parent.get_next_bb_id()}, next_instr_id_{0} {}
 
 void BasicBlock::replace_instruction(iterator from, Instruction &to) {
     assert(from->get_parent() == this);
