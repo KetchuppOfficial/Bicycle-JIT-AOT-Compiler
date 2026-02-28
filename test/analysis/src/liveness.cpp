@@ -16,6 +16,13 @@ using enum bjac::Instruction::Opcode;
 using enum bjac::Type;
 using Segment = bjac::Lifetime::Segment;
 
+::testing::AssertionResult check(const bjac::Lifetime &lhs, const bjac::Lifetime &rhs) {
+    if (lhs == rhs) {
+        return ::testing::AssertionSuccess();
+    }
+    return ::testing::AssertionFailure() << std::format("{} != {}", lhs, rhs);
+}
+
 /*   i64 foo(i64)
  *   %bb0:
  * 0     %0.0 = i64 arg [0] ; used by: %1.1
@@ -64,12 +71,12 @@ TEST(Liveness, Loop1) {
     }
 
     // Assert
-    EXPECT_EQ(lifetimes.at(arg), bjac::Lifetime{Segment(0, 8)});
-    EXPECT_EQ(lifetimes.at(i), bjac::Lifetime{Segment(1, 3)});
-    EXPECT_EQ(lifetimes.at(one), bjac::Lifetime{Segment(2, 8)});
-    EXPECT_EQ(lifetimes.at(phi), bjac::Lifetime({Segment(4, 7), Segment(9, 9)}));
-    EXPECT_EQ(lifetimes.at(cond), bjac::Lifetime{Segment(5, 6)});
-    EXPECT_EQ(lifetimes.at(add), bjac::Lifetime{Segment(7, 8)});
+    EXPECT_TRUE(check(lifetimes.at(arg), bjac::Lifetime{Segment(0, 8)}));
+    EXPECT_TRUE(check(lifetimes.at(i), bjac::Lifetime{Segment(1, 3)}));
+    EXPECT_TRUE(check(lifetimes.at(one), bjac::Lifetime{Segment(2, 8)}));
+    EXPECT_TRUE(check(lifetimes.at(phi), bjac::Lifetime({Segment(4, 7), Segment(9, 9)})));
+    EXPECT_TRUE(check(lifetimes.at(cond), bjac::Lifetime{Segment(5, 6)}));
+    EXPECT_TRUE(check(lifetimes.at(add), bjac::Lifetime{Segment(7, 8)}));
 }
 
 /*
@@ -142,19 +149,18 @@ TEST(Liveness, Loop2) {
     const bjac::LivenessAnalysis lifetimes{foo};
 
     // Assert
-    EXPECT_EQ(lifetimes.at(zero), bjac::Lifetime{Segment(0, 4)});
-    EXPECT_EQ(lifetimes.at(one), bjac::Lifetime{Segment(1, 16)});
-    EXPECT_EQ(lifetimes.at(two), bjac::Lifetime{Segment(2, 16)});
-    EXPECT_EQ(lifetimes.at(arg), bjac::Lifetime{Segment(3, 16)});
-    EXPECT_EQ(lifetimes.at(b_phi), bjac::Lifetime{Segment(5, 6)});
-    EXPECT_EQ(lifetimes.at(prod), bjac::Lifetime{Segment(6, 15)});
-    EXPECT_EQ(lifetimes.at(b_cmp), bjac::Lifetime{Segment(7, 8)});
-    EXPECT_EQ(lifetimes.at(c_prod), bjac::Lifetime{Segment(9, 10)});
-    EXPECT_EQ(lifetimes.at(d_prod), bjac::Lifetime{Segment(11, 12)});
-    EXPECT_EQ(lifetimes.at(e_phi), bjac::Lifetime{Segment(13, 17)});
-    EXPECT_EQ(lifetimes.at(f_cmp), bjac::Lifetime{Segment(15, 16)});
+    EXPECT_TRUE(check(lifetimes.at(zero), bjac::Lifetime{Segment(0, 4)}));
+    EXPECT_TRUE(check(lifetimes.at(one), bjac::Lifetime{Segment(1, 16)}));
+    EXPECT_TRUE(check(lifetimes.at(two), bjac::Lifetime{Segment(2, 16)}));
+    EXPECT_TRUE(check(lifetimes.at(arg), bjac::Lifetime{Segment(3, 16)}));
+    EXPECT_TRUE(check(lifetimes.at(b_phi), bjac::Lifetime{Segment(5, 6)}));
+    EXPECT_TRUE(check(lifetimes.at(prod), bjac::Lifetime{Segment(6, 15)}));
+    EXPECT_TRUE(check(lifetimes.at(b_cmp), bjac::Lifetime{Segment(7, 8)}));
+    EXPECT_TRUE(check(lifetimes.at(c_prod), bjac::Lifetime{Segment(9, 10)}));
+    EXPECT_TRUE(check(lifetimes.at(d_prod), bjac::Lifetime{Segment(11, 12)}));
+    EXPECT_TRUE(check(lifetimes.at(e_phi), bjac::Lifetime{Segment(13, 17)}));
+    EXPECT_TRUE(check(lifetimes.at(f_cmp), bjac::Lifetime{Segment(15, 16)}));
 }
-
 /*
  *    %bb0:
  *  0     %0.0 = i64 arg [0] ; used by: %0.3
@@ -168,10 +174,10 @@ TEST(Liveness, Loop2) {
  *  6     %2.2 = i64 add %2.0, %2.1 ; used by: %2.0
  *  7     %2.3 = i64 add %2.1, %0.2 ; used by: %2.1
  *  8     %2.4 br label %bb3
- *    %bb1: ; preds: %bb0
- *  9     %1.0 ret i64 %0.1
  *    %bb3: ; preds: %bb2
- * 10     %3.0 br label %bb2
+ *  9     %3.0 br label %bb2
+ *    %bb1: ; preds: %bb0
+ * 10     %1.0 ret i64 %0.1
  */
 TEST(Liveness, Loop3) {
     // Assign
@@ -205,12 +211,12 @@ TEST(Liveness, Loop3) {
     const bjac::LivenessAnalysis lifetimes{foo};
 
     // Assert
-    EXPECT_EQ(lifetimes.at(arg), bjac::Lifetime{Segment(0, 3)});
-    EXPECT_EQ(lifetimes.at(zero), bjac::Lifetime({Segment(1, 4), Segment(9, 9)}));
-    EXPECT_EQ(lifetimes.at(one), bjac::Lifetime{Segment(2, 10)});
-    EXPECT_EQ(lifetimes.at(a_cmp), bjac::Lifetime{Segment(3, 4)});
-    EXPECT_EQ(lifetimes.at(acc), bjac::Lifetime{Segment(5, 6)});
-    EXPECT_EQ(lifetimes.at(counter), bjac::Lifetime{Segment(5, 7)});
-    EXPECT_EQ(lifetimes.at(next_acc), bjac::Lifetime({Segment(6, 8), Segment(10, 10)}));
-    EXPECT_EQ(lifetimes.at(next_counter), bjac::Lifetime({Segment(7, 8), Segment(10, 10)}));
+    EXPECT_TRUE(check(lifetimes.at(arg), bjac::Lifetime{Segment(0, 3)}));
+    EXPECT_TRUE(check(lifetimes.at(zero), bjac::Lifetime({Segment(1, 4), Segment(10, 10)})));
+    EXPECT_TRUE(check(lifetimes.at(one), bjac::Lifetime{Segment(2, 9)}));
+    EXPECT_TRUE(check(lifetimes.at(a_cmp), bjac::Lifetime{Segment(3, 4)}));
+    EXPECT_TRUE(check(lifetimes.at(acc), bjac::Lifetime{Segment(5, 6)}));
+    EXPECT_TRUE(check(lifetimes.at(counter), bjac::Lifetime{Segment(5, 7)}));
+    EXPECT_TRUE(check(lifetimes.at(next_acc), bjac::Lifetime({Segment(6, 9)})));
+    EXPECT_TRUE(check(lifetimes.at(next_counter), bjac::Lifetime({Segment(7, 9)})));
 }

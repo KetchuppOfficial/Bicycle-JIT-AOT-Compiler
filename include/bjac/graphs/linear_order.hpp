@@ -1,7 +1,10 @@
 #ifndef INCLUDE_BJAC_GRAPHS_LINEAR_ORDER_HPP
 #define INCLUDE_BJAC_GRAPHS_LINEAR_ORDER_HPP
 
-#include <queue>
+#include <cassert>
+#include <deque>
+#include <ranges>
+#include <unordered_map>
 #include <vector>
 
 #include "bjac/graphs/dfs.hpp"
@@ -53,29 +56,30 @@ class LinearOrder final : private std::vector<typename Traits::vertex_handler> {
             return color_table;
         }();
 
-        std::queue<vertex_handler> queue;
-        queue.push(Traits::source(g));
+        std::deque<vertex_handler> queue;
+        queue.push_back(Traits::source(g));
 
         while (!queue.empty()) {
             const vertex_handler u = queue.front();
-            queue.pop();
+            queue.pop_front();
 
             this->push_back(u);
 
             if (loop_tree.is_header(u)) {
-                for (auto v : loop_tree.get_loop(u).vertices()) {
-                    if (auto &color = color_table.find(v)->second;
-                        color == Color::white /* also implies that v != u*/) {
-                        color = Color::black;
-                        queue.push(v);
-                    }
+                // drop(1) not to process the header again
+                for (auto v :
+                     loop_tree.get_loop(u).vertices() | std::views::drop(1) | std::views::reverse) {
+                    auto &color = color_table.find(v)->second;
+                    assert(color == Color::white);
+                    color = Color::black;
+                    queue.push_front(v);
                 }
             }
 
             for (auto v : dom_tree.successors(u)) {
                 if (auto &color = color_table.find(v)->second; color == Color::white) {
                     color = Color::black;
-                    queue.push(v);
+                    queue.push_back(v);
                 }
             }
         }
