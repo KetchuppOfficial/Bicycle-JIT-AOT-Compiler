@@ -1,0 +1,32 @@
+on:
+  - push
+jobs:
+  build-debug:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: nix develop --command bash -e {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v27
+      - name: Configure (Debug)
+        run: cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Debug -DBJAC_BUILD_TESTS=ON
+      - name: Build (Debug)
+        run: cmake --build build -j4
+      - name: Test (Debug)
+        run: ctest --test-dir build --output-on-failure
+
+  build-release:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: nix develop --command bash -e {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v27
+      - name: Configure (Release)
+        run: cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Release -DBJAC_BUILD_TESTS=ON
+      - name: Build (Release)
+        run: cmake --build build -j4
+      - name: Test (Release)
+        run: ctest --test-dir build --output-on-failure
