@@ -6,7 +6,6 @@
 #include <ranges>
 #include <unordered_map>
 #include <utility>
-#include <vector>
 
 #include "bjac/graphs/dominator_tree.hpp"
 #include "bjac/graphs/graph_traits.hpp"
@@ -27,7 +26,7 @@ class LoopTree final {
 
     explicit LoopTree(graph_type &g, const DFS<Traits> &dfs,
                       const DominatorTree<Traits> &dom_tree) {
-        for (const auto &[latch, header] : compute_back_edges(g, dfs, dom_tree)) {
+        for (auto [latch, header] : compute_back_edges(g, dfs, dom_tree)) {
             auto loop = std::make_unique<Loop<vertex_handler>>(header);
             loop->add_vertex(header);
 
@@ -65,18 +64,16 @@ class LoopTree final {
     }
 
   private:
-    static auto compute_back_edges(graph_type &g, const DFS<Traits> &dfs,
-                                   const DominatorTree<Traits> &dom_tree) {
-        std::vector<std::pair<vertex_handler, vertex_handler>> back_edges_;
-        for (vertex_handler v : dfs.pre_order()) {
-            for (vertex_handler u : Traits::adjacent_vertices(g, v)) {
-                if (v == u || dom_tree.is_dominator_of(v, u)) {
-                    back_edges_.emplace_back(v, u);
-                }
-            }
-        }
-
-        return back_edges_;
+    static std::ranges::view auto compute_back_edges(graph_type &g, const DFS<Traits> &dfs,
+                                                     const DominatorTree<Traits> &dom_tree) {
+        return dfs.pre_order() | std::views::transform([&g, &dom_tree](auto v) {
+                   return Traits::adjacent_vertices(g, v) |
+                          std::views::filter([v, &dom_tree](auto u) {
+                              return v == u || dom_tree.is_dominator_of(v, u);
+                          }) |
+                          std::views::transform([v](auto u) { return std::pair{v, u}; });
+               }) |
+               std::views::join;
     }
 
     std::unordered_map<vertex_handler, std::unique_ptr<Loop<vertex_handler>>> header_to_loop_;
