@@ -28,18 +28,19 @@ class LoopTree final {
     explicit LoopTree(graph_type &g, const DFS<Traits> &dfs,
                       const DominatorTree<Traits> &dom_tree) {
         for (const auto &[latch, header] : compute_back_edges(g, dfs, dom_tree)) {
-            const DFS<ReverseGraphTraits<Traits>> dfs(g, latch, {header});
-
             auto loop = std::make_unique<Loop<vertex_handler>>(header);
-
             loop->add_vertex(header);
-            for (vertex_handler v : dfs.post_order()) {
-                loop->add_vertex(v);
-                if (auto it = header_to_loop_.find(v); it != header_to_loop_.end()) {
-                    auto &inner_loop_ptr = it->second;
-                    inner_loop_ptr->set_parent_loop(*loop);
-                    loop->add_inner_loop(std::move(inner_loop_ptr));
-                    header_to_loop_.erase(it);
+
+            if (latch != header) {
+                const DFS<ReverseGraphTraits<Traits>> dfs(g, latch, {header});
+                for (vertex_handler v : dfs.post_order()) {
+                    loop->add_vertex(v);
+                    if (auto it = header_to_loop_.find(v); it != header_to_loop_.end()) {
+                        auto &inner_loop_ptr = it->second;
+                        inner_loop_ptr->set_parent_loop(*loop);
+                        loop->add_inner_loop(std::move(inner_loop_ptr));
+                        header_to_loop_.erase(it);
+                    }
                 }
             }
 
@@ -69,7 +70,7 @@ class LoopTree final {
         std::vector<std::pair<vertex_handler, vertex_handler>> back_edges_;
         for (vertex_handler v : dfs.pre_order()) {
             for (vertex_handler u : Traits::adjacent_vertices(g, v)) {
-                if (dom_tree.is_dominator_of(v, u)) {
+                if (v == u || dom_tree.is_dominator_of(v, u)) {
                     back_edges_.emplace_back(v, u);
                 }
             }

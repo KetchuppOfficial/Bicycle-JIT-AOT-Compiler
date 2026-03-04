@@ -210,3 +210,26 @@ TEST(LoopTree, Mandatory_6) {
     EXPECT_EQ(loop.get_parent_loop(), nullptr);
     EXPECT_TRUE(matches(loop.vertices(), {std::array{bb.at('B'), bb.at('E'), bb.at('F')}}, names));
 }
+
+TEST(LoopTree, SingleBlockLoop) {
+    // Assign
+    bjac::Function foo{"foo", bjac::Type::kVoid, {}};
+    auto [bb, names] = setup(foo, {'A', 'B'});
+
+    auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(bjac::Type::kI1, 0);
+
+    bb.at('A')->emplace_back<bjac::BranchInstruction>(cond, *bb.at('A'), *bb.at('B'));
+
+    // Act
+    const bjac::LoopTree<bjac::ConstFunctionGraphTraits> loop_tree{foo};
+
+    // Assert
+    EXPECT_EQ(loop_tree.loops_count(), 1);
+
+    const auto &loop = loop_tree.get_loop(bb.at('A'));
+    EXPECT_EQ(loop.get_header(), bb.at('A'));
+    EXPECT_EQ(loop.vertices_count(), 1);
+    EXPECT_EQ(loop.inner_loops_count(), 0);
+    EXPECT_EQ(loop.get_parent_loop(), nullptr);
+    EXPECT_TRUE(matches(loop.vertices(), {std::array{bb.at('A')}}, names));
+}
