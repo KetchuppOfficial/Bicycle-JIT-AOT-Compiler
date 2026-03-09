@@ -16,7 +16,7 @@ using enum bjac::Instruction::Opcode;
 using enum bjac::Type;
 using Segment = bjac::Lifetime::Segment;
 
-::testing::AssertionResult check(const bjac::Lifetime &lhs, const bjac::Lifetime &rhs) {
+static ::testing::AssertionResult check(const bjac::Lifetime &lhs, const bjac::Lifetime &rhs) {
     if (lhs == rhs) {
         return ::testing::AssertionSuccess();
     }
@@ -155,6 +155,7 @@ TEST(Liveness, Loop2) {
     EXPECT_TRUE(check(lifetimes.at(e_phi), bjac::Lifetime{Segment(13, 17)}));
     EXPECT_TRUE(check(lifetimes.at(f_cmp), bjac::Lifetime{Segment(15, 16)}));
 }
+
 /*
  *    %bb0:
  *  0     %0.0 = i64 arg [0] ; used by: %0.3
