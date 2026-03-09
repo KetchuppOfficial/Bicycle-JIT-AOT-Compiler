@@ -12,18 +12,21 @@ namespace bjac {
 class Function;
 class Instruction;
 
-class LivenessAnalysis final {
+class LivenessAnalysis final : std::unordered_map<const Instruction *, Lifetime> {
+    using base = std::unordered_map<const Instruction *, Lifetime>;
+
   public:
     explicit LivenessAnalysis(const Function &func);
 
-    const Lifetime &at(const Instruction &instr) const {
-        return lifetimes_.at(std::addressof(instr));
-    }
+    const Lifetime &at(const Instruction &instr) const { return base::at(std::addressof(instr)); }
 
-    std::ranges::forward_range auto lifetimes() const { return std::views::all(lifetimes_); }
+    std::ranges::view auto lifetimes() const { return *this | std::views::values; }
 
-  private:
-    std::unordered_map<const Instruction *, Lifetime> lifetimes_;
+    using base::begin;
+    using base::cbegin;
+    using base::cend;
+    using base::end;
+    using base::size;
 };
 
 } // namespace bjac

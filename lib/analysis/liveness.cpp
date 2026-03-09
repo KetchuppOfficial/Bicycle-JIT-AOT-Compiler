@@ -60,14 +60,14 @@ LivenessAnalysis::LivenessAnalysis(const Function &func) {
 
         for (const auto *instr : live_in) {
             assert(instr);
-            lifetimes_[instr].add(Segment{first_instr_n, last_instr_n});
+            (*this)[instr].add(Segment{first_instr_n, last_instr_n});
         }
 
         for (const auto &instr : bb->non_phi_instructions() | std::views::reverse) {
             const auto instr_n = numbering.at(std::addressof(instr));
 
             if (instr.get_type() != Type::kVoid) {
-                auto &lt = lifetimes_[std::addressof(instr)];
+                auto &lt = (*this)[std::addressof(instr)];
                 auto seg = Segment{instr_n, last_instr_n};
                 if (auto it = lt.find(seg); it == lt.end()) {
                     lt.add(seg);
@@ -84,7 +84,7 @@ LivenessAnalysis::LivenessAnalysis(const Function &func) {
 
             for (const auto *input : instr.inputs()) {
                 assert(input);
-                lifetimes_[input].add(Segment{first_instr_n, instr_n});
+                (*this)[input].add(Segment{first_instr_n, instr_n});
                 live_in.insert(input);
             }
         }
@@ -98,7 +98,7 @@ LivenessAnalysis::LivenessAnalysis(const Function &func) {
             const auto loop_end = numbering.at(std::addressof(last_loop_instr));
             for (const auto *instr : live_in) {
                 assert(instr);
-                lifetimes_[instr].add(Segment{first_instr_n, loop_end});
+                (*this)[instr].add(Segment{first_instr_n, loop_end});
             }
         }
     }

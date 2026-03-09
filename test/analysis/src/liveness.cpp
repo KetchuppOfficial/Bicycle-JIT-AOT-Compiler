@@ -65,12 +65,6 @@ TEST(Liveness, Loop1) {
     const bjac::LivenessAnalysis lifetimes{foo};
 
     // Assert
-    for (auto &[instr, lifetime] : lifetimes.lifetimes()) {
-        assert(instr);
-        std::cerr << instr->to_string() << ":\n    " << lifetime << '\n';
-    }
-
-    // Assert
     EXPECT_TRUE(check(lifetimes.at(arg), bjac::Lifetime{Segment(0, 8)}));
     EXPECT_TRUE(check(lifetimes.at(i), bjac::Lifetime{Segment(1, 3)}));
     EXPECT_TRUE(check(lifetimes.at(one), bjac::Lifetime{Segment(2, 8)}));
