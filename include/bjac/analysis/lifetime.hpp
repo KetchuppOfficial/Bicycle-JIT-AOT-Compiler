@@ -58,6 +58,8 @@ class Lifetime final {
         }
     }
 
+    bool empty() const noexcept { return lt_segments_.empty(); }
+
     const_iterator begin() const noexcept { return lt_segments_.begin(); }
     const_iterator cbegin() const noexcept { return begin(); }
     const_reverse_iterator rbegin() const noexcept { return lt_segments_.rbegin(); }
