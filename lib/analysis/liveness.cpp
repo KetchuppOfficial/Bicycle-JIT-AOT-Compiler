@@ -28,12 +28,12 @@ LivenessAnalysis::LivenessAnalysis(const Function &func) {
 
     std::unordered_map<const Instruction *, std::size_t> numbering;
     for (std::size_t n = 0; const auto *bb : linear_order) {
-        auto phi_instruction = bb->phi_instructions();
-        for (const auto &instr : phi_instruction) {
+        std::ranges::view auto phi_instructions = bb->phi_instructions();
+        for (const auto &instr : phi_instructions) {
             numbering.emplace(std::addressof(instr), n);
         }
 
-        n += !phi_instruction.empty();
+        n += !phi_instructions.empty();
 
         for (const auto &instr : bb->non_phi_instructions()) {
             numbering.emplace(std::addressof(instr), n++);
