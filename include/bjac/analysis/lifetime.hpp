@@ -1,6 +1,7 @@
 #ifndef INCLUDE_BJAC_ANALYSIS_LIFETIME_HPP
 #define INCLUDE_BJAC_ANALYSIS_LIFETIME_HPP
 
+#include <cassert>
 #include <cstddef>
 #include <format>
 #include <initializer_list>
@@ -71,6 +72,19 @@ class Lifetime final {
     const_reverse_iterator crend() const noexcept { return rend(); }
 
     const_iterator find(const Segment &seg) const { return lt_segments_.find(seg); }
+
+    const Segment &front() const {
+        assert(!empty());
+        return *begin();
+    }
+
+    const Segment &back() const {
+        assert(!empty());
+        return *std::prev(end());
+    }
+
+    std::size_t start_point() const { return front().start(); }
+    std::size_t end_point() const { return back().end(); }
 
     // Checks whether given point/segment belongs to the lifetime set
     bool intersects(std::size_t point) const { return intersects(Segment{point, point}); }
