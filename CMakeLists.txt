@@ -108,6 +108,7 @@ FILES
 
 add_library(bjac_analysis STATIC
     lib/analysis/liveness.cpp
+    lib/analysis/reg_alloc.cpp
 )
 add_library(bjac::analysis ALIAS bjac_analysis)
 target_link_libraries(bjac_analysis
@@ -122,6 +123,7 @@ BASE_DIRS
 FILES
     include/bjac/analysis/lifetime.hpp
     include/bjac/analysis/liveness.hpp
+    include/bjac/analysis/reg_alloc.hpp
 )
 
 if (BJAC_BUILD_TESTS)
