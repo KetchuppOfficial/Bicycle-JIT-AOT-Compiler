@@ -7,10 +7,10 @@
 
 #include "bjac/analysis/lifetime.hpp"
 
-#include "bjac/IR/function.hpp"
-#include "bjac/IR/instruction.hpp"
-
 namespace bjac {
+
+class Function;
+class Instruction;
 
 class LivenessAnalysis final {
   public:

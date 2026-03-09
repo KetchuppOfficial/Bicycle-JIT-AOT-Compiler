@@ -9,6 +9,7 @@
 
 #include "bjac/graphs/linear_order.hpp"
 
+#include "bjac/IR/function.hpp"
 #include "bjac/IR/instruction.hpp"
 #include "bjac/IR/phi_instruction.hpp"
 
