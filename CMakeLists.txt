@@ -131,7 +131,7 @@ if (BJAC_BUILD_TESTS)
     add_subdirectory(test)
 endif()
 
-install(TARGETS bjac_ir bjac_ilist bjac_graphs bjac_transforms
+install(TARGETS bjac_ir bjac_ilist bjac_graphs bjac_transforms bjac_analysis
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
             COMPONENT BJAC_Runtime
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
