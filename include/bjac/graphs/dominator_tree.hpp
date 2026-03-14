@@ -127,8 +127,8 @@ class DominatorTree final {
                     return it->second.vertex;
                 });
 
-            auto sdom_candidates = std::views::concat(sdom_candidates_1, sdom_candidates_2);
-            vertex_handler sdom = *std::ranges::min_element(sdom_candidates, {}, discovery_time);
+            vertex_handler sdom = std::ranges::min(
+                std::views::concat(sdom_candidates_1, sdom_candidates_2), {}, discovery_time);
 
             v_to_sdom.try_emplace(w, sdom, discovery_time(sdom));
             visited_vertices.push_back(w);
