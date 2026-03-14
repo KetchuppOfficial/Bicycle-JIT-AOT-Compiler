@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <memory>
 #include <ranges>
+#include <stdexcept>
 #include <vector>
 
 #include "bjac/analysis/liveness.hpp"
@@ -13,6 +14,10 @@
 namespace bjac {
 
 RegAlloc::RegAlloc(const Function &func, std::size_t free_regs_count) {
+    if (free_regs_count == 0) {
+        throw std::invalid_argument{"register allocation with 0 registers is meaningless"};
+    }
+
     constexpr bool kFree = true;
     constexpr bool kOccupied = false;
     std::vector<bool> free_regs(free_regs_count, kFree);

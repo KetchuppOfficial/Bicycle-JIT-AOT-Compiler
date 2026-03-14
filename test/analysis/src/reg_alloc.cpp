@@ -1,3 +1,6 @@
+#include <format>
+#include <stdexcept>
+
 #include <gtest/gtest.h>
 
 #include "bjac/analysis/reg_alloc.hpp"
@@ -22,6 +25,14 @@ static ::testing::AssertionResult check(const Storage &lhs, const Storage &rhs) 
         return ::testing::AssertionSuccess();
     }
     return ::testing::AssertionFailure() << std::format("{} != {}", lhs, rhs);
+}
+
+TEST(RegAlloc, ThrowOneRequestForZeroRegisters) {
+    // Assign
+    const bjac::Function foo{"foo", kVoid, {}};
+
+    // Act & Assert
+    EXPECT_THROW(bjac::RegAlloc(foo, 0), std::invalid_argument);
 }
 
 /* i64 foo(i64)
