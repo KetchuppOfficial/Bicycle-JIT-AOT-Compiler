@@ -13,8 +13,8 @@ jobs:
       run:
         shell: nix develop .#${{ matrix.nix_shell }} --command bash -e {0}
     steps:
-      - uses: actions/checkout@v4
-      - uses: cachix/install-nix-action@v27
+      - uses: actions/checkout@v6
+      - uses: cachix/install-nix-action@v31
       - name: Configure
         run: cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBJAC_BUILD_TESTS=ON
       - name: Build
