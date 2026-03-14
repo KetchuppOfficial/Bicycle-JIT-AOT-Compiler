@@ -33,12 +33,10 @@ RegAlloc::RegAlloc(const Function &func, std::size_t free_regs_count) {
     auto expire_old_intervals = [&active, &free_regs](std::size_t current_point) -> void {
         for (auto it = active.begin(), ite = active.end(); it != ite;) {
             auto active_it = it++;
-            const auto [info, reg] = *active_it;
-            if (info.lifetime->end_point() > current_point) {
-                return;
+            if (const auto [info, reg] = *active_it; info.lifetime->end_point() <= current_point) {
+                active.erase(active_it);
+                free_regs[reg] = kFree;
             }
-            active.erase(active_it);
-            free_regs[reg] = kFree;
         }
     };
 
@@ -60,7 +58,7 @@ RegAlloc::RegAlloc(const Function &func, std::size_t free_regs_count) {
         return spill_info.instr;
     };
 
-    const auto sorted_lifetimes = [&func] {
+    const std::vector<LTInfo> sorted_lifetimes = [&func] {
         const LivenessAnalysis lifetimes{func};
         std::vector<LTInfo> lifetime_infos{
             std::from_range,
