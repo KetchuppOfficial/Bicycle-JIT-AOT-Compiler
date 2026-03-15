@@ -1,4 +1,3 @@
-#include <format>
 #include <stdexcept>
 
 #include <gtest/gtest.h>
@@ -19,13 +18,6 @@ using enum bjac::Instruction::Opcode;
 using enum bjac::Type;
 using Storage = bjac::RegAlloc::Storage;
 using enum Storage::Kind;
-
-static ::testing::AssertionResult check(const Storage &lhs, const Storage &rhs) {
-    if (lhs == rhs) {
-        return ::testing::AssertionSuccess();
-    }
-    return ::testing::AssertionFailure() << std::format("{} != {}", lhs, rhs);
-}
 
 TEST(RegAlloc, ThrowOneRequestForZeroRegisters) {
     // Assign
@@ -77,12 +69,12 @@ TEST(RegAlloc, Loop1) {
     const bjac::RegAlloc allocator{foo, 2};
 
     // Assert
-    EXPECT_TRUE(check(allocator.at(arg), Storage{kRegister, 0}));
-    EXPECT_TRUE(check(allocator.at(i), Storage{kRegister, 1}));
-    EXPECT_TRUE(check(allocator.at(one), Storage{kStackSlot, 0}));
-    EXPECT_TRUE(check(allocator.at(phi), Storage{kStackSlot, 1}));
-    EXPECT_TRUE(check(allocator.at(cond), Storage{kRegister, 1}));
-    EXPECT_TRUE(check(allocator.at(add), Storage{kRegister, 1}));
+    EXPECT_EQ(allocator.at(arg), Storage(kRegister, 0));
+    EXPECT_EQ(allocator.at(i), Storage(kRegister, 1));
+    EXPECT_EQ(allocator.at(one), Storage(kStackSlot, 0));
+    EXPECT_EQ(allocator.at(phi), Storage(kStackSlot, 1));
+    EXPECT_EQ(allocator.at(cond), Storage(kRegister, 1));
+    EXPECT_EQ(allocator.at(add), Storage(kRegister, 1));
 }
 
 /*
@@ -155,17 +147,17 @@ TEST(RegAlloc, Loop2) {
     const bjac::RegAlloc allocator{foo, 2};
 
     // Assert
-    EXPECT_TRUE(check(allocator.at(zero), Storage{kRegister, 0}));
-    EXPECT_TRUE(check(allocator.at(one), Storage{kStackSlot, 2}));
-    EXPECT_TRUE(check(allocator.at(two), Storage{kStackSlot, 0}));
-    EXPECT_TRUE(check(allocator.at(arg), Storage{kStackSlot, 1}));
-    EXPECT_TRUE(check(allocator.at(b_phi), Storage{kRegister, 0}));
-    EXPECT_TRUE(check(allocator.at(prod), Storage{kRegister, 0}));
-    EXPECT_TRUE(check(allocator.at(b_cmp), Storage{kRegister, 1}));
-    EXPECT_TRUE(check(allocator.at(c_prod), Storage{kRegister, 1}));
-    EXPECT_TRUE(check(allocator.at(d_prod), Storage{kRegister, 1}));
-    EXPECT_TRUE(check(allocator.at(e_phi), Storage{kRegister, 1}));
-    EXPECT_TRUE(check(allocator.at(f_cmp), Storage{kRegister, 0}));
+    EXPECT_EQ(allocator.at(zero), Storage(kRegister, 0));
+    EXPECT_EQ(allocator.at(one), Storage(kStackSlot, 2));
+    EXPECT_EQ(allocator.at(two), Storage(kStackSlot, 0));
+    EXPECT_EQ(allocator.at(arg), Storage(kStackSlot, 1));
+    EXPECT_EQ(allocator.at(b_phi), Storage(kRegister, 0));
+    EXPECT_EQ(allocator.at(prod), Storage(kRegister, 0));
+    EXPECT_EQ(allocator.at(b_cmp), Storage(kRegister, 1));
+    EXPECT_EQ(allocator.at(c_prod), Storage(kRegister, 1));
+    EXPECT_EQ(allocator.at(d_prod), Storage(kRegister, 1));
+    EXPECT_EQ(allocator.at(e_phi), Storage(kRegister, 1));
+    EXPECT_EQ(allocator.at(f_cmp), Storage(kRegister, 0));
 }
 
 /*
@@ -218,12 +210,12 @@ TEST(RegAlloc, Loop3) {
     const bjac::RegAlloc allocator{foo, 2};
 
     // Assert
-    EXPECT_TRUE(check(allocator.at(arg), Storage{kRegister, 0}));
-    EXPECT_TRUE(check(allocator.at(zero), Storage{kStackSlot, 0}));
-    EXPECT_TRUE(check(allocator.at(one), Storage{kStackSlot, 1}));
-    EXPECT_TRUE(check(allocator.at(a_cmp), Storage{kRegister, 0}));
-    EXPECT_TRUE(check(allocator.at(acc), Storage{kRegister, 0}));
-    EXPECT_TRUE(check(allocator.at(counter), Storage{kRegister, 1}));
-    EXPECT_TRUE(check(allocator.at(next_acc), Storage{kRegister, 0}));
-    EXPECT_TRUE(check(allocator.at(next_counter), Storage{kRegister, 1}));
+    EXPECT_EQ(allocator.at(arg), Storage(kRegister, 0));
+    EXPECT_EQ(allocator.at(zero), Storage(kStackSlot, 0));
+    EXPECT_EQ(allocator.at(one), Storage(kStackSlot, 1));
+    EXPECT_EQ(allocator.at(a_cmp), Storage(kRegister, 0));
+    EXPECT_EQ(allocator.at(acc), Storage(kRegister, 0));
+    EXPECT_EQ(allocator.at(counter), Storage(kRegister, 1));
+    EXPECT_EQ(allocator.at(next_acc), Storage(kRegister, 0));
+    EXPECT_EQ(allocator.at(next_counter), Storage(kRegister, 1));
 }

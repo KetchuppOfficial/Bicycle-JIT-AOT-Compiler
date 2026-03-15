@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <format>
+#include <ostream>
 #include <memory>
 #include <unordered_map>
 
@@ -67,5 +68,13 @@ struct formatter<::bjac::RegAlloc::Storage> : formatter<string> {
 };
 
 } // namespace std
+
+namespace bjac {
+
+inline std::ostream &operator<<(std::ostream &os, const RegAlloc::Storage &storage) {
+    return os << std::format("{}", storage);
+}
+
+} // namespace bjac
 
 #endif // INCLUDE_BJAC_ANALYSIS_REG_ALLOC_HPP

@@ -5,8 +5,8 @@
 #include <cstddef>
 #include <format>
 #include <initializer_list>
-#include <iosfwd>
 #include <iterator>
+#include <ostream>
 #include <ranges>
 #include <set>
 #include <stdexcept>
@@ -117,8 +117,6 @@ class Lifetime final {
 
     bool operator==(const Lifetime &) const = default;
 
-    friend std::ostream &operator<<(std::ostream &os, const Lifetime &lt);
-
   private:
     std::set<Segment, Compare> lt_segments_;
 };
@@ -154,6 +152,10 @@ struct formatter<::bjac::Lifetime> : formatter<string> {
 } // namespace std
 
 namespace bjac {
+
+inline std::ostream &operator<<(std::ostream &os, const Lifetime::Segment &seg) {
+    return os << std::format("{}", seg);
+}
 
 inline std::ostream &operator<<(std::ostream &os, const Lifetime &lt) {
     return os << std::format("{}", lt);
