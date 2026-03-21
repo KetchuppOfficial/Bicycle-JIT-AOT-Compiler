@@ -153,6 +153,67 @@ class ilist {
     void pop_front() { erase(begin()); }
     void pop_back() { erase(const_iterator{tail()}); }
 
+    // transfers all nodes from other list into this one before pos
+    void splice(const_iterator pos, ilist &other) noexcept {
+        assert(std::addressof(other) != this);
+
+        size_ += std::exchange(other.size_, 0uz);
+
+        auto *pos_node = const_cast<node_type *>(pos.node_);
+
+        node_type::connect(pos_node->prev(), other.head());
+        node_type::connect(other.tail(), pos_node);
+
+        other.sentinel_.reset();
+    }
+
+    // transfers one node from other list into this one before pos
+    void splice(const_iterator pos, ilist &other, const_iterator it) noexcept {
+        auto *pos_node = const_cast<node_type *>(pos.node_);
+        auto *other_node = const_cast<node_type *>(it.node_);
+        auto *after_other_node = other_node->next();
+
+        if (pos_node == other_node || pos_node == after_other_node) {
+            return;
+        }
+
+        ++size_;
+        --other.size_;
+
+        // fix the other list
+        node_type::connect(other_node->prev(), after_other_node);
+
+        // inject *it into this list
+        node_type::connect(pos_node->prev(), other_node);
+        node_type::connect(other_node, pos_node);
+    }
+
+    // transfers [first; last) from other list into this one before pos
+    void splice(const_iterator pos, ilist &other, const_iterator first,
+                const_iterator last) noexcept {
+        if (first == last) {
+            return;
+        }
+
+        {
+            const auto n = std::distance(first, last);
+            size_ += n;
+            other.size_ -= n;
+        }
+
+        auto *first_node = const_cast<node_type *>(first.node_);
+        auto *last_node = const_cast<node_type *>(last.node_);
+        auto *pos_node = const_cast<node_type *>(pos.node_);
+        auto *before_first_node = first_node->prev();
+
+        // inject [first; last) into this list
+        node_type::connect(pos_node->prev(), first_node);
+        node_type::connect(last_node->prev(), pos_node);
+
+        // fix the other list
+        node_type::connect(before_first_node, last_node);
+    }
+
   protected:
     static iterator get_iterator(node_type &node) noexcept {
         return iterator{std::addressof(node)};
