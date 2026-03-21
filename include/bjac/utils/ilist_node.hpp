@@ -7,11 +7,10 @@
 namespace bjac {
 
 template <typename ValueT>
+    requires std::is_object_v<ValueT>
 class ilist_node {
   public:
     using value_type = ValueT;
-
-    static_assert(std::is_object_v<value_type>);
 
     ilist_node() noexcept : ilist_node{nullptr, nullptr} {}
     ilist_node(ilist_node *next, ilist_node *prev) noexcept : next_{next}, prev_{prev} {}
