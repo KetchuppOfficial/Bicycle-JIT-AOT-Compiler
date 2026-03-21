@@ -1,6 +1,7 @@
 #ifndef INCLUDE_BJAC_UTILS_ILIST_NODE_HPP
 #define INCLUDE_BJAC_UTILS_ILIST_NODE_HPP
 
+#include <cassert>
 #include <type_traits>
 #include <utility>
 
@@ -36,6 +37,13 @@ class ilist_node {
     ilist_node *prev() noexcept { return prev_; }
     const ilist_node *prev() const noexcept { return prev_; }
     void set_prev(ilist_node *prev) noexcept { prev_ = prev; }
+
+    static void connect(ilist_node *prev, ilist_node *next) noexcept {
+        assert(prev);
+        assert(next);
+        prev->set_next(next);
+        next->set_prev(prev);
+    }
 
     // Note: this methods should be called only if ilist_node is a base class subobject of ValueT
     template <typename Self>

@@ -136,11 +136,8 @@ class ilist {
         assert(pos != end());
 
         auto *to_erase = const_cast<node_type *>(pos.node_);
-        auto *prev = to_erase->prev();
         auto *next = to_erase->next();
-
-        prev->set_next(next);
-        next->set_prev(prev);
+        node_type::connect(to_erase->prev(), next);
         delete to_erase;
 
         --size_;
@@ -167,12 +164,9 @@ class ilist {
   private:
     iterator insert_node(const_iterator pos, node_type *new_node) noexcept {
         auto *next = const_cast<node_type *>(pos.node_);
-        auto *prev = next->prev();
 
-        prev->set_next(new_node);
-        next->set_prev(new_node);
-        new_node->set_next(next);
-        new_node->set_prev(prev);
+        node_type::connect(next->prev(), new_node);
+        node_type::connect(new_node, next);
 
         ++size_;
 
