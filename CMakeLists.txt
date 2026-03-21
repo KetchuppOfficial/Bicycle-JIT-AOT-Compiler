@@ -67,6 +67,7 @@ FILES
     include/bjac/IR/basic_block.hpp
     include/bjac/IR/binary_operator.hpp
     include/bjac/IR/branch_instruction.hpp
+    include/bjac/IR/call_instruction.hpp
     include/bjac/IR/constant_instruction.hpp
     include/bjac/IR/function.hpp
     include/bjac/IR/icmp_instruction.hpp

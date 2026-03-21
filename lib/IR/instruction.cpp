@@ -3,6 +3,7 @@
 #include <ranges>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 #include "bjac/IR/basic_block.hpp"
 #include "bjac/IR/function.hpp"
@@ -10,6 +11,7 @@
 #include "bjac/IR/argument_instruction.hpp"
 #include "bjac/IR/binary_operator.hpp"
 #include "bjac/IR/branch_instruction.hpp"
+#include "bjac/IR/call_instruction.hpp"
 #include "bjac/IR/constant_instruction.hpp"
 #include "bjac/IR/icmp_instruction.hpp"
 #include "bjac/IR/phi_instruction.hpp"
@@ -183,5 +185,29 @@ std::string ReturnInstruction::to_string() const {
     }
     return std::format("{} {} {}", ssa_value_to_string(*this), Opcode::kRet, Type::kVoid);
 }
+
+CallInstruction::CallInstruction(BasicBlock &parent, Function &callee,
+                                 std::vector<Instruction *> args)
+    : Instruction(parent, Opcode::kCall, callee.return_type()), callee_{std::addressof(callee)},
+      args_(std::move(args)) {
+    if (!std::ranges::equal(callee.arguments(),
+                            args_ | std::views::transform(
+                                        [](const auto *arg) static { return arg->get_type(); }))) {
+        throw std::invalid_argument{std::format(
+            "types of call arguments mismatch with parameters of function '{}'", callee.name())};
+    }
+}
+
+std::string CallInstruction::to_string() const {
+    std::ranges::view auto arg_string = args_ | std::views::transform([](const auto *arg) static {
+                                            return ssa_value_to_string(*arg);
+                                        });
+    using namespace std::string_view_literals;
+    return std::format("{} = {} {}({:s})", ssa_value_to_string(*this), Opcode::kCall,
+                       callee_->name(), std::views::join_with(arg_string, ", "sv));
+}
+
+Function &CallInstruction::caller() noexcept { return get_parent().get_parent(); }
+const Function &CallInstruction::caller() const noexcept { return get_parent().get_parent(); }
 
 } // namespace bjac
