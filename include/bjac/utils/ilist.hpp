@@ -156,6 +156,14 @@ class ilist {
     void pop_front() { erase(begin()); }
     void pop_back() { erase(const_iterator{tail()}); }
 
+  protected:
+    static iterator get_iterator(node_type &node) noexcept {
+        return iterator{std::addressof(node)};
+    }
+    static const_iterator get_iterator(const node_type &node) noexcept {
+        return const_iterator{std::addressof(node)};
+    }
+
   private:
     iterator insert_node(const_iterator pos, node_type *new_node) noexcept {
         auto *next = const_cast<node_type *>(pos.node_);
