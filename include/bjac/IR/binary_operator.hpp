@@ -1,7 +1,6 @@
 #ifndef INCLUDE_BJAC_IR_BINARY_OPERATOR_HPP
 #define INCLUDE_BJAC_IR_BINARY_OPERATOR_HPP
 
-#include <array>
 #include <memory>
 #include <stdexcept>
 #include <string>
