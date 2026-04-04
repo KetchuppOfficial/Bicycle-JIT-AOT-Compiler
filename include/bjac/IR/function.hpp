@@ -9,11 +9,14 @@
 #include <ranges>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
 #include "bjac/IR/basic_block.hpp"
+#include "bjac/IR/ret_instruction.hpp"
 #include "bjac/IR/type.hpp"
+
 #include "bjac/utils/ilist.hpp"
 
 namespace bjac {
@@ -73,6 +76,10 @@ class Function final : public Value, private ilist<BasicBlock> {
     reference push_back(std::unique_ptr<BasicBlock> bb) { return *insert(end(), std::move(bb)); }
     reference push_front(std::unique_ptr<BasicBlock> bb) { return *insert(begin(), std::move(bb)); }
 
+    void add_ret(ReturnInstruction &ret) { rets_.insert(std::addressof(ret)); }
+    void remove_ret(ReturnInstruction &ret) { rets_.erase(std::addressof(ret)); }
+    std::unsigned_integral auto rets_count() const noexcept { return rets_.size(); }
+
     void print(std::ostream &os) const;
     friend std::ostream &operator<<(std::ostream &os, const Function &f);
 
@@ -100,6 +107,8 @@ class Function final : public Value, private ilist<BasicBlock> {
 
     Type return_type_;
     std::vector<Type> arguments_;
+
+    std::unordered_set<ReturnInstruction *> rets_;
 
     unsigned next_bb_id_ = 0;
 };

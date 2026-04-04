@@ -12,6 +12,7 @@
 #include "bjac/IR/branch_instruction.hpp"
 #include "bjac/IR/instruction.hpp"
 #include "bjac/IR/phi_instruction.hpp"
+#include "bjac/IR/ret_instruction.hpp"
 
 #include "bjac/utils/ilist.hpp"
 #include "bjac/utils/ilist_node.hpp"
@@ -93,6 +94,8 @@ class BasicBlock final : public Value, public ilist_node<BasicBlock>, private il
             if (instr->is_conditional()) {
                 instr->get_false_path()->add_predecessor(*this);
             }
+        } else if constexpr (std::is_same_v<T, ReturnInstruction>) {
+            add_ret_to_parent(*instr);
         }
 
         ++next_instr_id_;
@@ -121,6 +124,17 @@ class BasicBlock final : public Value, public ilist_node<BasicBlock>, private il
         if (pos == first_non_phi_) {
             ++first_non_phi_;
         }
+
+        using enum Instruction::Opcode;
+        switch (pos->get_opcode()) {
+        case kRet:
+            remove_ret_from_parent(
+                const_cast<ReturnInstruction &>(static_cast<const ReturnInstruction &>(*pos)));
+            break;
+        default:
+            break;
+        }
+
         return instructions::erase(pos);
     }
 
@@ -169,6 +183,9 @@ class BasicBlock final : public Value, public ilist_node<BasicBlock>, private il
     friend class Function;
 
     BasicBlock(Function &parent);
+
+    void add_ret_to_parent(ReturnInstruction &ret);
+    void remove_ret_from_parent(ReturnInstruction &ret);
 
     iterator first_non_phi_;
     Function *parent_;

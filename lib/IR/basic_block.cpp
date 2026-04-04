@@ -21,6 +21,9 @@ void BasicBlock::replace_instruction(iterator from, Instruction &to) {
     erase(from);
 }
 
+void BasicBlock::add_ret_to_parent(ReturnInstruction &ret) { get_parent().add_ret(ret); }
+void BasicBlock::remove_ret_from_parent(ReturnInstruction &ret) { get_parent().remove_ret(ret); }
+
 void BasicBlock::print(std::ostream &os) const {
     os << std::format("%bb{}:", get_id());
 
