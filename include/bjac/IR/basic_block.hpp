@@ -10,6 +10,7 @@
 #include <utility>
 
 #include "bjac/IR/branch_instruction.hpp"
+#include "bjac/IR/call_instruction.hpp"
 #include "bjac/IR/instruction.hpp"
 #include "bjac/IR/phi_instruction.hpp"
 #include "bjac/IR/ret_instruction.hpp"
@@ -96,6 +97,8 @@ class BasicBlock final : public Value, public ilist_node<BasicBlock>, private il
             }
         } else if constexpr (std::is_same_v<T, ReturnInstruction>) {
             add_ret_to_parent(*instr);
+        } else if constexpr (std::is_same_v<T, CallInstruction>) {
+            add_callee_to_parent(*instr);
         }
 
         ++next_instr_id_;
@@ -130,6 +133,10 @@ class BasicBlock final : public Value, public ilist_node<BasicBlock>, private il
         case kRet:
             remove_ret_from_parent(
                 const_cast<ReturnInstruction &>(static_cast<const ReturnInstruction &>(*pos)));
+            break;
+        case kCall:
+            remove_callee_from_parent(
+                const_cast<CallInstruction &>(static_cast<const CallInstruction &>(*pos)));
             break;
         default:
             break;
@@ -186,6 +193,9 @@ class BasicBlock final : public Value, public ilist_node<BasicBlock>, private il
 
     void add_ret_to_parent(ReturnInstruction &ret);
     void remove_ret_from_parent(ReturnInstruction &ret);
+
+    void add_callee_to_parent(CallInstruction &call);
+    void remove_callee_from_parent(CallInstruction &call);
 
     iterator first_non_phi_;
     Function *parent_;

@@ -49,6 +49,8 @@ class Function final : public Value, private ilist<BasicBlock> {
     Type return_type() const noexcept { return return_type_; }
     auto arguments() const { return std::ranges::ref_view{arguments_}; }
 
+    bool is_recursive() const { return callees_.contains(this); }
+
     unsigned get_next_bb_id() const noexcept { return next_bb_id_; }
 
     template <typename... Args>
@@ -80,6 +82,9 @@ class Function final : public Value, private ilist<BasicBlock> {
     void remove_ret(ReturnInstruction &ret) { rets_.erase(std::addressof(ret)); }
     std::unsigned_integral auto rets_count() const noexcept { return rets_.size(); }
 
+    void add_callee(Function &callee) { callees_.insert(std::addressof(callee)); }
+    void remove_callee(Function &callee) { callees_.erase(std::addressof(callee)); }
+
     void print(std::ostream &os) const;
     friend std::ostream &operator<<(std::ostream &os, const Function &f);
 
@@ -109,6 +114,18 @@ class Function final : public Value, private ilist<BasicBlock> {
     std::vector<Type> arguments_;
 
     std::unordered_set<ReturnInstruction *> rets_;
+
+    struct ConstHash : public std::hash<const Function *> {
+        using is_transparent = void;
+
+        using std::hash<const Function *>::operator();
+
+        std::size_t operator()(Function *f) const noexcept {
+            return (*this)(static_cast<const Function *>(f));
+        }
+    };
+
+    std::unordered_set<Function *, ConstHash, std::equal_to<>> callees_;
 
     unsigned next_bb_id_ = 0;
 };

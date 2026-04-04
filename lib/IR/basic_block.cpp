@@ -5,6 +5,7 @@
 #include <ranges>
 
 #include "bjac/IR/basic_block.hpp"
+#include "bjac/IR/call_instruction.hpp"
 #include "bjac/IR/function.hpp"
 
 namespace bjac {
@@ -23,6 +24,13 @@ void BasicBlock::replace_instruction(iterator from, Instruction &to) {
 
 void BasicBlock::add_ret_to_parent(ReturnInstruction &ret) { get_parent().add_ret(ret); }
 void BasicBlock::remove_ret_from_parent(ReturnInstruction &ret) { get_parent().remove_ret(ret); }
+
+void BasicBlock::add_callee_to_parent(CallInstruction &call) {
+    get_parent().add_callee(call.callee());
+}
+void BasicBlock::remove_callee_from_parent(CallInstruction &call) {
+    get_parent().remove_callee(call.callee());
+}
 
 void BasicBlock::print(std::ostream &os) const {
     os << std::format("%bb{}:", get_id());
