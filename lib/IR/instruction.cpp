@@ -146,18 +146,18 @@ std::string ICmpInstruction::to_string() const {
 }
 
 std::string PHIInstruction::to_string() const {
-    if (records_.size() < 2) {
-        throw std::invalid_argument{"phi instruction does not have enough records"};
+    if (records_.empty()) {
+        return std::format("{} = {} {}{}", ssa_value_to_string(*this), Opcode::kPHI, type_,
+                           users_to_string(*this));
+    } else {
+        auto phi_strings = records_ | std::views::transform([](const auto &r) static {
+                               return std::format("[{}, %bb{}]", ssa_value_to_string(*r.second),
+                                                  r.first->get_id());
+                           });
+        using namespace std::string_view_literals;
+        return std::format("{} = {} {} {:s}{}", ssa_value_to_string(*this), Opcode::kPHI, type_,
+                           std::views::join_with(phi_strings, ", "sv), users_to_string(*this));
     }
-
-    auto phi_strings =
-        records_ | std::views::transform([](const auto &r) static {
-            return std::format("[{}, %bb{}]", ssa_value_to_string(*r.second), r.first->get_id());
-        });
-
-    using namespace std::string_view_literals;
-    return std::format("{} = {} {} {:s}{}", ssa_value_to_string(*this), Opcode::kPHI, type_,
-                       std::views::join_with(phi_strings, ", "sv), users_to_string(*this));
 }
 
 ReturnInstruction::ReturnInstruction(BasicBlock &parent)
