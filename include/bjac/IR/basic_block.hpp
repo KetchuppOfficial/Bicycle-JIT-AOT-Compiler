@@ -1,6 +1,7 @@
 #ifndef INCLUDE_BJAC_IR_BASIC_BLOCK_HPP
 #define INCLUDE_BJAC_IR_BASIC_BLOCK_HPP
 
+#include <cassert>
 #include <iosfwd>
 #include <memory>
 #include <ranges>
@@ -29,8 +30,9 @@ class BasicBlock final : public Value, public ilist_node<BasicBlock>, private il
     using instructions::size_type;
 
     template <typename Self>
-    auto *get_parent(this Self &&self) noexcept {
-        return std::addressof(std::forward_like<Self>(*self.parent_));
+    auto &get_parent(this Self &&self) noexcept {
+        assert(self.parent_);
+        return std::forward_like<Self>(*self.parent_);
     }
 
     template <typename Self>

@@ -1,8 +1,8 @@
 #ifndef INCLUDE_BJAC_IR_INSTRUCTION_HPP
 #define INCLUDE_BJAC_IR_INSTRUCTION_HPP
 
+#include <cassert>
 #include <format>
-#include <memory>
 #include <ranges>
 #include <set>
 #include <stdexcept>
@@ -48,8 +48,9 @@ class Instruction : public Value, public ilist_node<Instruction> {
     Opcode get_opcode() const noexcept { return opcode_; }
 
     template <typename Self>
-    auto *get_parent(this Self &&self) noexcept {
-        return std::addressof(std::forward_like<Self>(*self.parent_));
+    auto &get_parent(this Self &&self) noexcept {
+        assert(self.parent_);
+        return std::forward_like<Self>(*self.parent_);
     }
 
     unsigned get_id() const noexcept { return id_; }

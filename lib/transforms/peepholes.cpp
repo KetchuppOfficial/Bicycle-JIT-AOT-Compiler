@@ -23,7 +23,7 @@ auto process_add(std::bidirectional_iterator auto it) -> decltype(it) {
     auto &add_instr = static_cast<BinaryOperator &>(*it);
     assert(add_instr.get_opcode() == kAdd);
 
-    auto *bb = it->get_parent();
+    auto &bb = it->get_parent();
     auto next_it = std::next(it);
 
     auto *lhs = add_instr.get_lhs();
@@ -31,11 +31,11 @@ auto process_add(std::bidirectional_iterator auto it) -> decltype(it) {
 
     if (lhs->get_opcode() == kConst) {
         if (static_cast<ConstInstruction *>(lhs)->get_value() == 0) { // 0 + x -> x
-            bb->replace_instruction(it, *rhs);
+            bb.replace_instruction(it, *rhs);
         }
     } else if (rhs->get_opcode() == kConst) {
         if (static_cast<ConstInstruction *>(rhs)->get_value() == 0) { // x + 0 -> x
-            bb->replace_instruction(it, *lhs);
+            bb.replace_instruction(it, *lhs);
         }
     } else {
         auto [sub, other] = [lhs, rhs] -> std::pair<BinaryOperator *, Instruction *> {
@@ -53,8 +53,8 @@ auto process_add(std::bidirectional_iterator auto it) -> decltype(it) {
 
         if (sub->get_lhs()->get_opcode() == kConst &&
             static_cast<ConstInstruction *>(sub->get_lhs())->get_value() == 0) {
-            auto new_it = bb->template emplace<BinaryOperator>(it, kSub, *other, *sub->get_rhs());
-            bb->replace_instruction(it, *new_it);
+            auto new_it = bb.template emplace<BinaryOperator>(it, kSub, *other, *sub->get_rhs());
+            bb.replace_instruction(it, *new_it);
             return new_it;
         }
     }
@@ -68,7 +68,7 @@ auto process_shrl(std::bidirectional_iterator auto it) -> decltype(it) {
     auto &shrl_instr = static_cast<BinaryOperator &>(*it);
     assert(shrl_instr.get_opcode() == kShrL);
 
-    auto *bb = it->get_parent();
+    auto &bb = it->get_parent();
     auto next_it = std::next(it);
 
     auto *lhs = shrl_instr.get_lhs();
@@ -76,11 +76,11 @@ auto process_shrl(std::bidirectional_iterator auto it) -> decltype(it) {
 
     if (lhs->get_opcode() == kConst) {
         if (static_cast<ConstInstruction *>(lhs)->get_value() == 0) { // 0 >> x -> 0
-            bb->replace_instruction(it, *lhs);
+            bb.replace_instruction(it, *lhs);
         }
     } else if (rhs->get_opcode() == kConst) {
         if (static_cast<ConstInstruction *>(rhs)->get_value() == 0) { // x >> 0 -> x
-            bb->replace_instruction(it, *lhs);
+            bb.replace_instruction(it, *lhs);
         }
     }
 
@@ -200,9 +200,9 @@ void bitwise_instr_chaining(std::bidirectional_iterator auto it, auto op) {
     }();
 
     if (instr != nullptr) {
-        auto *bb = it->get_parent();
-        assert(it != bb->begin());
-        auto new_it = bb->template emplace<ConstInstruction>(it, bit_instr->get_type(), constant);
+        auto &bb = it->get_parent();
+        assert(it != bb.begin());
+        auto new_it = bb.template emplace<ConstInstruction>(it, bit_instr->get_type(), constant);
         bit_instr->set_lhs(*instr);
         bit_instr->set_rhs(*new_it);
     }
@@ -214,7 +214,7 @@ auto process_and(std::bidirectional_iterator auto it) -> decltype(it) {
     auto &and_instr = static_cast<BinaryOperator &>(*it);
     assert(and_instr.get_opcode() == kAnd);
 
-    auto *bb = it->get_parent();
+    auto &bb = it->get_parent();
     auto next_it = std::next(it);
 
     auto *lhs = and_instr.get_lhs();
@@ -223,23 +223,23 @@ auto process_and(std::bidirectional_iterator auto it) -> decltype(it) {
     if (lhs->get_opcode() == kConst) {
         auto *const_lhs = static_cast<ConstInstruction *>(lhs);
         if (const auto value = const_lhs->get_value(); value == 0) { // 0 & x -> 0
-            bb->replace_instruction(it, *lhs);
+            bb.replace_instruction(it, *lhs);
         } else if (value == const_lhs->max_value()) { // 1..1 & x -> x
-            bb->replace_instruction(it, *rhs);
+            bb.replace_instruction(it, *rhs);
         } else {
             bitwise_instr_chaining(it, std::bit_and{});
         }
     } else if (rhs->get_opcode() == kConst) {
         auto *const_rhs = static_cast<ConstInstruction *>(rhs);
         if (const auto value = const_rhs->get_value(); value == 0) { // x & 0 -> 0
-            bb->replace_instruction(it, *rhs);
+            bb.replace_instruction(it, *rhs);
         } else if (value == const_rhs->max_value()) { // x & 1..1 -> x
-            bb->replace_instruction(it, *lhs);
+            bb.replace_instruction(it, *lhs);
         } else {
             bitwise_instr_chaining(it, std::bit_and{});
         }
     } else if (lhs == rhs) { // x & x -> x
-        bb->replace_instruction(it, *lhs);
+        bb.replace_instruction(it, *lhs);
     }
 
     return next_it;
@@ -251,7 +251,7 @@ auto process_or(std::bidirectional_iterator auto it) -> decltype(it) {
     auto &or_instr = static_cast<BinaryOperator &>(*it);
     assert(or_instr.get_opcode() == kOr);
 
-    auto *bb = it->get_parent();
+    auto &bb = it->get_parent();
     auto next_it = std::next(it);
 
     auto *lhs = or_instr.get_lhs();
@@ -260,23 +260,23 @@ auto process_or(std::bidirectional_iterator auto it) -> decltype(it) {
     if (lhs->get_opcode() == kConst) {
         auto *const_lhs = static_cast<ConstInstruction *>(lhs);
         if (const auto value = const_lhs->get_value(); value == 0) { // 0 | x -> x
-            bb->replace_instruction(it, *rhs);
+            bb.replace_instruction(it, *rhs);
         } else if (value == const_lhs->max_value()) { // 1..1 | x -> 1..1
-            bb->replace_instruction(it, *lhs);
+            bb.replace_instruction(it, *lhs);
         } else {
             bitwise_instr_chaining(it, std::bit_or{});
         }
     } else if (rhs->get_opcode() == kConst) {
         auto *const_rhs = static_cast<ConstInstruction *>(rhs);
         if (const auto value = const_rhs->get_value(); value == 0) { // x | 0 -> x
-            bb->replace_instruction(it, *lhs);
+            bb.replace_instruction(it, *lhs);
         } else if (value == const_rhs->max_value()) { // x | 1..1 -> 1..1
-            bb->replace_instruction(it, *rhs);
+            bb.replace_instruction(it, *rhs);
         } else {
             bitwise_instr_chaining(it, std::bit_or{});
         }
     } else if (lhs == rhs) { // x | x -> x
-        bb->replace_instruction(it, *lhs);
+        bb.replace_instruction(it, *lhs);
     }
 
     return next_it;
@@ -288,7 +288,7 @@ auto process_xor(std::bidirectional_iterator auto it) -> decltype(it) {
     auto &xor_instr = static_cast<BinaryOperator &>(*it);
     assert(xor_instr.get_opcode() == kOr);
 
-    auto *bb = it->get_parent();
+    auto &bb = it->get_parent();
     auto next_it = std::next(it);
 
     auto *lhs = xor_instr.get_lhs();
@@ -297,20 +297,20 @@ auto process_xor(std::bidirectional_iterator auto it) -> decltype(it) {
     if (lhs->get_opcode() == kConst) {
         const auto value = static_cast<ConstInstruction *>(lhs)->get_value();
         if (value == 0) { // 0 ^ x -> x
-            bb->replace_instruction(it, *rhs);
+            bb.replace_instruction(it, *rhs);
         } else {
             bitwise_instr_chaining(it, std::bit_or{});
         }
     } else if (rhs->get_opcode() == kConst) {
         const auto value = static_cast<ConstInstruction *>(rhs)->get_value();
         if (value == 0) { // x ^ 0 -> x
-            bb->replace_instruction(it, *lhs);
+            bb.replace_instruction(it, *lhs);
         } else {
             bitwise_instr_chaining(it, std::bit_or{});
         }
     } else if (lhs == rhs) { // x ^ x -> 0
-        auto new_it = bb->template emplace<ConstInstruction>(it, xor_instr.get_type(), 0);
-        bb->replace_instruction(it, *new_it);
+        auto new_it = bb.template emplace<ConstInstruction>(it, xor_instr.get_type(), 0);
+        bb.replace_instruction(it, *new_it);
         return new_it;
     }
 

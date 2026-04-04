@@ -66,7 +66,7 @@ TEST_P(PeepholesForAndWithConstant, ValueWithZero) {
 
     // Assert
     EXPECT_EQ(foo.size(), 1) << foo;
-    EXPECT_EQ(bb.get_parent(), std::addressof(foo)) << foo;
+    EXPECT_EQ(std::addressof(bb.get_parent()), std::addressof(foo)) << foo;
 
     EXPECT_EQ(bb.size(), 3) << foo;
 
@@ -130,7 +130,7 @@ TEST_P(PeepholesForAndWithConstant, ValueWithAllOnes) {
 
     // Assert
     EXPECT_EQ(foo.size(), 1) << foo;
-    EXPECT_EQ(bb.get_parent(), std::addressof(foo)) << foo;
+    EXPECT_EQ(std::addressof(bb.get_parent()), std::addressof(foo)) << foo;
 
     EXPECT_EQ(bb.size(), 3) << foo;
 
@@ -191,7 +191,7 @@ TEST(PeepholesForAnd, BothArgumentsAreTheSameInstruction) {
 
     // Assert
     EXPECT_EQ(foo.size(), 1) << foo;
-    EXPECT_EQ(bb.get_parent(), std::addressof(foo)) << foo;
+    EXPECT_EQ(std::addressof(bb.get_parent()), std::addressof(foo)) << foo;
 
     EXPECT_EQ(bb.size(), 2) << foo;
 
@@ -257,7 +257,7 @@ TEST(PeepholesForAnd, ChainingConstantOnLeftLeft) {
 
     // Assert
     EXPECT_EQ(foo.size(), 1) << foo;
-    EXPECT_EQ(bb.get_parent(), std::addressof(foo)) << foo;
+    EXPECT_EQ(std::addressof(bb.get_parent()), std::addressof(foo)) << foo;
 
     EXPECT_EQ(bb.size(), 7) << foo;
 
@@ -336,7 +336,7 @@ TEST_P(PeepholesForAdd, OneOfArgumentsIsZero) {
 
     // Assert
     EXPECT_EQ(foo.size(), 1) << foo;
-    EXPECT_EQ(bb.get_parent(), std::addressof(foo)) << foo;
+    EXPECT_EQ(std::addressof(bb.get_parent()), std::addressof(foo)) << foo;
 
     EXPECT_EQ(bb.size(), 3) << foo;
 
@@ -407,7 +407,7 @@ TEST_P(PeepholesForAdd, LeftArgumentIsSubFromZero) {
 
     // Assert
     EXPECT_EQ(foo.size(), 1) << foo;
-    EXPECT_EQ(bb.get_parent(), std::addressof(foo)) << foo;
+    EXPECT_EQ(std::addressof(bb.get_parent()), std::addressof(foo)) << foo;
 
     EXPECT_EQ(bb.size(), 6) << foo;
 
@@ -481,7 +481,7 @@ TEST(PeepholesForShrLWithZero, ShiftForZeroBits) {
 
     // Assert
     EXPECT_EQ(foo.size(), 1) << foo;
-    EXPECT_EQ(bb.get_parent(), std::addressof(foo)) << foo;
+    EXPECT_EQ(std::addressof(bb.get_parent()), std::addressof(foo)) << foo;
 
     EXPECT_EQ(bb.size(), 3) << foo;
 
@@ -525,7 +525,7 @@ TEST(PeepholesForShrLWithZero, ShiftZeroForAnyNumberOfBits) {
 
     // Assert
     EXPECT_EQ(foo.size(), 1) << foo;
-    EXPECT_EQ(bb.get_parent(), std::addressof(foo)) << foo;
+    EXPECT_EQ(std::addressof(bb.get_parent()), std::addressof(foo)) << foo;
 
     EXPECT_EQ(bb.size(), 3) << foo;
 

@@ -91,7 +91,7 @@ Type get_arg_type(const Function &f, unsigned pos) {
 }
 
 std::string ssa_value_to_string(const Instruction &instr) {
-    return std::format("%{}.{}", instr.get_parent()->get_id(), instr.get_id());
+    return std::format("%{}.{}", instr.get_parent().get_id(), instr.get_id());
 }
 
 std::string users_to_string(const Instruction &instr) {
@@ -162,7 +162,7 @@ std::string PHIInstruction::to_string() const {
 
 ReturnInstruction::ReturnInstruction(BasicBlock &parent)
     : Instruction(parent, Opcode::kRet, Type::kVoid), ret_val_{nullptr} {
-    if (auto ret_type = parent.get_parent()->return_type(); ret_type != Type::kVoid) {
+    if (auto ret_type = parent.get_parent().return_type(); ret_type != Type::kVoid) {
         throw std::invalid_argument{std::format("trying to create {} {} in a function returning {}",
                                                 Opcode::kRet, Type::kVoid, ret_type)};
     }
@@ -170,8 +170,7 @@ ReturnInstruction::ReturnInstruction(BasicBlock &parent)
 
 ReturnInstruction::ReturnInstruction(BasicBlock &parent, Instruction &ret_val)
     : Instruction(parent, Opcode::kRet, Type::kVoid), ret_val_{std::addressof(ret_val)} {
-    assert(parent.get_parent());
-    if (auto ret_type = parent.get_parent()->return_type(); ret_type != ret_val.get_type()) {
+    if (auto ret_type = parent.get_parent().return_type(); ret_type != ret_val.get_type()) {
         throw std::invalid_argument{std::format("trying to create {} {} in a function returning {}",
                                                 Opcode::kRet, ret_val.get_type(), ret_type)};
     }

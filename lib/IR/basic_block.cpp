@@ -14,7 +14,7 @@ BasicBlock::BasicBlock(Function &parent)
       id_{parent.get_next_bb_id()}, next_instr_id_{0} {}
 
 void BasicBlock::replace_instruction(iterator from, Instruction &to) {
-    assert(from->get_parent() == this);
+    assert(std::addressof(from->get_parent()) == this);
 
     from->replace_with(to);
     from->remove_as_user();

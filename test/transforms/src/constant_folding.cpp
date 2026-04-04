@@ -51,7 +51,7 @@ TEST_P(ConstantFoldingForBinaryOperation, /* no test name */) {
 
     // Assert
     EXPECT_EQ(foo.size(), 1) << foo;
-    EXPECT_EQ(bb.get_parent(), std::addressof(foo)) << foo;
+    EXPECT_EQ(std::addressof(bb.get_parent()), std::addressof(foo)) << foo;
 
     EXPECT_EQ(bb.size(), 4) << foo;
 
@@ -142,7 +142,7 @@ TEST_P(ConstantFoldingForICmp, /* no test name */) {
 
     // Assert
     EXPECT_EQ(foo.size(), 1) << foo;
-    EXPECT_EQ(bb.get_parent(), std::addressof(foo)) << foo;
+    EXPECT_EQ(std::addressof(bb.get_parent()), std::addressof(foo)) << foo;
 
     EXPECT_EQ(bb.size(), 4) << foo;
 
@@ -275,7 +275,7 @@ TEST(ConstantFolding, ArithmeticCombination) {
 
     // Assert
     EXPECT_EQ(foo.size(), 1) << foo;
-    EXPECT_EQ(bb.get_parent(), std::addressof(foo)) << foo;
+    EXPECT_EQ(std::addressof(bb.get_parent()), std::addressof(foo)) << foo;
 
     EXPECT_EQ(bb.size(), 8) << foo;
 
@@ -330,7 +330,7 @@ TEST(ConstantFolding, ArithmeticCombinationWithLogic) {
 
     // Assert
     EXPECT_EQ(foo.size(), 1) << foo;
-    EXPECT_EQ(bb.get_parent(), std::addressof(foo)) << foo;
+    EXPECT_EQ(std::addressof(bb.get_parent()), std::addressof(foo)) << foo;
 
     EXPECT_EQ(bb.size(), 8) << foo;
 
