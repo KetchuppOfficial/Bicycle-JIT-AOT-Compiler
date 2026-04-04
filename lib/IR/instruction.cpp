@@ -170,10 +170,19 @@ ReturnInstruction::ReturnInstruction(BasicBlock &parent)
 
 ReturnInstruction::ReturnInstruction(BasicBlock &parent, Instruction &ret_val)
     : Instruction(parent, Opcode::kRet, Type::kVoid), ret_val_{std::addressof(ret_val)} {
+    auto &callee = parent.get_parent();
+    auto &owner = ret_val.get_parent().get_parent();
+    if (std::addressof(owner) != std::addressof(callee)) {
+        throw std::invalid_argument{
+            std::format("trying to return SSA value owned by function '{}' from function '{}'",
+                        owner.name(), callee.name())};
+    }
+
     if (auto ret_type = parent.get_parent().return_type(); ret_type != ret_val.get_type()) {
         throw std::invalid_argument{std::format("trying to create {} {} in a function returning {}",
                                                 Opcode::kRet, ret_val.get_type(), ret_type)};
     }
+
     ret_val.add_user(this);
 }
 
