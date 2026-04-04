@@ -57,7 +57,7 @@ class BinaryOperator final : public Instruction {
     friend class BasicBlock;
 
     BinaryOperator(BasicBlock &parent, Opcode opcode, Instruction &lhs, Instruction &rhs)
-        : Instruction(parent, check_opcode(opcode), common_type(lhs, rhs)),
+        : Instruction(parent, check_opcode(opcode), common_type(opcode, lhs, rhs)),
           lhs_{std::addressof(lhs)}, rhs_{std::addressof(rhs)} {
         lhs.add_user(this);
         rhs.add_user(this);
@@ -70,13 +70,13 @@ class BinaryOperator final : public Instruction {
         return opcode;
     }
 
-    Type common_type(Instruction &lhs, Instruction &rhs) {
+    static Type common_type(Opcode opcode, Instruction &lhs, Instruction &rhs) {
         const auto lhs_type = lhs.get_type();
         const auto rhs_type = rhs.get_type();
         if (lhs_type == rhs_type) {
             return lhs_type;
         } else {
-            throw OperandsTypeMismatch{opcode_, lhs_type, rhs_type};
+            throw OperandsTypeMismatch{opcode, lhs_type, rhs_type};
         }
     }
 
