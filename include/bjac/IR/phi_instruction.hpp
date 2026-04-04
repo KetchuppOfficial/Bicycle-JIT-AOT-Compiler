@@ -56,6 +56,13 @@ class PHIInstruction final : public Instruction {
         return nullptr;
     }
 
+    std::ranges::bidirectional_range auto get_paths() { return records_ | std::views::all; }
+    std::ranges::bidirectional_range auto get_paths() const {
+        return records_ | std::views::transform([](const auto &pair) static {
+                   return std::pair<const BasicBlock *, const Instruction *>{pair};
+               });
+    }
+
     std::ranges::bidirectional_range auto get_sources() { return records_ | std::views::keys; }
 
     std::ranges::bidirectional_range auto get_sources() const {
