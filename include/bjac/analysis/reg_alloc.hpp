@@ -3,8 +3,8 @@
 
 #include <cstddef>
 #include <format>
-#include <ostream>
 #include <memory>
+#include <ostream>
 #include <unordered_map>
 
 namespace bjac {

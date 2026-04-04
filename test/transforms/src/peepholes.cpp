@@ -51,7 +51,7 @@ TEST_P(PeepholesForAndWithConstant, ValueWithZero) {
     auto &bb = foo.emplace_back();
 
     { // Use scope to discourage usage of variables defined within after the optimization pass
-        auto &arg = bb.emplace_back<bjac::ArgumentInstruction>(foo, 0);
+        auto &arg = bb.emplace_back<bjac::ArgumentInstruction>(0);
         auto &constant = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, 0);
         auto &op = (GetParam() == ArgsOrder::kSelectedArgOnLeft)
                        ? bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kAnd,
@@ -114,7 +114,7 @@ TEST_P(PeepholesForAndWithConstant, ValueWithAllOnes) {
     auto &bb = foo.emplace_back();
 
     { // Use scope to discourage usage of variables defined within after the optimization pass
-        auto &arg = bb.emplace_back<bjac::ArgumentInstruction>(foo, 0);
+        auto &arg = bb.emplace_back<bjac::ArgumentInstruction>(0);
         auto &constant =
             bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, ~std::uint64_t{0});
         auto &op = (GetParam() == ArgsOrder::kSelectedArgOnLeft)
@@ -181,7 +181,7 @@ TEST(PeepholesForAnd, BothArgumentsAreTheSameInstruction) {
     auto &bb = foo.emplace_back();
 
     { // Use scope to discourage usage of variables defined within after the optimization pass
-        auto &arg = bb.emplace_back<bjac::ArgumentInstruction>(foo, 0);
+        auto &arg = bb.emplace_back<bjac::ArgumentInstruction>(0);
         auto &op = bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kAnd, arg, arg);
         bb.emplace_back<bjac::ReturnInstruction>(op);
     }
@@ -240,7 +240,7 @@ TEST(PeepholesForAnd, ChainingConstantOnLeftLeft) {
     auto &bb = foo.emplace_back();
 
     { // Use scope to discourage usage of variables defined within after the optimization pass
-        auto &arg = bb.emplace_back<bjac::ArgumentInstruction>(foo, 0);
+        auto &arg = bb.emplace_back<bjac::ArgumentInstruction>(0);
         auto &const_1 =
             bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, std::uint64_t{0x0ff});
         auto &op_1 =
@@ -321,7 +321,7 @@ TEST_P(PeepholesForAdd, OneOfArgumentsIsZero) {
     auto &bb = foo.emplace_back();
 
     { // Use scope to discourage usage of variables defined within after the optimization pass
-        auto &arg = bb.emplace_back<bjac::ArgumentInstruction>(foo, 0);
+        auto &arg = bb.emplace_back<bjac::ArgumentInstruction>(0);
         auto &constant = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, 0);
         auto &op = (GetParam() == ArgsOrder::kSelectedArgOnLeft)
                        ? bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kAdd,
@@ -389,11 +389,11 @@ TEST_P(PeepholesForAdd, LeftArgumentIsSubFromZero) {
     auto &bb = foo.emplace_back();
 
     { // Use scope to discourage usage of variables defined within after the optimization pass
-        auto &arg_1 = bb.emplace_back<bjac::ArgumentInstruction>(foo, 0);
+        auto &arg_1 = bb.emplace_back<bjac::ArgumentInstruction>(0);
         auto &const_1 = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, 0);
         auto &sub =
             bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kSub, const_1, arg_1);
-        auto &arg_2 = bb.emplace_back<bjac::ArgumentInstruction>(foo, 1);
+        auto &arg_2 = bb.emplace_back<bjac::ArgumentInstruction>(1);
         auto &add =
             (GetParam() == ArgsOrder::kSelectedArgOnLeft)
                 ? bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kAdd, sub, arg_2)
@@ -469,7 +469,7 @@ TEST(PeepholesForShrLWithZero, ShiftForZeroBits) {
     auto &bb = foo.emplace_back();
 
     { // Use scope to discourage usage of variables defined within after the optimization pass
-        auto &arg = bb.emplace_back<bjac::ArgumentInstruction>(foo, 0);
+        auto &arg = bb.emplace_back<bjac::ArgumentInstruction>(0);
         auto &constant = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, 0);
         auto &op =
             bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kShrL, arg, constant);
@@ -513,7 +513,7 @@ TEST(PeepholesForShrLWithZero, ShiftZeroForAnyNumberOfBits) {
     auto &bb = foo.emplace_back();
 
     { // Use scope to discourage usage of variables defined within after the optimization pass
-        auto &arg = bb.emplace_back<bjac::ArgumentInstruction>(foo, 0);
+        auto &arg = bb.emplace_back<bjac::ArgumentInstruction>(0);
         auto &constant = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, 0);
         auto &op =
             bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kShrL, constant, arg);

@@ -48,7 +48,7 @@ TEST(RegAlloc, Loop1) {
     bjac::Function foo{"foo", kI64, {kI64}};
     auto [bb, names] = setup(foo, {'A', 'B', 'C', 'D'});
 
-    auto &arg = bb.at('A')->emplace_back<bjac::ArgumentInstruction>(foo, 0);
+    auto &arg = bb.at('A')->emplace_back<bjac::ArgumentInstruction>(0);
     auto &i = bb.at('A')->emplace_back<bjac::ConstInstruction>(kI64, 0);
     auto &one = bb.at('A')->emplace_back<bjac::ConstInstruction>(kI64, 1);
     bb.at('A')->emplace_back<bjac::BranchInstruction>(*bb.at('B'));
@@ -113,7 +113,7 @@ TEST(RegAlloc, Loop2) {
     auto &zero = bb.at('A')->emplace_back<bjac::ConstInstruction>(kI64, 0);
     auto &one = bb.at('A')->emplace_back<bjac::ConstInstruction>(kI64, 1);
     auto &two = bb.at('A')->emplace_back<bjac::ConstInstruction>(kI64, 2);
-    auto &arg = bb.at('A')->emplace_back<bjac::ArgumentInstruction>(foo, 0);
+    auto &arg = bb.at('A')->emplace_back<bjac::ArgumentInstruction>(0);
     bb.at('A')->emplace_back<bjac::BranchInstruction>(*bb.at('B'));
 
     auto &b_phi = bb.at('B')->emplace_back<bjac::PHIInstruction>(kI64);
@@ -183,7 +183,7 @@ TEST(RegAlloc, Loop3) {
     bjac::Function foo{"foo", kI64, {kI64}};
     auto [bb, names] = setup(foo, {'A', 'B', 'C', 'D'});
 
-    auto &arg = bb.at('A')->emplace_back<bjac::ArgumentInstruction>(foo, 0);
+    auto &arg = bb.at('A')->emplace_back<bjac::ArgumentInstruction>(0);
     auto &zero = bb.at('A')->emplace_back<bjac::ConstInstruction>(kI64, 0);
     auto &one = bb.at('A')->emplace_back<bjac::ConstInstruction>(kI64, 1);
     auto &a_cmp =

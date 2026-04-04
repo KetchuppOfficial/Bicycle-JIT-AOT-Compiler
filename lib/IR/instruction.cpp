@@ -108,8 +108,8 @@ std::string users_to_string(const Instruction &instr) {
 
 } // unnamed namespace
 
-ArgumentInstruction::ArgumentInstruction(BasicBlock &parent, const Function &f, unsigned pos)
-    : Instruction(parent, Opcode::kArg, get_arg_type(f, pos)), pos_{pos} {}
+ArgumentInstruction::ArgumentInstruction(BasicBlock &parent, unsigned pos)
+    : Instruction(parent, Opcode::kArg, get_arg_type(parent.get_parent(), pos)), pos_{pos} {}
 
 std::string ArgumentInstruction::to_string() const {
     return std::format("{} = {} {} [{}]{}", ssa_value_to_string(*this), type_, Opcode::kArg, pos_,

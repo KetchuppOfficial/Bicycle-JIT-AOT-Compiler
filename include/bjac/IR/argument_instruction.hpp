@@ -25,7 +25,7 @@ class ArgumentInstruction final : public Instruction {
   private:
     friend class BasicBlock;
 
-    ArgumentInstruction(BasicBlock &parent, const Function &f, unsigned pos);
+    ArgumentInstruction(BasicBlock &parent, unsigned pos);
 
     virtual void remove_as_user() override { /* no-op */ }
 

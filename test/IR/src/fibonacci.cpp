@@ -26,7 +26,7 @@ int main() try {
     auto &bb3 = fibonacci.emplace_back();
     auto &bb4 = fibonacci.emplace_back();
 
-    auto &arg = bb1.emplace_back<bjac::ArgumentInstruction>(fibonacci, 0);
+    auto &arg = bb1.emplace_back<bjac::ArgumentInstruction>(0);
     auto &two = bb1.emplace_back<bjac::ConstInstruction>(kI64, 2);
     auto &bb1_cmp =
         bb1.emplace_back<bjac::ICmpInstruction>(bjac::ICmpInstruction::Kind::ult, arg, two);
