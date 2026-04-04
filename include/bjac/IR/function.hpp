@@ -21,6 +21,8 @@
 
 namespace bjac {
 
+class CallInstruction;
+
 class Function final : public Value, private ilist<BasicBlock> {
     using basic_blocks = ilist<BasicBlock>;
 
@@ -106,6 +108,9 @@ class Function final : public Value, private ilist<BasicBlock> {
     using basic_blocks::erase;
     using basic_blocks::pop_back;
     using basic_blocks::pop_front;
+
+    static void inline_at(CallInstruction &call);
+    iterator split_bb_at(Instruction &instr);
 
   private:
     std::string name_;

@@ -4,3 +4,16 @@ PRIVATE
     bjac::ir
     bjac::defaults
 )
+
+add_executable(bjac_ir_tests
+    src/function.cpp
+)
+
+target_link_libraries(bjac_ir_tests
+PRIVATE
+    GTest::gtest_main
+    Threads::Threads
+    bjac::ir
+)
+
+gtest_discover_tests(bjac_ir_tests)

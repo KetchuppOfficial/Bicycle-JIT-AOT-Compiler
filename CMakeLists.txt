@@ -81,6 +81,8 @@ target_link_libraries(bjac_ir
 PUBLIC
     bjac::ilist
     bjac::defaults
+PRIVATE
+    bjac::graphs
 )
 
 add_library(bjac_transforms STATIC
