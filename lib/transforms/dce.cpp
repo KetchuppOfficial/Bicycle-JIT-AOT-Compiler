@@ -25,7 +25,7 @@ void remove_unreachable_blocks(Function &f) {
 void remove_unused_instructions(Function &f) {
     for (auto &bb : f) {
         for (auto it = bb.begin(), ite = bb.end(); it != ite;) {
-            if (it->get_type() != Type::kVoid && it->users_count() == 0) {
+            if (it->get_type_id() != Type::ID::kVoid && it->users_count() == 0) {
                 auto next_it = std::next(it);
                 bb.erase(it);
                 it = next_it;

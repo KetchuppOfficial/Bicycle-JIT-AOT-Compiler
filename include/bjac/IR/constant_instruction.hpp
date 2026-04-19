@@ -24,27 +24,27 @@ template <auto T>
 struct IRTypeToMaxValue;
 
 template <>
-struct IRTypeToMaxValue<Type::kI1> {
+struct IRTypeToMaxValue<Type::ID::kI1> {
     static constexpr std::uintmax_t kMax = std::numeric_limits<bool>::max();
 };
 
 template <>
-struct IRTypeToMaxValue<Type::kI8> {
+struct IRTypeToMaxValue<Type::ID::kI8> {
     static constexpr std::uintmax_t kMax = std::numeric_limits<std::uint8_t>::max();
 };
 
 template <>
-struct IRTypeToMaxValue<Type::kI16> {
+struct IRTypeToMaxValue<Type::ID::kI16> {
     static constexpr std::uintmax_t kMax = std::numeric_limits<std::uint16_t>::max();
 };
 
 template <>
-struct IRTypeToMaxValue<Type::kI32> {
+struct IRTypeToMaxValue<Type::ID::kI32> {
     static constexpr std::uintmax_t kMax = std::numeric_limits<std::uint32_t>::max();
 };
 
 template <>
-struct IRTypeToMaxValue<Type::kI64> {
+struct IRTypeToMaxValue<Type::ID::kI64> {
     static constexpr std::uintmax_t kMax = std::numeric_limits<std::uint64_t>::max();
 };
 
@@ -55,17 +55,18 @@ class ConstInstruction final : public Instruction {
     std::uintmax_t get_value() const noexcept { return value_; }
 
     std::uintmax_t max_value() const {
-        switch (get_type()) {
-        case Type::kI1:
-            return IRTypeToMaxValue<Type::kI1>::kMax;
-        case Type::kI8:
-            return IRTypeToMaxValue<Type::kI8>::kMax;
-        case Type::kI16:
-            return IRTypeToMaxValue<Type::kI16>::kMax;
-        case Type::kI32:
-            return IRTypeToMaxValue<Type::kI32>::kMax;
-        case Type::kI64:
-            return IRTypeToMaxValue<Type::kI64>::kMax;
+        using enum Type::ID;
+        switch (get_type().id()) {
+        case kI1:
+            return IRTypeToMaxValue<kI1>::kMax;
+        case kI8:
+            return IRTypeToMaxValue<kI8>::kMax;
+        case kI16:
+            return IRTypeToMaxValue<kI16>::kMax;
+        case kI32:
+            return IRTypeToMaxValue<kI32>::kMax;
+        case kI64:
+            return IRTypeToMaxValue<kI64>::kMax;
         default:
             std::unreachable();
         }
@@ -76,40 +77,37 @@ class ConstInstruction final : public Instruction {
   private:
     friend class BasicBlock;
 
-    ConstInstruction(BasicBlock &parent, Type type, std::uintmax_t value)
-        : Instruction(parent, Opcode::kConst, type), value_{value} {
-        switch (type) {
-        case Type::kI1:
-            if (value > IRTypeToMaxValue<Type::kI1>::kMax) {
+    ConstInstruction(BasicBlock &parent, std::unique_ptr<Type> type, std::uintmax_t value)
+        : Instruction(parent, Opcode::kConst, std::move(type)), value_{value} {
+        using enum Type::ID;
+        switch (const auto id = get_type().id()) {
+        case kI1:
+            if (value > IRTypeToMaxValue<kI1>::kMax) {
                 throw ConstantOutOfRange{"value for i1 is out of range"};
             }
             break;
-        case Type::kI8:
-            if (value > IRTypeToMaxValue<Type::kI8>::kMax) {
+        case kI8:
+            if (value > IRTypeToMaxValue<kI8>::kMax) {
                 throw ConstantOutOfRange{"value for i8 is out of range"};
             }
             break;
-        case Type::kI16:
-            if (value > IRTypeToMaxValue<Type::kI16>::kMax) {
+        case kI16:
+            if (value > IRTypeToMaxValue<kI16>::kMax) {
                 throw ConstantOutOfRange{"value for i16 is out of range"};
             }
             break;
-        case Type::kI32:
-            if (value > IRTypeToMaxValue<Type::kI32>::kMax) {
+        case kI32:
+            if (value > IRTypeToMaxValue<kI32>::kMax) {
                 throw ConstantOutOfRange{"value for i32 is out of range"};
             }
             break;
-        case Type::kI64:
-            if (value > IRTypeToMaxValue<Type::kI64>::kMax) {
+        case kI64:
+            if (value > IRTypeToMaxValue<kI64>::kMax) {
                 throw ConstantOutOfRange{"value for i64 is out of range"};
             }
             break;
-        case Type::kVoid:
-            throw InvalidConstantType{"void constant shall not be created"};
-        case Type::kNone:
-            throw InvalidConstantType{"none constant shall not be created"};
         default:
-            std::unreachable();
+            throw InvalidConstantType{std::format("'{}' constant shall not be created", id)};
         }
     }
 

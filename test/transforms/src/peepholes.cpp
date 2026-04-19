@@ -14,6 +14,10 @@
 
 #include "bjac/transforms/peepholes.hpp"
 
+#include "test/common.hpp"
+
+using enum bjac::Type::ID;
+
 static auto get_instructions(const bjac::BasicBlock &bb) {
     return std::vector<const bjac::Instruction *>{
         std::from_range,
@@ -46,13 +50,13 @@ class PeepholesForAndWithConstant : public ::testing::TestWithParam<ArgsOrder> {
  */
 TEST_P(PeepholesForAndWithConstant, ValueWithZero) {
     // Assign
-    bjac::Function foo{"foo", bjac::Type::kI64, {bjac::Type::kI64}};
+    bjac::Function foo = get_func("foo", kI64, {kI64});
 
     auto &bb = foo.emplace_back();
 
     { // Use scope to discourage usage of variables defined within after the optimization pass
         auto &arg = bb.emplace_back<bjac::ArgumentInstruction>(0);
-        auto &constant = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, 0);
+        auto &constant = bb.emplace_back<bjac::ConstInstruction>(get_i64(), 0);
         auto &op = (GetParam() == ArgsOrder::kSelectedArgOnLeft)
                        ? bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kAnd,
                                                                constant, arg)
@@ -72,13 +76,13 @@ TEST_P(PeepholesForAndWithConstant, ValueWithZero) {
 
     const auto instrs = get_instructions(bb);
 
-    EXPECT_EQ(instrs.at(0)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(0)->get_type_id(), kI64) << foo;
     EXPECT_EQ(instrs.at(0)->users_count(), 0) << foo;
     ASSERT_EQ(instrs.at(0)->get_opcode(), bjac::Instruction::Opcode::kArg) << foo;
     EXPECT_EQ(static_cast<const bjac::ArgumentInstruction *>(instrs.at(0))->get_position(), 0)
         << foo;
 
-    EXPECT_EQ(instrs.at(1)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(1)->get_type_id(), kI64) << foo;
     EXPECT_EQ(instrs.at(1)->users_count(), 1) << foo;
     EXPECT_TRUE(instrs.at(1)->has_user(instrs.at(2))) << foo;
     ASSERT_EQ(instrs.at(1)->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
@@ -109,14 +113,13 @@ TEST_P(PeepholesForAndWithConstant, ValueWithZero) {
  */
 TEST_P(PeepholesForAndWithConstant, ValueWithAllOnes) {
     // Assign
-    bjac::Function foo{"foo", bjac::Type::kI64, {bjac::Type::kI64}};
+    bjac::Function foo = get_func("foo", kI64, {kI64});
 
     auto &bb = foo.emplace_back();
 
     { // Use scope to discourage usage of variables defined within after the optimization pass
         auto &arg = bb.emplace_back<bjac::ArgumentInstruction>(0);
-        auto &constant =
-            bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, ~std::uint64_t{0});
+        auto &constant = bb.emplace_back<bjac::ConstInstruction>(get_i64(), ~std::uint64_t{0});
         auto &op = (GetParam() == ArgsOrder::kSelectedArgOnLeft)
                        ? bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kAnd,
                                                                constant, arg)
@@ -136,14 +139,14 @@ TEST_P(PeepholesForAndWithConstant, ValueWithAllOnes) {
 
     const auto instrs = get_instructions(bb);
 
-    EXPECT_EQ(instrs.at(0)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(0)->get_type_id(), kI64) << foo;
     EXPECT_EQ(instrs.at(0)->users_count(), 1) << foo;
     EXPECT_TRUE(instrs.at(0)->has_user(instrs.at(2))) << foo;
     ASSERT_EQ(instrs.at(0)->get_opcode(), bjac::Instruction::Opcode::kArg) << foo;
     EXPECT_EQ(static_cast<const bjac::ArgumentInstruction *>(instrs.at(0))->get_position(), 0)
         << foo;
 
-    EXPECT_EQ(instrs.at(1)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(1)->get_type_id(), kI64) << foo;
     EXPECT_EQ(instrs.at(1)->users_count(), 0) << foo;
     ASSERT_EQ(instrs.at(1)->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
     EXPECT_EQ(static_cast<const bjac::ConstInstruction *>(instrs.at(1))->get_value(), ~uint64_t{0})
@@ -176,7 +179,7 @@ INSTANTIATE_TEST_SUITE_P(
  */
 TEST(PeepholesForAnd, BothArgumentsAreTheSameInstruction) {
     // Assign
-    bjac::Function foo{"foo", bjac::Type::kI64, {bjac::Type::kI64}};
+    bjac::Function foo = get_func("foo", kI64, {kI64});
 
     auto &bb = foo.emplace_back();
 
@@ -197,7 +200,7 @@ TEST(PeepholesForAnd, BothArgumentsAreTheSameInstruction) {
 
     const auto instrs = get_instructions(bb);
 
-    EXPECT_EQ(instrs.at(0)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(0)->get_type_id(), kI64) << foo;
     EXPECT_EQ(instrs.at(0)->users_count(), 1) << foo;
     EXPECT_TRUE(instrs.at(0)->has_user(instrs.at(1))) << foo;
     ASSERT_EQ(instrs.at(0)->get_opcode(), bjac::Instruction::Opcode::kArg) << foo;
@@ -235,18 +238,16 @@ TEST(PeepholesForAnd, BothArgumentsAreTheSameInstruction) {
  */
 TEST(PeepholesForAnd, ChainingConstantOnLeftLeft) {
     // Assign
-    bjac::Function foo{"foo", bjac::Type::kI64, {bjac::Type::kI64}};
+    bjac::Function foo = get_func("foo", kI64, {kI64});
 
     auto &bb = foo.emplace_back();
 
     { // Use scope to discourage usage of variables defined within after the optimization pass
         auto &arg = bb.emplace_back<bjac::ArgumentInstruction>(0);
-        auto &const_1 =
-            bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, std::uint64_t{0x0ff});
+        auto &const_1 = bb.emplace_back<bjac::ConstInstruction>(get_i64(), std::uint64_t{0x0ff});
         auto &op_1 =
             bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kAnd, const_1, arg);
-        auto &const_2 =
-            bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, std::uint64_t{0xff0});
+        auto &const_2 = bb.emplace_back<bjac::ConstInstruction>(get_i64(), std::uint64_t{0xff0});
         auto &op_2 =
             bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kAnd, const_2, op_1);
         bb.emplace_back<bjac::ReturnInstruction>(op_2);
@@ -263,7 +264,7 @@ TEST(PeepholesForAnd, ChainingConstantOnLeftLeft) {
 
     const auto instrs = get_instructions(bb);
 
-    EXPECT_EQ(instrs.at(0)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(0)->get_type_id(), kI64) << foo;
     EXPECT_EQ(instrs.at(0)->users_count(), 2) << foo;
     EXPECT_TRUE(instrs.at(0)->has_user(instrs.at(2))) << foo;
     EXPECT_TRUE(instrs.at(0)->has_user(instrs.at(5))) << foo;
@@ -271,13 +272,13 @@ TEST(PeepholesForAnd, ChainingConstantOnLeftLeft) {
     EXPECT_EQ(static_cast<const bjac::ArgumentInstruction *>(instrs.at(0))->get_position(), 0)
         << foo;
 
-    EXPECT_EQ(instrs.at(1)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(1)->get_type_id(), kI64) << foo;
     EXPECT_EQ(instrs.at(1)->users_count(), 1) << foo;
     EXPECT_TRUE(instrs.at(1)->has_user(instrs.at(2))) << foo;
     ASSERT_EQ(instrs.at(1)->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
     EXPECT_EQ(static_cast<const bjac::ConstInstruction *>(instrs.at(1))->get_value(), 0x0ff) << foo;
 
-    EXPECT_EQ(instrs.at(2)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(2)->get_type_id(), kI64) << foo;
     EXPECT_EQ(instrs.at(2)->users_count(), 0) << foo;
     ASSERT_EQ(instrs.at(2)->get_opcode(), bjac::Instruction::Opcode::kAnd) << foo;
     EXPECT_EQ(static_cast<const bjac::BinaryOperator *>(instrs.at(2))->get_lhs(), instrs.at(1))
@@ -285,18 +286,18 @@ TEST(PeepholesForAnd, ChainingConstantOnLeftLeft) {
     EXPECT_EQ(static_cast<const bjac::BinaryOperator *>(instrs.at(2))->get_rhs(), instrs.at(0))
         << foo;
 
-    EXPECT_EQ(instrs.at(3)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(3)->get_type_id(), kI64) << foo;
     EXPECT_EQ(instrs.at(3)->users_count(), 0) << foo;
     ASSERT_EQ(instrs.at(3)->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
     EXPECT_EQ(static_cast<const bjac::ConstInstruction *>(instrs.at(3))->get_value(), 0xff0) << foo;
 
-    EXPECT_EQ(instrs.at(4)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(4)->get_type_id(), kI64) << foo;
     EXPECT_EQ(instrs.at(4)->users_count(), 1) << foo;
     EXPECT_TRUE(instrs.at(4)->has_user(instrs.at(5))) << foo;
     ASSERT_EQ(instrs.at(4)->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
     EXPECT_EQ(static_cast<const bjac::ConstInstruction *>(instrs.at(4))->get_value(), 0x0f0) << foo;
 
-    EXPECT_EQ(instrs.at(5)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(5)->get_type_id(), kI64) << foo;
     EXPECT_EQ(instrs.at(5)->users_count(), 1) << foo;
     EXPECT_TRUE(instrs.at(5)->has_user(instrs.at(6))) << foo;
     ASSERT_EQ(instrs.at(5)->get_opcode(), bjac::Instruction::Opcode::kAnd) << foo;
@@ -316,13 +317,13 @@ class PeepholesForAdd : public ::testing::TestWithParam<ArgsOrder> {};
 
 TEST_P(PeepholesForAdd, OneOfArgumentsIsZero) {
     // Assign
-    bjac::Function foo{"foo", bjac::Type::kI64, {bjac::Type::kI64}};
+    bjac::Function foo = get_func("foo", kI64, {kI64});
 
     auto &bb = foo.emplace_back();
 
     { // Use scope to discourage usage of variables defined within after the optimization pass
         auto &arg = bb.emplace_back<bjac::ArgumentInstruction>(0);
-        auto &constant = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, 0);
+        auto &constant = bb.emplace_back<bjac::ConstInstruction>(get_i64(), 0);
         auto &op = (GetParam() == ArgsOrder::kSelectedArgOnLeft)
                        ? bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kAdd,
                                                                constant, arg)
@@ -342,14 +343,14 @@ TEST_P(PeepholesForAdd, OneOfArgumentsIsZero) {
 
     const auto instrs = get_instructions(bb);
 
-    EXPECT_EQ(instrs.at(0)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(0)->get_type_id(), kI64) << foo;
     EXPECT_EQ(instrs.at(0)->users_count(), 1) << foo;
     EXPECT_TRUE(instrs.at(0)->has_user(instrs.at(2))) << foo;
     ASSERT_EQ(instrs.at(0)->get_opcode(), bjac::Instruction::Opcode::kArg) << foo;
     EXPECT_EQ(static_cast<const bjac::ArgumentInstruction *>(instrs.at(0))->get_position(), 0)
         << foo;
 
-    EXPECT_EQ(instrs.at(1)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(1)->get_type_id(), kI64) << foo;
     EXPECT_EQ(instrs.at(1)->users_count(), 0) << foo;
     ASSERT_EQ(instrs.at(1)->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
     EXPECT_EQ(static_cast<const bjac::ConstInstruction *>(instrs.at(1))->get_value(), 0) << foo;
@@ -384,13 +385,13 @@ TEST_P(PeepholesForAdd, OneOfArgumentsIsZero) {
  */
 TEST_P(PeepholesForAdd, LeftArgumentIsSubFromZero) {
     // Assign
-    bjac::Function foo{"foo", bjac::Type::kI64, {bjac::Type::kI64, bjac::Type::kI64}};
+    bjac::Function foo = get_func("foo", kI64, {kI64, kI64});
 
     auto &bb = foo.emplace_back();
 
     { // Use scope to discourage usage of variables defined within after the optimization pass
         auto &arg_1 = bb.emplace_back<bjac::ArgumentInstruction>(0);
-        auto &const_1 = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, 0);
+        auto &const_1 = bb.emplace_back<bjac::ConstInstruction>(get_i64(), 0);
         auto &sub =
             bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kSub, const_1, arg_1);
         auto &arg_2 = bb.emplace_back<bjac::ArgumentInstruction>(1);
@@ -413,7 +414,7 @@ TEST_P(PeepholesForAdd, LeftArgumentIsSubFromZero) {
 
     const auto instrs = get_instructions(bb);
 
-    EXPECT_EQ(instrs.at(0)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(0)->get_type_id(), kI64) << foo;
     EXPECT_EQ(instrs.at(0)->users_count(), 2) << foo;
     EXPECT_TRUE(instrs.at(0)->has_user(instrs.at(2))) << foo;
     EXPECT_TRUE(instrs.at(0)->has_user(instrs.at(4))) << foo;
@@ -421,13 +422,13 @@ TEST_P(PeepholesForAdd, LeftArgumentIsSubFromZero) {
     EXPECT_EQ(static_cast<const bjac::ArgumentInstruction *>(instrs.at(0))->get_position(), 0)
         << foo;
 
-    EXPECT_EQ(instrs.at(1)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(1)->get_type_id(), kI64) << foo;
     EXPECT_EQ(instrs.at(1)->users_count(), 1) << foo;
     EXPECT_TRUE(instrs.at(1)->has_user(instrs.at(2))) << foo;
     ASSERT_EQ(instrs.at(1)->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
     EXPECT_EQ(static_cast<const bjac::ConstInstruction *>(instrs.at(1))->get_value(), 0) << foo;
 
-    EXPECT_EQ(instrs.at(2)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(2)->get_type_id(), kI64) << foo;
     EXPECT_EQ(instrs.at(2)->users_count(), 0) << foo;
     ASSERT_EQ(instrs.at(2)->get_opcode(), bjac::Instruction::Opcode::kSub) << foo;
     EXPECT_EQ(static_cast<const bjac::BinaryOperator *>(instrs.at(2))->get_lhs(), instrs.at(1))
@@ -435,14 +436,14 @@ TEST_P(PeepholesForAdd, LeftArgumentIsSubFromZero) {
     EXPECT_EQ(static_cast<const bjac::BinaryOperator *>(instrs.at(2))->get_rhs(), instrs.at(0))
         << foo;
 
-    EXPECT_EQ(instrs.at(3)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(3)->get_type_id(), kI64) << foo;
     EXPECT_EQ(instrs.at(3)->users_count(), 1) << foo;
     EXPECT_TRUE(instrs.at(3)->has_user(instrs.at(4))) << foo;
     ASSERT_EQ(instrs.at(3)->get_opcode(), bjac::Instruction::Opcode::kArg) << foo;
     EXPECT_EQ(static_cast<const bjac::ArgumentInstruction *>(instrs.at(3))->get_position(), 1)
         << foo;
 
-    EXPECT_EQ(instrs.at(4)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(4)->get_type_id(), kI64) << foo;
     EXPECT_EQ(instrs.at(4)->users_count(), 1) << foo;
     EXPECT_TRUE(instrs.at(4)->has_user(instrs.at(5))) << foo;
     ASSERT_EQ(instrs.at(4)->get_opcode(), bjac::Instruction::Opcode::kSub) << foo;
@@ -464,13 +465,13 @@ INSTANTIATE_TEST_SUITE_P(
 
 TEST(PeepholesForShrLWithZero, ShiftForZeroBits) {
     // Assign
-    bjac::Function foo{"foo", bjac::Type::kI64, {bjac::Type::kI64}};
+    bjac::Function foo = get_func("foo", kI64, {kI64});
 
     auto &bb = foo.emplace_back();
 
     { // Use scope to discourage usage of variables defined within after the optimization pass
         auto &arg = bb.emplace_back<bjac::ArgumentInstruction>(0);
-        auto &constant = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, 0);
+        auto &constant = bb.emplace_back<bjac::ConstInstruction>(get_i64(), 0);
         auto &op =
             bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kShrL, arg, constant);
         bb.emplace_back<bjac::ReturnInstruction>(op);
@@ -487,14 +488,14 @@ TEST(PeepholesForShrLWithZero, ShiftForZeroBits) {
 
     const auto instrs = get_instructions(bb);
 
-    EXPECT_EQ(instrs.at(0)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(0)->get_type_id(), kI64) << foo;
     EXPECT_EQ(instrs.at(0)->users_count(), 1) << foo;
     EXPECT_TRUE(instrs.at(0)->has_user(instrs.at(2))) << foo;
     ASSERT_EQ(instrs.at(0)->get_opcode(), bjac::Instruction::Opcode::kArg) << foo;
     EXPECT_EQ(static_cast<const bjac::ArgumentInstruction *>(instrs.at(0))->get_position(), 0)
         << foo;
 
-    EXPECT_EQ(instrs.at(1)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(1)->get_type_id(), kI64) << foo;
     EXPECT_EQ(instrs.at(1)->users_count(), 0) << foo;
     ASSERT_EQ(instrs.at(1)->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;
     EXPECT_EQ(static_cast<const bjac::ConstInstruction *>(instrs.at(1))->get_value(), 0) << foo;
@@ -508,13 +509,13 @@ TEST(PeepholesForShrLWithZero, ShiftForZeroBits) {
 
 TEST(PeepholesForShrLWithZero, ShiftZeroForAnyNumberOfBits) {
     // Assign
-    bjac::Function foo{"foo", bjac::Type::kI64, {bjac::Type::kI64}};
+    bjac::Function foo = get_func("foo", kI64, {kI64});
 
     auto &bb = foo.emplace_back();
 
     { // Use scope to discourage usage of variables defined within after the optimization pass
         auto &arg = bb.emplace_back<bjac::ArgumentInstruction>(0);
-        auto &constant = bb.emplace_back<bjac::ConstInstruction>(bjac::Type::kI64, 0);
+        auto &constant = bb.emplace_back<bjac::ConstInstruction>(get_i64(), 0);
         auto &op =
             bb.emplace_back<bjac::BinaryOperator>(bjac::Instruction::Opcode::kShrL, constant, arg);
         bb.emplace_back<bjac::ReturnInstruction>(op);
@@ -531,13 +532,13 @@ TEST(PeepholesForShrLWithZero, ShiftZeroForAnyNumberOfBits) {
 
     const auto instrs = get_instructions(bb);
 
-    EXPECT_EQ(instrs.at(0)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(0)->get_type_id(), kI64) << foo;
     EXPECT_EQ(instrs.at(0)->users_count(), 0) << foo;
     ASSERT_EQ(instrs.at(0)->get_opcode(), bjac::Instruction::Opcode::kArg) << foo;
     EXPECT_EQ(static_cast<const bjac::ArgumentInstruction *>(instrs.at(0))->get_position(), 0)
         << foo;
 
-    EXPECT_EQ(instrs.at(1)->get_type(), bjac::Type::kI64) << foo;
+    EXPECT_EQ(instrs.at(1)->get_type_id(), kI64) << foo;
     EXPECT_EQ(instrs.at(1)->users_count(), 1) << foo;
     EXPECT_TRUE(instrs.at(1)->has_user(instrs.at(2))) << foo;
     ASSERT_EQ(instrs.at(1)->get_opcode(), bjac::Instruction::Opcode::kConst) << foo;

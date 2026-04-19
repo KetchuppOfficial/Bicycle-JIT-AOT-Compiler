@@ -19,8 +19,8 @@
 
 namespace bjac {
 
-Instruction::Instruction(BasicBlock &parent, Opcode opcode, Type type)
-    : Value{type}, opcode_{opcode}, parent_{std::addressof(parent)},
+Instruction::Instruction(BasicBlock &parent, Opcode opcode, std::unique_ptr<Type> type)
+    : Value{std::move(type)}, opcode_{opcode}, parent_{std::addressof(parent)},
       id_{parent.get_next_instr_id()} {}
 
 void Instruction::replace_with(Instruction &other) {
@@ -83,9 +83,9 @@ void Instruction::replace_with(Instruction &other) {
 
 namespace {
 
-Type get_arg_type(const Function &f, unsigned pos) {
+std::unique_ptr<Type> get_arg_type(const Function &f, unsigned pos) {
     if (const auto args = f.arguments(); pos < args.size()) {
-        return args[pos];
+        return args[pos]->clone();
     }
     throw ArgOutOfRange{"function parameter index is out of range"};
 }
@@ -112,22 +112,22 @@ ArgumentInstruction::ArgumentInstruction(BasicBlock &parent, unsigned pos)
     : Instruction(parent, Opcode::kArg, get_arg_type(parent.get_parent(), pos)), pos_{pos} {}
 
 std::string ArgumentInstruction::to_string() const {
-    return std::format("{} = {} {} [{}]{}", ssa_value_to_string(*this), type_, Opcode::kArg, pos_,
-                       users_to_string(*this));
+    return std::format("{} = {} {} [{}]{}", ssa_value_to_string(*this), get_type().to_string(),
+                       Opcode::kArg, pos_, users_to_string(*this));
 }
 
 std::string BinaryOperator::to_string() const {
-    return std::format("{} = {} {} {}, {}{}", ssa_value_to_string(*this), type_, opcode_,
-                       ssa_value_to_string(*lhs_), ssa_value_to_string(*rhs_),
+    return std::format("{} = {} {} {}, {}{}", ssa_value_to_string(*this), get_type().to_string(),
+                       opcode_, ssa_value_to_string(*lhs_), ssa_value_to_string(*rhs_),
                        users_to_string(*this));
 }
 
 std::string BranchInstruction::to_string() const {
     if (is_conditional()) {
         return std::format("{} {} {} {}, label %bb{}, label %bb{}{}", ssa_value_to_string(*this),
-                           Opcode::kBr, condition_->get_type(), ssa_value_to_string(*condition_),
-                           get_true_path()->get_id(), get_false_path()->get_id(),
-                           users_to_string(*this));
+                           Opcode::kBr, condition_->get_type().to_string(),
+                           ssa_value_to_string(*condition_), get_true_path()->get_id(),
+                           get_false_path()->get_id(), users_to_string(*this));
     } else {
         return std::format("{} {} label %bb{}{}", ssa_value_to_string(*this), Opcode::kBr,
                            get_true_path()->get_id(), users_to_string(*this));
@@ -135,41 +135,43 @@ std::string BranchInstruction::to_string() const {
 }
 
 std::string ConstInstruction::to_string() const {
-    return std::format("{} = {} {} {}{}", ssa_value_to_string(*this), type_, Opcode::kConst, value_,
-                       users_to_string(*this));
+    return std::format("{} = {} {} {}{}", ssa_value_to_string(*this), get_type().to_string(),
+                       Opcode::kConst, value_, users_to_string(*this));
 }
 
 std::string ICmpInstruction::to_string() const {
     return std::format("{} = {} {} {} {}, {}{}", ssa_value_to_string(*this), Opcode::kICmp, kind_,
-                       lhs_->get_type(), ssa_value_to_string(*lhs_), ssa_value_to_string(*rhs_),
-                       users_to_string(*this));
+                       lhs_->get_type().to_string(), ssa_value_to_string(*lhs_),
+                       ssa_value_to_string(*rhs_), users_to_string(*this));
 }
 
 std::string PHIInstruction::to_string() const {
     if (records_.empty()) {
-        return std::format("{} = {} {}{}", ssa_value_to_string(*this), Opcode::kPHI, type_,
-                           users_to_string(*this));
+        return std::format("{} = {} {}{}", ssa_value_to_string(*this), Opcode::kPHI,
+                           get_type().to_string(), users_to_string(*this));
     } else {
         auto phi_strings = records_ | std::views::transform([](const auto &r) static {
                                return std::format("[{}, %bb{}]", ssa_value_to_string(*r.second),
                                                   r.first->get_id());
                            });
         using namespace std::string_view_literals;
-        return std::format("{} = {} {} {:s}{}", ssa_value_to_string(*this), Opcode::kPHI, type_,
-                           std::views::join_with(phi_strings, ", "sv), users_to_string(*this));
+        return std::format("{} = {} {} {:s}{}", ssa_value_to_string(*this), Opcode::kPHI,
+                           get_type().to_string(), std::views::join_with(phi_strings, ", "sv),
+                           users_to_string(*this));
     }
 }
 
 ReturnInstruction::ReturnInstruction(BasicBlock &parent)
-    : Instruction(parent, Opcode::kRet, Type::kVoid), ret_val_{nullptr} {
-    if (auto ret_type = parent.get_parent().return_type(); ret_type != Type::kVoid) {
+    : Instruction(parent, Opcode::kRet, std::make_unique<VoidType>()), ret_val_{nullptr} {
+    if (auto ret_type_id = parent.get_parent().return_type_id(); ret_type_id != Type::ID::kVoid) {
         throw std::invalid_argument{std::format("trying to create {} {} in a function returning {}",
-                                                Opcode::kRet, Type::kVoid, ret_type)};
+                                                Opcode::kRet, Type::ID::kVoid, ret_type_id)};
     }
 }
 
 ReturnInstruction::ReturnInstruction(BasicBlock &parent, Instruction &ret_val)
-    : Instruction(parent, Opcode::kRet, Type::kVoid), ret_val_{std::addressof(ret_val)} {
+    : Instruction(parent, Opcode::kRet, std::make_unique<VoidType>()),
+      ret_val_{std::addressof(ret_val)} {
     auto &callee = parent.get_parent();
     auto &owner = ret_val.get_parent().get_parent();
     if (std::addressof(owner) != std::addressof(callee)) {
@@ -178,9 +180,11 @@ ReturnInstruction::ReturnInstruction(BasicBlock &parent, Instruction &ret_val)
                         owner.name(), callee.name())};
     }
 
-    if (auto ret_type = parent.get_parent().return_type(); ret_type != ret_val.get_type()) {
+    const auto &ret_type = parent.get_parent().return_type();
+    if (!ret_type.is_equal(ret_val.get_type())) {
         throw std::invalid_argument{std::format("trying to create {} {} in a function returning {}",
-                                                Opcode::kRet, ret_val.get_type(), ret_type)};
+                                                Opcode::kRet, ret_val.get_type().to_string(),
+                                                ret_type.to_string())};
     }
 
     ret_val.add_user(this);
@@ -189,18 +193,23 @@ ReturnInstruction::ReturnInstruction(BasicBlock &parent, Instruction &ret_val)
 std::string ReturnInstruction::to_string() const {
     if (ret_val_) {
         return std::format("{} {} {} {}", ssa_value_to_string(*this), Opcode::kRet,
-                           ret_val_->get_type(), ssa_value_to_string(*ret_val_));
+                           ret_val_->get_type().to_string(), ssa_value_to_string(*ret_val_));
     }
-    return std::format("{} {} {}", ssa_value_to_string(*this), Opcode::kRet, Type::kVoid);
+    return std::format("{} {} {}", ssa_value_to_string(*this), Opcode::kRet, Type::ID::kVoid);
 }
 
 CallInstruction::CallInstruction(BasicBlock &parent, Function &callee,
                                  std::vector<Instruction *> args)
-    : Instruction(parent, Opcode::kCall, callee.return_type()), callee_{std::addressof(callee)},
-      args_(std::move(args)) {
-    if (!std::ranges::equal(callee.arguments(),
-                            args_ | std::views::transform(
-                                        [](const auto *arg) static { return arg->get_type(); }))) {
+    : Instruction(parent, Opcode::kCall, callee.return_type().clone()),
+      callee_{std::addressof(callee)}, args_(std::move(args)) {
+    auto parameters =
+        callee.arguments() |
+        std::views::transform([](const auto &u_ptr) static -> const Type & { return *u_ptr; });
+    auto arguments = args_ | std::views::transform([](const auto *arg) static -> const Type & {
+                         return arg->get_type();
+                     });
+    if (!std::ranges::equal(parameters, arguments,
+                            [](const auto &lhs, const auto &rhs) { return lhs.is_equal(rhs); })) {
         throw std::invalid_argument{std::format(
             "types of call arguments mismatch with parameters of function '{}'", callee.name())};
     }

@@ -8,6 +8,7 @@ PRIVATE
     GTest::gtest_main
     Threads::Threads
     bjac::transforms
+    tests_common
 )
 
 gtest_discover_tests(bjac_transforms_tests)

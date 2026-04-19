@@ -9,14 +9,14 @@
 
 #include "test/common.hpp"
 
-using enum bjac::Type;
+using enum bjac::Type::ID;
 
 TEST(LinearOrder, Mandatory_1) {
     // Assign
-    bjac::Function foo{"foo", kVoid, {}};
+    bjac::Function foo = get_func("foo", kVoid);
     auto [bb, names] = setup(foo, {'A', 'B', 'C', 'D', 'E'});
 
-    auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(kI1, 0);
+    auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(get_i1(), 0);
 
     bb.at('A')->emplace_back<bjac::BranchInstruction>(*bb.at('B'));
     bb.at('B')->emplace_back<bjac::BranchInstruction>(cond, *bb.at('C'), *bb.at('D'));
@@ -34,10 +34,10 @@ TEST(LinearOrder, Mandatory_1) {
 
 TEST(LinearOrder, Mandatory_2) {
     // Assign
-    bjac::Function foo{"foo", kVoid, {}};
+    bjac::Function foo = get_func("foo", kVoid);
     auto [bb, names] = setup(foo, {'A', 'B', 'C', 'D', 'E', 'F'});
 
-    auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(kI1, 0);
+    auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(get_i1(), 0);
 
     bb.at('A')->emplace_back<bjac::BranchInstruction>(*bb.at('B'));
     bb.at('B')->emplace_back<bjac::BranchInstruction>(*bb.at('C'));
@@ -57,10 +57,10 @@ TEST(LinearOrder, Mandatory_2) {
 
 TEST(LinearOrder, Mandatory_3) {
     // Assign
-    bjac::Function foo{"foo", kVoid, {}};
+    bjac::Function foo = get_func("foo", kVoid);
     auto [bb, names] = setup(foo, {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'});
 
-    auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(kI1, 0);
+    auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(get_i1(), 0);
 
     bb.at('A')->emplace_back<bjac::BranchInstruction>(*bb.at('B'));
     bb.at('B')->emplace_back<bjac::BranchInstruction>(cond, *bb.at('C'), *bb.at('D'));
@@ -84,10 +84,10 @@ TEST(LinearOrder, Mandatory_3) {
 
 TEST(LinearOrder, Mandatory_5) {
     // Assign
-    bjac::Function foo{"foo", kVoid, {}};
+    bjac::Function foo = get_func("foo", kVoid);
     auto [bb, names] = setup(foo, {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'});
 
-    auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(kI1, 0);
+    auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(get_i1(), 0);
 
     bb.at('A')->emplace_back<bjac::BranchInstruction>(*bb.at('B'));
     bb.at('B')->emplace_back<bjac::BranchInstruction>(cond, *bb.at('C'), *bb.at('J'));
@@ -124,10 +124,10 @@ TEST(LinearOrder, IssueWithIfBeforeLoop) {
     using enum bjac::Instruction::Opcode;
 
     // Assign
-    bjac::Function foo{"foo", bjac::Type::kVoid, {}};
+    bjac::Function foo = get_func("foo", kVoid);
     auto [bb, names] = setup(foo, {'A', 'B', 'C', 'D'});
 
-    auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(bjac::Type::kI1, 0);
+    auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(get_i1(), 0);
 
     bb.at('A')->emplace_back<bjac::BranchInstruction>(cond, *bb.at('B'), *bb.at('C'));
     bb.at('B')->emplace_back<bjac::ReturnInstruction>();

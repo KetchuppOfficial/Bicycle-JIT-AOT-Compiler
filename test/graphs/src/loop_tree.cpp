@@ -11,12 +11,14 @@
 
 #include "test/common.hpp"
 
+using enum bjac::Type::ID;
+
 TEST(LoopTree, Mandatory_1) {
     // Assign
-    bjac::Function foo{"foo", bjac::Type::kVoid, {}};
+    bjac::Function foo = get_func("foo", kVoid);
     auto [bb, names] = setup(foo, {'A', 'B', 'C', 'D', 'E'});
 
-    auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(bjac::Type::kI1, 0);
+    auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(get_i1(), 0);
 
     bb.at('A')->emplace_back<bjac::BranchInstruction>(*bb.at('B'));
     bb.at('B')->emplace_back<bjac::BranchInstruction>(cond, *bb.at('C'), *bb.at('D'));
@@ -39,10 +41,10 @@ TEST(LoopTree, Mandatory_1) {
 
 TEST(LoopTree, Mandatory_2) {
     // Assign
-    bjac::Function foo{"foo", bjac::Type::kVoid, {}};
+    bjac::Function foo = get_func("foo", kVoid);
     auto [bb, names] = setup(foo, {'A', 'B', 'C', 'D', 'E', 'F'});
 
-    auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(bjac::Type::kI1, 0);
+    auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(get_i1(), 0);
 
     bb.at('A')->emplace_back<bjac::BranchInstruction>(*bb.at('B'));
     bb.at('B')->emplace_back<bjac::BranchInstruction>(*bb.at('C'));
@@ -67,10 +69,10 @@ TEST(LoopTree, Mandatory_2) {
 
 TEST(LoopTree, Mandatory_3) {
     // Assign
-    bjac::Function foo{"foo", bjac::Type::kVoid, {}};
+    bjac::Function foo = get_func("foo", kVoid);
     auto [bb, names] = setup(foo, {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'});
 
-    auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(bjac::Type::kI1, 0);
+    auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(get_i1(), 0);
 
     bb.at('A')->emplace_back<bjac::BranchInstruction>(*bb.at('B'));
     bb.at('B')->emplace_back<bjac::BranchInstruction>(cond, *bb.at('C'), *bb.at('D'));
@@ -111,10 +113,10 @@ TEST(LoopTree, Mandatory_3) {
 
 TEST(LoopTree, Mandatory_4) {
     // Assign
-    bjac::Function foo{"foo", bjac::Type::kVoid, {}};
+    bjac::Function foo = get_func("foo", kVoid);
     auto [bb, names] = setup(foo, {'A', 'B', 'C', 'D', 'E', 'F', 'G'});
 
-    auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(bjac::Type::kI1, 0);
+    auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(get_i1(), 0);
 
     bb.at('A')->emplace_back<bjac::BranchInstruction>(*bb.at('B'));
     bb.at('B')->emplace_back<bjac::BranchInstruction>(cond, *bb.at('C'), *bb.at('F'));
@@ -132,10 +134,10 @@ TEST(LoopTree, Mandatory_4) {
 
 TEST(LoopTree, Mandatory_5) {
     // Assign
-    bjac::Function foo{"foo", bjac::Type::kVoid, {}};
+    bjac::Function foo = get_func("foo", kVoid);
     auto [bb, names] = setup(foo, {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'});
 
-    auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(bjac::Type::kI1, 0);
+    auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(get_i1(), 0);
 
     bb.at('A')->emplace_back<bjac::BranchInstruction>(*bb.at('B'));
     bb.at('B')->emplace_back<bjac::BranchInstruction>(cond, *bb.at('C'), *bb.at('J'));
@@ -183,10 +185,10 @@ TEST(LoopTree, Mandatory_5) {
 
 TEST(LoopTree, Mandatory_6) {
     // Assign
-    bjac::Function foo{"foo", bjac::Type::kVoid, {}};
+    bjac::Function foo = get_func("foo", kVoid);
     auto [bb, names] = setup(foo, {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'});
 
-    auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(bjac::Type::kI1, 0);
+    auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(get_i1(), 0);
 
     bb.at('A')->emplace_back<bjac::BranchInstruction>(*bb.at('B'));
     bb.at('B')->emplace_back<bjac::BranchInstruction>(cond, *bb.at('E'), *bb.at('C'));
@@ -213,10 +215,10 @@ TEST(LoopTree, Mandatory_6) {
 
 TEST(LoopTree, SingleBlockLoop) {
     // Assign
-    bjac::Function foo{"foo", bjac::Type::kVoid, {}};
+    bjac::Function foo = get_func("foo", kVoid);
     auto [bb, names] = setup(foo, {'A', 'B'});
 
-    auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(bjac::Type::kI1, 0);
+    auto &cond = bb.at('A')->emplace_back<bjac::ConstInstruction>(get_i1(), 0);
 
     bb.at('A')->emplace_back<bjac::BranchInstruction>(cond, *bb.at('A'), *bb.at('B'));
 

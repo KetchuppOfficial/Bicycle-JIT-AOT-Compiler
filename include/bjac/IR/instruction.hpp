@@ -111,7 +111,7 @@ class Instruction : public Value, public ilist_node<Instruction> {
     }
 
   protected:
-    Instruction(BasicBlock &parent, Opcode opcode, Type type);
+    Instruction(BasicBlock &parent, Opcode opcode, std::unique_ptr<Type> type);
 
     // Replaces this instruction as an argument of all its users
     void replace_with(Instruction &other);
@@ -157,10 +157,10 @@ namespace bjac {
 
 class OperandsTypeMismatch final : public std::invalid_argument {
   public:
-    OperandsTypeMismatch(Instruction::Opcode opcode, Type type_1, Type type_2)
+    OperandsTypeMismatch(Instruction::Opcode opcode, const Type &type_1, const Type &type_2)
         : std::invalid_argument{
               std::format("operands of {} instruction are of different types: {} and {}", opcode,
-                          type_1, type_2)} {}
+                          type_1.to_string(), type_2.to_string())} {}
 };
 
 } // namespace bjac

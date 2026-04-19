@@ -11,7 +11,7 @@
 namespace bjac {
 
 BasicBlock::BasicBlock(Function &parent)
-    : Value{Type::kNone}, first_non_phi_{end()}, parent_{std::addressof(parent)},
+    : Value{std::make_unique<NoneType>()}, first_non_phi_{end()}, parent_{std::addressof(parent)},
       id_{parent.get_next_bb_id()}, next_instr_id_{0} {}
 
 void BasicBlock::replace_instruction(iterator from, Instruction &to) {

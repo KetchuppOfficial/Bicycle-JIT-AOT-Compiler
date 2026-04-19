@@ -18,17 +18,19 @@ namespace bjac {
 namespace {
 
 template <typename F>
-static std::uintmax_t apply_bin_op(F op, Type type, std::uintmax_t lhs, std::uintmax_t rhs) {
-    switch (type) {
-    case Type::kI1:
+static std::uintmax_t apply_bin_op(F op, const Type::ID type_id, std::uintmax_t lhs,
+                                   std::uintmax_t rhs) {
+    using enum Type::ID;
+    switch (type_id) {
+    case kI1:
         return op(static_cast<bool>(lhs), static_cast<bool>(rhs));
-    case Type::kI8:
+    case kI8:
         return op(static_cast<std::uint8_t>(lhs), static_cast<std::uint8_t>(rhs));
-    case Type::kI16:
+    case kI16:
         return op(static_cast<std::uint16_t>(lhs), static_cast<std::uint16_t>(rhs));
-    case Type::kI32:
+    case kI32:
         return op(static_cast<std::uint32_t>(lhs), static_cast<std::uint32_t>(rhs));
-    case Type::kI64:
+    case kI64:
         return op(static_cast<std::uint64_t>(lhs), static_cast<std::uint64_t>(rhs));
     default:
         std::unreachable();
@@ -41,22 +43,22 @@ static std::optional<std::uintmax_t> fold_binary_operator(const BinaryOperator &
     assert(bin_op.get_lhs()->get_opcode() == kConst);
     assert(bin_op.get_rhs()->get_opcode() == kConst);
 
-    Type type = bin_op.get_type();
+    Type::ID type_id = bin_op.get_type_id();
     auto lhs = static_cast<const ConstInstruction *>(bin_op.get_lhs())->get_value();
     auto rhs = static_cast<const ConstInstruction *>(bin_op.get_rhs())->get_value();
 
     switch (bin_op.get_opcode()) {
     case kAdd:
-        return apply_bin_op(std::plus{}, type, lhs, rhs);
+        return apply_bin_op(std::plus{}, type_id, lhs, rhs);
     case kSub:
-        return apply_bin_op(std::minus{}, type, lhs, rhs);
+        return apply_bin_op(std::minus{}, type_id, lhs, rhs);
     case kMul:
-        return apply_bin_op(std::multiplies{}, type, lhs, rhs);
+        return apply_bin_op(std::multiplies{}, type_id, lhs, rhs);
     case kUDiv:
         if (rhs == 0) { // do not optimize if encounter division by 0
             return std::nullopt;
         }
-        return apply_bin_op(std::divides{}, type, lhs, rhs);
+        return apply_bin_op(std::divides{}, type_id, lhs, rhs);
     case kSDiv:
         if (rhs == 0) { // do not optimize if encounter division by 0
             return std::nullopt;
@@ -65,13 +67,13 @@ static std::optional<std::uintmax_t> fold_binary_operator(const BinaryOperator &
             [](std::uintmax_t l, std::uintmax_t r) -> std::uintmax_t {
                 return static_cast<std::intmax_t>(l) / static_cast<std::intmax_t>(r);
             },
-            type, lhs, rhs);
+            type_id, lhs, rhs);
 
     case kURem:
         if (rhs == 0) { // do not optimize if encounter division by 0
             return std::nullopt;
         }
-        return apply_bin_op(std::modulus{}, type, lhs, rhs);
+        return apply_bin_op(std::modulus{}, type_id, lhs, rhs);
     case kSRem:
         if (rhs == 0) { // do not optimize if encounter division by 0
             return std::nullopt;
@@ -80,34 +82,37 @@ static std::optional<std::uintmax_t> fold_binary_operator(const BinaryOperator &
             [](std::uintmax_t l, std::uintmax_t r) -> std::uintmax_t {
                 return static_cast<std::intmax_t>(l) % static_cast<std::intmax_t>(r);
             },
-            type, lhs, rhs);
+            type_id, lhs, rhs);
     case kShl:
-        if (rhs >= width(bin_op.get_type())) { // do not optimize shifts for more than type's width
+        if (rhs >=
+            bit_width(bin_op.get_type())) { // do not optimize shifts for more than type's width
             return std::nullopt;
         }
-        return apply_bin_op([](std::uintmax_t l, std::uintmax_t r) { return l << r; }, type, lhs,
+        return apply_bin_op([](std::uintmax_t l, std::uintmax_t r) { return l << r; }, type_id, lhs,
                             rhs);
     case kShrA:
-        if (rhs >= width(bin_op.get_type())) { // do not optimize shifts for more than type's width
+        if (rhs >=
+            bit_width(bin_op.get_type())) { // do not optimize shifts for more than type's width
             return std::nullopt;
         }
         return apply_bin_op(
             [](std::uintmax_t l, std::uintmax_t r) -> std::uintmax_t {
                 return static_cast<std::intmax_t>(l) >> r;
             },
-            type, lhs, rhs);
+            type_id, lhs, rhs);
     case kShrL:
-        if (rhs >= width(bin_op.get_type())) { // do not optimize shifts for more than type's width
+        if (rhs >=
+            bit_width(bin_op.get_type())) { // do not optimize shifts for more than type's width
             return std::nullopt;
         }
-        return apply_bin_op([](std::uintmax_t l, std::uintmax_t r) { return l >> r; }, type, lhs,
+        return apply_bin_op([](std::uintmax_t l, std::uintmax_t r) { return l >> r; }, type_id, lhs,
                             rhs);
     case kAnd:
-        return apply_bin_op(std::bit_and{}, type, lhs, rhs);
+        return apply_bin_op(std::bit_and{}, type_id, lhs, rhs);
     case kOr:
-        return apply_bin_op(std::bit_or{}, type, lhs, rhs);
+        return apply_bin_op(std::bit_or{}, type_id, lhs, rhs);
     case kXor:
-        return apply_bin_op(std::bit_xor{}, type, lhs, rhs);
+        return apply_bin_op(std::bit_xor{}, type_id, lhs, rhs);
     default:
         std::unreachable();
     }
@@ -180,7 +185,8 @@ void ConstantFoldingPass::run(Function &f) {
             }();
 
             if (maybe_constant.has_value()) {
-                auto new_it = bb->emplace<ConstInstruction>(it, it->get_type(), *maybe_constant);
+                auto new_it =
+                    bb->emplace<ConstInstruction>(it, it->get_type().clone(), *maybe_constant);
                 bb->replace_instruction(it, *new_it);
                 it = new_it;
             }

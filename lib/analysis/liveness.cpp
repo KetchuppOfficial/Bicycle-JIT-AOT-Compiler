@@ -66,7 +66,7 @@ LivenessAnalysis::LivenessAnalysis(const Function &func) {
         for (const auto &instr : bb->non_phi_instructions() | std::views::reverse) {
             const auto instr_n = numbering.at(std::addressof(instr));
 
-            if (instr.get_type() != Type::kVoid) {
+            if (instr.get_type_id() != Type::ID::kVoid) {
                 auto &lt = (*this)[std::addressof(instr)];
                 auto seg = Segment{instr_n, last_instr_n};
                 if (auto it = lt.find(seg); it == lt.end()) {

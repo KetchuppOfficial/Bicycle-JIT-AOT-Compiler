@@ -13,7 +13,7 @@
 #include "test/common.hpp"
 
 using enum bjac::Instruction::Opcode;
-using enum bjac::Type;
+using enum bjac::Type::ID;
 using Segment = bjac::Lifetime::Segment;
 
 /*   i64 foo(i64)
@@ -34,15 +34,15 @@ using Segment = bjac::Lifetime::Segment;
  */
 TEST(Liveness, Loop1) {
     // Assign
-    bjac::Function foo{"foo", kI64, {kI64}};
+    bjac::Function foo = get_func("foo", kI64, {kI64});
     auto [bb, names] = setup(foo, {'A', 'B', 'C', 'D'});
 
     auto &arg = bb.at('A')->emplace_back<bjac::ArgumentInstruction>(0);
-    auto &i = bb.at('A')->emplace_back<bjac::ConstInstruction>(kI64, 0);
-    auto &one = bb.at('A')->emplace_back<bjac::ConstInstruction>(kI64, 1);
+    auto &i = bb.at('A')->emplace_back<bjac::ConstInstruction>(get_i64(), 0);
+    auto &one = bb.at('A')->emplace_back<bjac::ConstInstruction>(get_i64(), 1);
     bb.at('A')->emplace_back<bjac::BranchInstruction>(*bb.at('B'));
 
-    auto &phi = bb.at('B')->emplace_back<bjac::PHIInstruction>(kI64);
+    auto &phi = bb.at('B')->emplace_back<bjac::PHIInstruction>(get_i64());
     auto &cond =
         bb.at('B')->emplace_back<bjac::ICmpInstruction>(bjac::ICmpInstruction::Kind::ult, phi, arg);
     bb.at('B')->emplace_back<bjac::BranchInstruction>(cond, *bb.at('C'), *bb.at('D'));
@@ -96,16 +96,16 @@ TEST(Liveness, Loop1) {
  */
 TEST(Liveness, Loop2) {
     // Assign
-    bjac::Function foo{"foo", kI64, {kI64}};
+    bjac::Function foo = get_func("foo", kI64, {kI64});
     auto [bb, names] = setup(foo, {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'});
 
-    auto &zero = bb.at('A')->emplace_back<bjac::ConstInstruction>(kI64, 0);
-    auto &one = bb.at('A')->emplace_back<bjac::ConstInstruction>(kI64, 1);
-    auto &two = bb.at('A')->emplace_back<bjac::ConstInstruction>(kI64, 2);
+    auto &zero = bb.at('A')->emplace_back<bjac::ConstInstruction>(get_i64(), 0);
+    auto &one = bb.at('A')->emplace_back<bjac::ConstInstruction>(get_i64(), 1);
+    auto &two = bb.at('A')->emplace_back<bjac::ConstInstruction>(get_i64(), 2);
     auto &arg = bb.at('A')->emplace_back<bjac::ArgumentInstruction>(0);
     bb.at('A')->emplace_back<bjac::BranchInstruction>(*bb.at('B'));
 
-    auto &b_phi = bb.at('B')->emplace_back<bjac::PHIInstruction>(kI64);
+    auto &b_phi = bb.at('B')->emplace_back<bjac::PHIInstruction>(get_i64());
     auto &prod = bb.at('B')->emplace_back<bjac::BinaryOperator>(kMul, b_phi, two);
     auto &b_cmp = bb.at('B')->emplace_back<bjac::ICmpInstruction>(bjac::ICmpInstruction::Kind::ult,
                                                                   prod, arg);
@@ -117,7 +117,7 @@ TEST(Liveness, Loop2) {
     auto &d_prod = bb.at('D')->emplace_back<bjac::BinaryOperator>(kAdd, prod, two);
     bb.at('D')->emplace_back<bjac::BranchInstruction>(*bb.at('E'));
 
-    auto &e_phi = bb.at('E')->emplace_back<bjac::PHIInstruction>(kI64);
+    auto &e_phi = bb.at('E')->emplace_back<bjac::PHIInstruction>(get_i64());
     bb.at('E')->emplace_back<bjac::BranchInstruction>(*bb.at('F'));
 
     auto &f_cmp = bb.at('F')->emplace_back<bjac::ICmpInstruction>(bjac::ICmpInstruction::Kind::ult,
@@ -169,20 +169,20 @@ TEST(Liveness, Loop2) {
  */
 TEST(Liveness, Loop3) {
     // Assign
-    bjac::Function foo{"foo", kI64, {kI64}};
+    bjac::Function foo = get_func("foo", kI64, {kI64});
     auto [bb, names] = setup(foo, {'A', 'B', 'C', 'D'});
 
     auto &arg = bb.at('A')->emplace_back<bjac::ArgumentInstruction>(0);
-    auto &zero = bb.at('A')->emplace_back<bjac::ConstInstruction>(kI64, 0);
-    auto &one = bb.at('A')->emplace_back<bjac::ConstInstruction>(kI64, 1);
+    auto &zero = bb.at('A')->emplace_back<bjac::ConstInstruction>(get_i64(), 0);
+    auto &one = bb.at('A')->emplace_back<bjac::ConstInstruction>(get_i64(), 1);
     auto &a_cmp =
         bb.at('A')->emplace_back<bjac::ICmpInstruction>(bjac::ICmpInstruction::Kind::eq, arg, zero);
     bb.at('A')->emplace_back<bjac::BranchInstruction>(a_cmp, *bb.at('B'), *bb.at('C'));
 
     bb.at('B')->emplace_back<bjac::ReturnInstruction>(zero);
 
-    auto &acc = bb.at('C')->emplace_back<bjac::PHIInstruction>(kI64);
-    auto &counter = bb.at('C')->emplace_back<bjac::PHIInstruction>(kI64);
+    auto &acc = bb.at('C')->emplace_back<bjac::PHIInstruction>(get_i64());
+    auto &counter = bb.at('C')->emplace_back<bjac::PHIInstruction>(get_i64());
     auto &next_acc = bb.at('C')->emplace_back<bjac::BinaryOperator>(kAdd, acc, counter);
     auto &next_counter = bb.at('C')->emplace_back<bjac::BinaryOperator>(kAdd, counter, one);
     bb.at('C')->emplace_back<bjac::BranchInstruction>(*bb.at('D'));

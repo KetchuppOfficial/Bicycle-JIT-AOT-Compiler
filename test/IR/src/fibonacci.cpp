@@ -15,11 +15,13 @@
 #include "bjac/IR/phi_instruction.hpp"
 #include "bjac/IR/ret_instruction.hpp"
 
+#include "test/common.hpp"
+
 int main() try {
     using Opcode = bjac::Instruction::Opcode;
-    using enum bjac::Type;
+    using enum bjac::Type::ID;
 
-    bjac::Function fibonacci{"fibonacci", kI64, {kI64}};
+    bjac::Function fibonacci = get_func("fibonacci", kI64, {kI64});
 
     auto &bb1 = fibonacci.emplace_back();
     auto &bb2 = fibonacci.emplace_back();
@@ -27,18 +29,18 @@ int main() try {
     auto &bb4 = fibonacci.emplace_back();
 
     auto &arg = bb1.emplace_back<bjac::ArgumentInstruction>(0);
-    auto &two = bb1.emplace_back<bjac::ConstInstruction>(kI64, 2);
+    auto &two = bb1.emplace_back<bjac::ConstInstruction>(get_i64(), 2);
     auto &bb1_cmp =
         bb1.emplace_back<bjac::ICmpInstruction>(bjac::ICmpInstruction::Kind::ult, arg, two);
     bb1.emplace_back<bjac::BranchInstruction>(bb1_cmp, bb4, bb2);
 
-    auto &zero = bb2.emplace_back<bjac::ConstInstruction>(kI64, 0);
-    auto &one = bb2.emplace_back<bjac::ConstInstruction>(kI64, 1);
+    auto &zero = bb2.emplace_back<bjac::ConstInstruction>(get_i64(), 0);
+    auto &one = bb2.emplace_back<bjac::ConstInstruction>(get_i64(), 1);
     bb2.emplace_back<bjac::BranchInstruction>(bb3);
 
-    auto &i = bb3.emplace_back<bjac::PHIInstruction>(kI64);
-    auto &second = bb3.emplace_back<bjac::PHIInstruction>(kI64);
-    auto &first = bb3.emplace_back<bjac::PHIInstruction>(kI64);
+    auto &i = bb3.emplace_back<bjac::PHIInstruction>(get_i64());
+    auto &second = bb3.emplace_back<bjac::PHIInstruction>(get_i64());
+    auto &first = bb3.emplace_back<bjac::PHIInstruction>(get_i64());
     auto &third = bb3.emplace_back<bjac::BinaryOperator>(Opcode::kAdd, first, second);
     auto &next_i = bb3.emplace_back<bjac::BinaryOperator>(Opcode::kAdd, i, one);
     auto &bb3_cmp =
@@ -51,7 +53,7 @@ int main() try {
     first.add_path(bb2, zero);
     first.add_path(bb3, second);
 
-    auto &ret_val = bb4.emplace_back<bjac::PHIInstruction>(kI64);
+    auto &ret_val = bb4.emplace_back<bjac::PHIInstruction>(get_i64());
     bb4.emplace_back<bjac::ReturnInstruction>(ret_val);
     ret_val.add_path(bb1, arg);
     ret_val.add_path(bb3, second);

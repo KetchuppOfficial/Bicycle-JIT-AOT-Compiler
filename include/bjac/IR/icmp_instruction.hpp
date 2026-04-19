@@ -26,7 +26,7 @@ class ICmpInstruction final : public Instruction {
     }
 
     void set_lhs(Instruction &lhs) {
-        if (lhs.get_type() != lhs_->get_type()) {
+        if (!lhs_->get_type().is_equal(lhs.get_type())) {
             throw OperandsTypeMismatch{opcode_, lhs_->get_type(), lhs.get_type()};
         }
         lhs_->remove_user(this);
@@ -40,7 +40,7 @@ class ICmpInstruction final : public Instruction {
     }
 
     void set_rhs(Instruction &rhs) {
-        if (rhs.get_type() != rhs_->get_type()) {
+        if (!rhs_->get_type().is_equal(rhs.get_type())) {
             throw OperandsTypeMismatch{opcode_, rhs_->get_type(), rhs.get_type()};
         }
         rhs_->remove_user(this);
@@ -57,11 +57,11 @@ class ICmpInstruction final : public Instruction {
     friend class BasicBlock;
 
     ICmpInstruction(BasicBlock &parent, Kind kind, Instruction &lhs, Instruction &rhs)
-        : Instruction(parent, Opcode::kICmp, Type::kI1), kind_{kind}, lhs_{std::addressof(lhs)},
-          rhs_{std::addressof(rhs)} {
-        const auto lhs_type = lhs.get_type();
-        const auto rhs_type = rhs.get_type();
-        if (lhs_type != rhs_type) {
+        : Instruction(parent, Opcode::kICmp, std::make_unique<IntegralType>(Type::ID::kI1)),
+          kind_{kind}, lhs_{std::addressof(lhs)}, rhs_{std::addressof(rhs)} {
+        const auto &lhs_type = lhs.get_type();
+        const auto &rhs_type = rhs.get_type();
+        if (!lhs_type.is_equal(rhs_type)) {
             throw OperandsTypeMismatch{opcode_, lhs_type, rhs_type};
         }
 
@@ -80,28 +80,29 @@ class ICmpInstruction final : public Instruction {
 };
 
 inline std::string_view to_string_view(ICmpInstruction::Kind kind) {
+    using namespace std::string_view_literals;
     using enum ICmpInstruction::Kind;
     switch (kind) {
     case eq:
-        return "eq";
+        return "eq"sv;
     case ne:
-        return "ne";
+        return "ne"sv;
     case ugt:
-        return "ugt";
+        return "ugt"sv;
     case uge:
-        return "uge";
+        return "uge"sv;
     case ult:
-        return "ult";
+        return "ult"sv;
     case ule:
-        return "ule";
+        return "ule"sv;
     case sgt:
-        return "sgt";
+        return "sgt"sv;
     case sge:
-        return "sge";
+        return "sge"sv;
     case slt:
-        return "slt";
+        return "slt"sv;
     case sle:
-        return "sle";
+        return "sle"sv;
     default:
         std::unreachable();
     }

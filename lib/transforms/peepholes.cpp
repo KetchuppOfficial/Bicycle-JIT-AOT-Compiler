@@ -202,7 +202,8 @@ void bitwise_instr_chaining(std::bidirectional_iterator auto it, auto op) {
     if (instr != nullptr) {
         auto &bb = it->get_parent();
         assert(it != bb.begin());
-        auto new_it = bb.template emplace<ConstInstruction>(it, bit_instr->get_type(), constant);
+        auto new_it =
+            bb.template emplace<ConstInstruction>(it, bit_instr->get_type().clone(), constant);
         bit_instr->set_lhs(*instr);
         bit_instr->set_rhs(*new_it);
     }
@@ -309,7 +310,7 @@ auto process_xor(std::bidirectional_iterator auto it) -> decltype(it) {
             bitwise_instr_chaining(it, std::bit_or{});
         }
     } else if (lhs == rhs) { // x ^ x -> 0
-        auto new_it = bb.template emplace<ConstInstruction>(it, xor_instr.get_type(), 0);
+        auto new_it = bb.template emplace<ConstInstruction>(it, xor_instr.get_type().clone(), 0);
         bb.replace_instruction(it, *new_it);
         return new_it;
     }

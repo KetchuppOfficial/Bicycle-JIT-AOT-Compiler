@@ -79,18 +79,19 @@ class BranchInstruction final : public Instruction {
     friend class BasicBlock;
 
     BranchInstruction(BasicBlock &parent, BasicBlock &true_path)
-        : Instruction(parent, Opcode::kBr, Type::kVoid), condition_{nullptr},
+        : Instruction(parent, Opcode::kBr, std::make_unique<VoidType>()), condition_{nullptr},
           paths_{std::addressof(true_path), nullptr} {}
 
     BranchInstruction(BasicBlock &parent, Instruction &condition, BasicBlock &true_path,
                       BasicBlock &false_path)
-        : Instruction(parent, Opcode::kBr, Type::kVoid), condition_{check_condition(condition)},
+        : Instruction(parent, Opcode::kBr, std::make_unique<VoidType>()),
+          condition_{check_condition(condition)},
           paths_{std::addressof(true_path), std::addressof(false_path)} {
         condition.add_user(this);
     }
 
     static Instruction *check_condition(Instruction &cond) {
-        if (cond.get_type() != Type::kI1) {
+        if (cond.get_type_id() != Type::ID::kI1) {
             throw InvalidConditionType{"type of condition is not i1"};
         }
         return std::addressof(cond);

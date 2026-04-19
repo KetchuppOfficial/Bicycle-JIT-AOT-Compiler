@@ -32,24 +32,29 @@ class Function final : public Value, private ilist<BasicBlock> {
     using basic_blocks::iterator;
     using basic_blocks::size_type;
 
-    Function(std::string_view name, Type return_type)
-        : Value{Type::kNone}, name_(name), return_type_{return_type} {}
+    Function(std::string_view name, std::unique_ptr<Type> return_type)
+        : Value{std::make_unique<NoneType>()}, name_(name), return_type_{std::move(return_type)} {}
 
     template <std::input_iterator It>
         requires std::convertible_to<std::iter_value_t<It>, Type>
-    Function(std::string_view name, Type return_type, It first, It last)
-        : Value{Type::kNone}, name_(name), return_type_{return_type}, arguments_(first, last) {}
+    Function(std::string_view name, std::unique_ptr<Type> return_type, It first, It last)
+        : Value{std::make_unique<NoneType>()}, name_(name), return_type_{std::move(return_type)},
+          parameters_(first, last) {}
 
-    Function(std::string_view name, Type return_type, std::initializer_list<Type> ilist)
-        : Value{Type::kNone}, name_(name), return_type_{return_type}, arguments_(ilist) {}
+    Function(std::string_view name, std::unique_ptr<Type> return_type,
+             std::vector<std::unique_ptr<Type>> parameters)
+        : Value{std::make_unique<NoneType>()}, name_(name), return_type_{std::move(return_type)},
+          parameters_(std::move(parameters)) {}
 
     Function(Function &&rhs) = delete("resetting parents of basic blocks would be slow");
     Function &operator=(Function &&rhs) = delete("resetting parents of basic blocks would be slow");
 
     std::string_view name() const noexcept { return name_; }
 
-    Type return_type() const noexcept { return return_type_; }
-    auto arguments() const { return std::ranges::ref_view{arguments_}; }
+    const Type &return_type() const noexcept { return *return_type_; }
+    Type::ID return_type_id() const noexcept { return return_type_->id(); }
+
+    auto arguments() const { return std::ranges::ref_view{parameters_}; }
 
     bool is_recursive() const { return callees_.contains(this); }
 
@@ -115,8 +120,8 @@ class Function final : public Value, private ilist<BasicBlock> {
   private:
     std::string name_;
 
-    Type return_type_;
-    std::vector<Type> arguments_;
+    std::unique_ptr<Type> return_type_;
+    std::vector<std::unique_ptr<Type>> parameters_;
 
     std::unordered_set<ReturnInstruction *> rets_;
 

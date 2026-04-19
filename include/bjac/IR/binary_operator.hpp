@@ -25,7 +25,7 @@ class BinaryOperator final : public Instruction {
     }
 
     void set_lhs(Instruction &lhs) {
-        if (lhs.get_type() != get_type()) {
+        if (!get_type().is_equal(lhs.get_type())) {
             throw OperandsTypeMismatch{opcode_, lhs.get_type(), get_type()};
         }
         lhs_->remove_user(this);
@@ -39,7 +39,7 @@ class BinaryOperator final : public Instruction {
     }
 
     void set_rhs(Instruction &rhs) {
-        if (rhs.get_type() != get_type()) {
+        if (!get_type().is_equal(rhs.get_type())) {
             throw OperandsTypeMismatch{opcode_, get_type(), rhs.get_type()};
         }
         rhs_->remove_user(this);
@@ -69,11 +69,12 @@ class BinaryOperator final : public Instruction {
         return opcode;
     }
 
-    static Type common_type(Opcode opcode, Instruction &lhs, Instruction &rhs) {
-        const auto lhs_type = lhs.get_type();
-        const auto rhs_type = rhs.get_type();
-        if (lhs_type == rhs_type) {
-            return lhs_type;
+    static std::unique_ptr<Type> common_type(Opcode opcode, const Instruction &lhs,
+                                             const Instruction &rhs) {
+        const auto &lhs_type = lhs.get_type();
+        const auto &rhs_type = rhs.get_type();
+        if (lhs_type.is_equal(rhs_type)) {
+            return lhs_type.clone();
         } else {
             throw OperandsTypeMismatch{opcode, lhs_type, rhs_type};
         }

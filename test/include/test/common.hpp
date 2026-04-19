@@ -14,6 +14,24 @@
 
 #include "bjac/IR/function.hpp"
 
+inline auto get_i1() { return std::make_unique<bjac::IntegralType>(bjac::Type::ID::kI1); }
+inline auto get_i64() { return std::make_unique<bjac::IntegralType>(bjac::Type::ID::kI64); }
+
+inline auto get_func(std::string_view name, bjac::Type::ID ret,
+                     std::initializer_list<bjac::Type::ID> params = {}) {
+    std::vector<std::unique_ptr<bjac::Type>> parameters;
+    for (auto id : params) {
+        parameters.emplace_back(std::make_unique<bjac::IntegralType>(id));
+    }
+
+    if (ret == bjac::Type::ID::kVoid) {
+        return bjac::Function{name, std::make_unique<bjac::VoidType>(), std::move(parameters)};
+    } else {
+        return bjac::Function{name, std::make_unique<bjac::IntegralType>(ret),
+                              std::move(parameters)};
+    }
+}
+
 inline auto setup(bjac::Function &foo, std::initializer_list<char> ilist) {
     std::unordered_map<char, bjac::BasicBlock *> bb;
     bb.reserve(foo.size());

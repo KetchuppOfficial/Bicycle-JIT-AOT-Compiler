@@ -21,9 +21,11 @@ namespace bjac {
 
 void Function::print(std::ostream &os) const {
     using namespace std::string_view_literals;
-    auto args =
-        arguments_ | std::views::transform([](Type type) static { return to_string_view(type); });
-    std::println(os, "{} {}({:s})", return_type_, name_, std::views::join_with(args, ", "sv));
+    auto params = parameters_ | std::views::transform([](const auto &type_ptr) static {
+                      return type_ptr->to_string();
+                  });
+    std::println(os, "{} {}({:s})", return_type_->to_string(), name_,
+                 std::views::join_with(params, ", "sv));
     for (auto &bb : *this) {
         bb.print(os);
     }
@@ -92,7 +94,7 @@ class InlineHelper final {
         }
         case kRet: { // all returned values shall later be joined with a PHI instruction
             if (auto &ret = static_cast<ReturnInstruction &>(callee_instr);
-                ret.get_ret_type() != Type::kVoid) {
+                ret.get_ret_type_id() != Type::ID::kVoid) {
                 if (callee_.rets_count() < 2) {
                     assert(!ret_val_);
                     ret_val_ = std::addressof(get_caller_instr(ret.get_ret_value()));
@@ -109,7 +111,7 @@ class InlineHelper final {
         }
         case kPHI: { // simply insert empty PHI instructions, assign paths on the second pass
             auto &phi = static_cast<PHIInstruction &>(callee_instr);
-            auto &caller_phi = caller_bb.emplace_back<PHIInstruction>(phi.get_type());
+            auto &caller_phi = caller_bb.emplace_back<PHIInstruction>(phi.get_type().clone());
             callee_caller_phis_.emplace_back(std::addressof(phi), std::addressof(caller_phi));
             return &caller_phi;
         }
@@ -127,7 +129,7 @@ class InlineHelper final {
     };
 
     Instruction &do_clone(BasicBlock &caller_bb, ConstInstruction &const_instr) const {
-        return caller_bb.emplace_back<ConstInstruction>(const_instr.get_type(),
+        return caller_bb.emplace_back<ConstInstruction>(const_instr.get_type().clone(),
                                                         const_instr.get_value());
     }
 
@@ -183,11 +185,11 @@ class InlineHelper final {
     }
 
     static PHIInstruction *try_create_ret_phi(const Function &callee, BasicBlock &bb_after_call) {
-        const auto ret_type = callee.return_type();
-        if (ret_type == Type::kVoid || callee.rets_count() < 2) {
+        const auto &ret_type = callee.return_type();
+        if (ret_type.id() == Type::ID::kVoid || callee.rets_count() < 2) {
             return nullptr;
         }
-        return std::addressof(bb_after_call.emplace_front<PHIInstruction>(ret_type));
+        return std::addressof(bb_after_call.emplace_front<PHIInstruction>(ret_type.clone()));
     }
 
     CallInstruction &call_;

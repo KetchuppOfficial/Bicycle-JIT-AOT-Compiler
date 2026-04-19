@@ -1,20 +1,23 @@
 #ifndef INCLUDE_BJAC_IR_VALUE_HPP
 #define INCLUDE_BJAC_IR_VALUE_HPP
 
+#include <memory>
+
 #include "bjac/IR/type.hpp"
 
 namespace bjac {
 
 class Value {
   public:
-    Value(Type type) : type_{type} {}
+    Value(std::unique_ptr<Type> type) : type_{std::move(type)} {}
 
     virtual ~Value() = default;
 
-    Type get_type() const noexcept { return type_; }
+    const Type &get_type() const noexcept { return *type_; }
+    Type::ID get_type_id() const noexcept { return type_->id(); }
 
-  protected:
-    Type type_;
+  private:
+    std::unique_ptr<Type> type_;
 };
 
 } // namespace bjac

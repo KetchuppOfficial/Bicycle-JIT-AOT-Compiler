@@ -11,15 +11,21 @@
 #include "bjac/IR/icmp_instruction.hpp"
 #include "bjac/IR/ret_instruction.hpp"
 
-using enum bjac::Type;
+#include "test/common.hpp"
+
+using enum bjac::Type::ID;
 using enum bjac::Instruction::Opcode;
 using Kind = bjac::ICmpInstruction::Kind;
+
+namespace {
 
 static std::string to_string(bjac::Function &func) {
     std::ostringstream oss;
     oss << func;
     return oss.str();
 }
+
+} // unnamed namespace
 
 /*
  * Before
@@ -36,11 +42,11 @@ static std::string to_string(bjac::Function &func) {
  */
 TEST(Inline, BodylessFunction) {
     // Assign
-    bjac::Function foo{"foo", kVoid};
+    bjac::Function foo = get_func("foo", kVoid);
     auto &foo_bb = foo.emplace_back();
     foo_bb.emplace_back<bjac::ReturnInstruction>();
 
-    bjac::Function bar{"bar", kVoid};
+    bjac::Function bar = get_func("bar", kVoid);
     auto &bar_bb = bar.emplace_back();
     auto &call = bar_bb.emplace_back<bjac::CallInstruction>(foo);
     bar_bb.emplace_back<bjac::ReturnInstruction>();
@@ -79,14 +85,14 @@ TEST(Inline, BodylessFunction) {
  */
 TEST(Inline, ReturnConstant) {
     // Assign
-    bjac::Function foo{"foo", kI64};
+    bjac::Function foo = get_func("foo", kI64);
     auto &foo_bb = foo.emplace_back();
-    auto &foo_const = foo_bb.emplace_back<bjac::ConstInstruction>(kI64, 42);
+    auto &foo_const = foo_bb.emplace_back<bjac::ConstInstruction>(get_i64(), 42);
     foo_bb.emplace_back<bjac::ReturnInstruction>(foo_const);
 
-    bjac::Function bar{"bar", kI64};
+    bjac::Function bar = get_func("bar", kI64);
     auto &bar_bb = bar.emplace_back();
-    auto &bar_const = bar_bb.emplace_back<bjac::ConstInstruction>(kI64, 1);
+    auto &bar_const = bar_bb.emplace_back<bjac::ConstInstruction>(get_i64(), 1);
     auto &call = bar_bb.emplace_back<bjac::CallInstruction>(foo);
     auto &add = bar_bb.emplace_back<bjac::BinaryOperator>(kAdd, bar_const, call);
     bar_bb.emplace_back<bjac::ReturnInstruction>(add);
@@ -128,14 +134,14 @@ TEST(Inline, ReturnConstant) {
  */
 TEST(Inline, ReturnArgument) {
     // Assign
-    bjac::Function foo{"foo", kI64, {kI64}};
+    bjac::Function foo = get_func("foo", kI64, {kI64});
     auto &foo_bb = foo.emplace_back();
     auto &arg = foo_bb.emplace_back<bjac::ArgumentInstruction>(0);
     foo_bb.emplace_back<bjac::ReturnInstruction>(arg);
 
-    bjac::Function bar{"bar", kI64};
+    bjac::Function bar = get_func("bar", kI64);
     auto &bar_bb = bar.emplace_back();
-    auto &one = bar_bb.emplace_back<bjac::ConstInstruction>(kI64, 1);
+    auto &one = bar_bb.emplace_back<bjac::ConstInstruction>(get_i64(), 1);
     auto &call =
         bar_bb.emplace_back<bjac::CallInstruction>(foo, std::vector<bjac::Instruction *>{&one});
     bar_bb.emplace_back<bjac::ReturnInstruction>(call);
@@ -183,8 +189,7 @@ TEST(Inline, ReturnArgument) {
 TEST(Inline, Max) {
     // Assign
     // ---------------------------------------------------------------------------------------------
-    bjac::Function max{"max", kI64, {kI64, kI64}};
-
+    bjac::Function max = get_func("max", kI64, {kI64, kI64});
     auto &first_bb = max.emplace_back();
     auto &second_bb = max.emplace_back();
     auto &third_bb = max.emplace_back();
@@ -198,10 +203,10 @@ TEST(Inline, Max) {
 
     third_bb.emplace_back<bjac::ReturnInstruction>(x);
     // ---------------------------------------------------------------------------------------------
-    bjac::Function foo{"foo", kI64};
+    bjac::Function foo = get_func("foo", kI64);
     auto &foo_bb = foo.emplace_back();
-    auto &one = foo_bb.emplace_back<bjac::ConstInstruction>(kI64, 1);
-    auto &two = foo_bb.emplace_back<bjac::ConstInstruction>(kI64, 2);
+    auto &one = foo_bb.emplace_back<bjac::ConstInstruction>(get_i64(), 1);
+    auto &two = foo_bb.emplace_back<bjac::ConstInstruction>(get_i64(), 2);
     auto &call = foo_bb.emplace_back<bjac::CallInstruction>(
         max, std::vector<bjac::Instruction *>{&one, &two});
     foo_bb.emplace_back<bjac::ReturnInstruction>(call);
@@ -273,7 +278,7 @@ TEST(Inline, Max) {
 TEST(Inline, Fibonacci) {
     // Assign
     // ---------------------------------------------------------------------------------------------
-    bjac::Function fibonacci{"fibonacci", kI64, {kI64}};
+    bjac::Function fibonacci = get_func("fibonacci", kI64, {kI64});
 
     auto &bb1 = fibonacci.emplace_back();
     auto &bb2 = fibonacci.emplace_back();
@@ -281,18 +286,18 @@ TEST(Inline, Fibonacci) {
     auto &bb4 = fibonacci.emplace_back();
 
     auto &arg = bb1.emplace_back<bjac::ArgumentInstruction>(0);
-    auto &two = bb1.emplace_back<bjac::ConstInstruction>(kI64, 2);
+    auto &two = bb1.emplace_back<bjac::ConstInstruction>(get_i64(), 2);
     auto &bb1_cmp =
         bb1.emplace_back<bjac::ICmpInstruction>(bjac::ICmpInstruction::Kind::ult, arg, two);
     bb1.emplace_back<bjac::BranchInstruction>(bb1_cmp, bb4, bb2);
 
-    auto &zero = bb2.emplace_back<bjac::ConstInstruction>(kI64, 0);
-    auto &one = bb2.emplace_back<bjac::ConstInstruction>(kI64, 1);
+    auto &zero = bb2.emplace_back<bjac::ConstInstruction>(get_i64(), 0);
+    auto &one = bb2.emplace_back<bjac::ConstInstruction>(get_i64(), 1);
     bb2.emplace_back<bjac::BranchInstruction>(bb3);
 
-    auto &i = bb3.emplace_back<bjac::PHIInstruction>(kI64);
-    auto &second = bb3.emplace_back<bjac::PHIInstruction>(kI64);
-    auto &first = bb3.emplace_back<bjac::PHIInstruction>(kI64);
+    auto &i = bb3.emplace_back<bjac::PHIInstruction>(get_i64());
+    auto &second = bb3.emplace_back<bjac::PHIInstruction>(get_i64());
+    auto &first = bb3.emplace_back<bjac::PHIInstruction>(get_i64());
     auto &third = bb3.emplace_back<bjac::BinaryOperator>(kAdd, first, second);
     auto &next_i = bb3.emplace_back<bjac::BinaryOperator>(kAdd, i, one);
     auto &bb3_cmp =
@@ -305,14 +310,14 @@ TEST(Inline, Fibonacci) {
     first.add_path(bb2, zero);
     first.add_path(bb3, second);
 
-    auto &ret_val = bb4.emplace_back<bjac::PHIInstruction>(kI64);
+    auto &ret_val = bb4.emplace_back<bjac::PHIInstruction>(get_i64());
     bb4.emplace_back<bjac::ReturnInstruction>(ret_val);
     ret_val.add_path(bb1, arg);
     ret_val.add_path(bb3, second);
     // ---------------------------------------------------------------------------------------------
-    bjac::Function foo{"foo", kI64};
+    bjac::Function foo = get_func("foo", kI64);
     auto &bb = foo.emplace_back();
-    auto &constant = bb.emplace_back<bjac::ConstInstruction>(kI64, 7);
+    auto &constant = bb.emplace_back<bjac::ConstInstruction>(get_i64(), 7);
     auto &call = bb.emplace_back<bjac::CallInstruction>(
         fibonacci, std::vector<bjac::Instruction *>{&constant});
     bb.emplace_back<bjac::ReturnInstruction>(call);
@@ -401,15 +406,15 @@ TEST(Inline, Fibonacci) {
 TEST(Inline, CannotInlineRecursiveFunction) {
     // Assign
     // ---------------------------------------------------------------------------------------------
-    bjac::Function fact{"factorial", kI64, {kI64}};
+    bjac::Function fact = get_func("factorial", kI64, {kI64});
 
     auto &first_bb = fact.emplace_back();
     auto &second_bb = fact.emplace_back();
     auto &third_bb = fact.emplace_back();
 
     auto &arg = first_bb.emplace_back<bjac::ArgumentInstruction>(0);
-    auto &one = first_bb.emplace_back<bjac::ConstInstruction>(kI64, 1);
-    auto &two = first_bb.emplace_back<bjac::ConstInstruction>(kI64, 2);
+    auto &one = first_bb.emplace_back<bjac::ConstInstruction>(get_i64(), 1);
+    auto &two = first_bb.emplace_back<bjac::ConstInstruction>(get_i64(), 2);
     auto &cond = first_bb.emplace_back<bjac::ICmpInstruction>(Kind::ult, arg, two);
     first_bb.emplace_back<bjac::BranchInstruction>(cond, second_bb, third_bb);
 
@@ -421,9 +426,9 @@ TEST(Inline, CannotInlineRecursiveFunction) {
     auto &res = third_bb.emplace_back<bjac::BinaryOperator>(kMul, arg, next_fact);
     third_bb.emplace_back<bjac::ReturnInstruction>(res);
     // ---------------------------------------------------------------------------------------------
-    bjac::Function foo{"foo", kI64};
+    bjac::Function foo = get_func("foo", kI64);
     auto &bb = foo.emplace_back();
-    auto &constant = bb.emplace_back<bjac::ConstInstruction>(kI64, 7);
+    auto &constant = bb.emplace_back<bjac::ConstInstruction>(get_i64(), 7);
     auto &call =
         bb.emplace_back<bjac::CallInstruction>(fact, std::vector<bjac::Instruction *>{&constant});
     bb.emplace_back<bjac::ReturnInstruction>(call);

@@ -22,7 +22,7 @@ class PHIInstruction final : public Instruction {
     ~PHIInstruction() override = default;
 
     void add_path(BasicBlock &bb, Instruction &value) {
-        if (value.get_type() != type_) {
+        if (!get_type().is_equal(value.get_type())) {
             throw PHITypeMismatch{"adding path of different type to a phi instruction"};
         }
         records_.emplace(std::addressof(bb), std::addressof(value));
@@ -92,7 +92,8 @@ class PHIInstruction final : public Instruction {
   private:
     friend class BasicBlock;
 
-    PHIInstruction(BasicBlock &parent, Type type) : Instruction(parent, Opcode::kPHI, type) {}
+    PHIInstruction(BasicBlock &parent, std::unique_ptr<Type> type)
+        : Instruction(parent, Opcode::kPHI, std::move(type)) {}
 
     void remove_as_user() override {
         for (auto *value : records_ | std::views::values) {
