@@ -10,10 +10,12 @@
 
 #include "bjac/IR/argument_instruction.hpp"
 #include "bjac/IR/binary_operator.hpp"
+#include "bjac/IR/bounds_check.hpp"
 #include "bjac/IR/branch_instruction.hpp"
 #include "bjac/IR/call_instruction.hpp"
 #include "bjac/IR/constant_instruction.hpp"
 #include "bjac/IR/icmp_instruction.hpp"
+#include "bjac/IR/null_check.hpp"
 #include "bjac/IR/phi_instruction.hpp"
 #include "bjac/IR/ret_instruction.hpp"
 
@@ -226,5 +228,43 @@ std::string CallInstruction::to_string() const {
 
 Function &CallInstruction::caller() noexcept { return get_parent().get_parent(); }
 const Function &CallInstruction::caller() const noexcept { return get_parent().get_parent(); }
+
+NullCheckInstruction::NullCheckInstruction(BasicBlock &parent, Instruction &input)
+    : Instruction{parent, Opcode::kNullCheck, std::make_unique<VoidType>()},
+      input_{std::addressof(input)} {
+    if (input.get_type_id() != Type::ID::kPointer) {
+        throw std::invalid_argument{
+            std::format("'{}' does not have pointer type and cannot be used as the "
+                        "input of a {} instruction",
+                        input.to_string(), Opcode::kNullCheck)};
+    }
+}
+
+std::string NullCheckInstruction::to_string() const {
+    return std::format("{} {} {} {}", ssa_value_to_string(*this), Opcode::kNullCheck,
+                       Type::ID::kPointer, ssa_value_to_string(*input_));
+}
+
+BoundsCheckInstruction::BoundsCheckInstruction(BasicBlock &parent, Instruction &array,
+                                               Instruction &index)
+    : Instruction{parent, Opcode::kBoundsCheck, std::make_unique<VoidType>()},
+      array_{std::addressof(array)}, index_{std::addressof(index)} {
+    if (array.get_type_id() != Type::ID::kArray) {
+        throw std::invalid_argument{std::format(
+            "'{}' does not have array type and cannot be used as an input of a {} instruction",
+            array.to_string(), Opcode::kBoundsCheck)};
+    }
+    if (index.get_type_id() != Type::ID::kI64) {
+        throw std::invalid_argument{std::format(
+            "'{}' does not have {} type and cannot be used as an input of a {} instruction",
+            index.to_string(), Type::ID::kI64, Opcode::kBoundsCheck)};
+    }
+}
+
+std::string BoundsCheckInstruction::to_string() const {
+    return std::format("{} {} {} {}, {} {}", ssa_value_to_string(*this), Opcode::kBoundsCheck,
+                       array_->get_type().to_string(), ssa_value_to_string(*array_), Type::ID::kI64,
+                       ssa_value_to_string(*index_));
+}
 
 } // namespace bjac

@@ -36,6 +36,10 @@ class Instruction : public Value, public ilist_node<Instruction> {
 #define HANDLE_CAST_INSTR(N, Opcode, Class, Name) k##Opcode = N,
 #define LAST_CAST_INSTR(N) kCastsEnd = N + 1,
 
+#define FIRST_CHECK_INSTR(N) kChecksBegin = N,
+#define HANDLE_CHECK_INSTR(N, Opcode, Class, Name) k##Opcode = N,
+#define LAST_CHECK_INSTR(N) kChecksEnd = N + 1,
+
 #define FIRST_OTHER_INSTR(N) kOtherBegin = N,
 #define HANDLE_OTHER_INSTR(N, Opcode, Class, Name) k##Opcode = N,
 #define LAST_OTHER_INSTR(N) kOtherEnd = N + 1,
