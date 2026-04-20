@@ -16,6 +16,7 @@
 
 inline auto get_i1() { return std::make_unique<bjac::IntegralType>(bjac::Type::ID::kI1); }
 inline auto get_i64() { return std::make_unique<bjac::IntegralType>(bjac::Type::ID::kI64); }
+inline auto get_ptr(bjac::Type::ID id) { return std::make_unique<bjac::PointerType>(id); }
 
 inline auto get_func(std::string_view name, bjac::Type::ID ret,
                      std::initializer_list<bjac::Type::ID> params = {}) {
@@ -72,6 +73,12 @@ template <std::ranges::forward_range R1>
     }
 
     return ::testing::AssertionFailure() << actual_names(names, range);
+}
+
+inline std::string to_string(const bjac::Function &func) {
+    std::ostringstream oss;
+    oss << func;
+    return oss.str();
 }
 
 #endif // TEST_INCLUDE_TEST_COMMON_HPP

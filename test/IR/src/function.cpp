@@ -17,16 +17,6 @@ using enum bjac::Type::ID;
 using enum bjac::Instruction::Opcode;
 using Kind = bjac::ICmpInstruction::Kind;
 
-namespace {
-
-static std::string to_string(bjac::Function &func) {
-    std::ostringstream oss;
-    oss << func;
-    return oss.str();
-}
-
-} // unnamed namespace
-
 /*
  * Before
  * -------------------------
