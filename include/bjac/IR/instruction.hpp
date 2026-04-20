@@ -40,6 +40,10 @@ class Instruction : public Value, public ilist_node<Instruction> {
 #define HANDLE_CHECK_INSTR(N, Opcode, Class, Name) k##Opcode = N,
 #define LAST_CHECK_INSTR(N) kChecksEnd = N + 1,
 
+#define FIRST_MEMORY_INSTR(N) kMemoryBegin = N,
+#define HANDLE_MEMORY_INSTR(N, Opcode, Class, Name) k##Opcode = N,
+#define LAST_MEMORY_INSTR(N) kMemoryEnd = N + 1,
+
 #define FIRST_OTHER_INSTR(N) kOtherBegin = N,
 #define HANDLE_OTHER_INSTR(N, Opcode, Class, Name) k##Opcode = N,
 #define LAST_OTHER_INSTR(N) kOtherEnd = N + 1,

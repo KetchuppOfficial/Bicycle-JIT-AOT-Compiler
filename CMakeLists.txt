@@ -73,6 +73,7 @@ FILES
     include/bjac/IR/function.hpp
     include/bjac/IR/icmp_instruction.hpp
     include/bjac/IR/instruction.hpp
+    include/bjac/IR/load_instruction.hpp
     include/bjac/IR/null_check.hpp
     include/bjac/IR/phi_instruction.hpp
     include/bjac/IR/ret_instruction.hpp

@@ -121,6 +121,32 @@ LAST_CHECK_INSTR(19)
 #undef LAST_CHECK_INSTR
 // =================================================================================================
 
+// Memory ==========================================================================================
+#ifndef FIRST_MEMORY_INSTR
+#define FIRST_MEMORY_INSTR(N)
+#endif // FIRST_MEMORY_INSTR
+
+#ifndef HANDLE_MEMORY_INSTR
+  #ifndef HANDLE_INSTR
+    #define HANDLE_MEMORY_INSTR(N, Opcode, Class, Name)
+  #else
+    #define HANDLE_MEMORY_INSTR(N, Opcode, Class, Name) HANDLE_INSTR(N, Opcode, Class, Name)
+  #endif // HANDLE_INSTR
+#endif // HANDLE_MEMORY_INSTR
+
+#ifndef LAST_MEMORY_INSTR
+#define LAST_MEMORY_INSTR(N)
+#endif // LAST_MEMORY_INSTR
+
+FIRST_MEMORY_INSTR(20)
+HANDLE_MEMORY_INSTR(20, Load, LoadInstruction, load)
+LAST_MEMORY_INSTR(20)
+
+#undef FIRST_MEMORY_INSTR
+#undef HANDLE_MEMORY_INSTR
+#undef LAST_MEMORY_INSTR
+// =================================================================================================
+
 // Other instructions ==============================================================================
 #ifndef FIRST_OTHER_INSTR
 #define FIRST_OTHER_INSTR(N)
@@ -138,13 +164,13 @@ LAST_CHECK_INSTR(19)
 #define LAST_OTHER_INSTR(N)
 #endif // LAST_OTHER_INSTR
 
-FIRST_OTHER_INSTR(20)
-HANDLE_OTHER_INSTR(20, Call, CallInstruction, call)
-HANDLE_OTHER_INSTR(21, ICmp, ICmpInstruction, icmp)
-HANDLE_OTHER_INSTR(22, PHI, PHIInstruction, phi)
-HANDLE_OTHER_INSTR(23, Arg, ArgumentInstruction, arg)
-HANDLE_OTHER_INSTR(24, Const, ConstInstruction, constant)
-LAST_OTHER_INSTR(24)
+FIRST_OTHER_INSTR(21)
+HANDLE_OTHER_INSTR(21, Call, CallInstruction, call)
+HANDLE_OTHER_INSTR(22, ICmp, ICmpInstruction, icmp)
+HANDLE_OTHER_INSTR(23, PHI, PHIInstruction, phi)
+HANDLE_OTHER_INSTR(24, Arg, ArgumentInstruction, arg)
+HANDLE_OTHER_INSTR(25, Const, ConstInstruction, constant)
+LAST_OTHER_INSTR(25)
 
 #undef FIRST_OTHER_INSTR
 #undef HANDLE_OTHER_INSTR

@@ -15,6 +15,7 @@
 #include "bjac/IR/call_instruction.hpp"
 #include "bjac/IR/constant_instruction.hpp"
 #include "bjac/IR/icmp_instruction.hpp"
+#include "bjac/IR/load_instruction.hpp"
 #include "bjac/IR/null_check.hpp"
 #include "bjac/IR/phi_instruction.hpp"
 #include "bjac/IR/ret_instruction.hpp"
@@ -265,6 +266,32 @@ std::string BoundsCheckInstruction::to_string() const {
     return std::format("{} {} {} {}, {} {}", ssa_value_to_string(*this), Opcode::kBoundsCheck,
                        array_->get_type().to_string(), ssa_value_to_string(*array_), Type::ID::kI64,
                        ssa_value_to_string(*index_));
+}
+
+LoadInstruction::LoadInstruction(BasicBlock &parent, std::unique_ptr<Type> type, Instruction &addr)
+    : Instruction(parent, Opcode::kLoad, std::move(type)), addr_{std::addressof(addr)} {
+    using enum Type::ID;
+
+    switch (const auto type_id = get_type_id()) {
+    case kNone:
+    case kVoid:
+    case kArray:
+        throw std::invalid_argument{std::format("'{}' cannot be loaded", type_id)};
+    default:
+        break;
+    }
+
+    if (addr.get_type_id() != kPointer) {
+        throw std::invalid_argument{std::format(
+            "address of load shall be represented with a value of pointer type, not '{}'",
+            addr.to_string())};
+    }
+}
+
+std::string LoadInstruction::to_string() const {
+    return std::format("{} = {} {}, {} {}{}", ssa_value_to_string(*this), Opcode::kLoad,
+                       get_type().to_string(), Type::ID::kPointer, ssa_value_to_string(*addr_),
+                       users_to_string(*this));
 }
 
 } // namespace bjac
