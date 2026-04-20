@@ -26,6 +26,7 @@
         default = (pkgs.mkShell.override { stdenv = pkgs.gcc15Stdenv; }) {
           buildInputs = [
             pkgs.gtest
+            pkgs.boost
           ];
           nativeBuildInputs = native_build_inputs;
         };
@@ -37,6 +38,7 @@
           (pkgs.mkShell.override { stdenv = llvm_stdenv; }) {
             buildInputs = [
               (pkgs.gtest.override { stdenv = llvm_stdenv; })
+              (pkgs.boost.override { stdenv = llvm_stdenv; })
             ];
             nativeBuildInputs = native_build_inputs ++ [
               llvm_packages.clang-tools
