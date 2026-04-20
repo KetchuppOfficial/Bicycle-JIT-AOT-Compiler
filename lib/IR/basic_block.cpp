@@ -22,6 +22,19 @@ void BasicBlock::replace_instruction(iterator from, Instruction &to) {
     erase(from);
 }
 
+void BasicBlock::remove_instruction(iterator it) {
+    assert(std::addressof(it->get_parent()) == this);
+    if (it->get_type_id() != Type::ID::kVoid) {
+        throw std::invalid_argument{
+            std::format("cannot remove '{}' from a basic block without replacing it with another "
+                        "instruction for all users",
+                        it->to_string())};
+    }
+
+    it->remove_as_user();
+    erase(it);
+}
+
 void BasicBlock::add_ret_to_parent(ReturnInstruction &ret) { get_parent().add_ret(ret); }
 void BasicBlock::remove_ret_from_parent(ReturnInstruction &ret) { get_parent().remove_ret(ret); }
 

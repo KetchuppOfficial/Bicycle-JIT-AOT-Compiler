@@ -152,6 +152,11 @@ class BasicBlock final : public Value, public ilist_node<BasicBlock>, private il
     // 2. Erases *from from this block, hence from is invalidated
     void replace_instruction(iterator from, Instruction &to);
 
+    // 1. Removes *it from the list of users for all inputs
+    // 2. Erases *it from this block, hence from is invalidate
+    // Throws if it->get_type_id() != Type::ID::kVoid
+    void remove_instruction(iterator it);
+
     std::ranges::bidirectional_range auto phi_instructions() {
         return std::ranges::subrange{begin(), first_non_phi_};
     }
