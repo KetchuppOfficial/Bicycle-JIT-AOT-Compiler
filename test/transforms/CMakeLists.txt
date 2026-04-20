@@ -1,4 +1,5 @@
 add_executable(bjac_transforms_tests
+    src/check_elimination.cpp
     src/constant_folding.cpp
     src/peepholes.cpp
 )

@@ -19,6 +19,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+find_package(Boost CONFIG REQUIRED COMPONENTS container)
+
 include(cmake/defaults.cmake)
 
 add_library(bjac_ilist INTERFACE)
@@ -89,6 +91,7 @@ PRIVATE
 )
 
 add_library(bjac_transforms STATIC
+    lib/transforms/check_elimination.cpp
     lib/transforms/constant_folding.cpp
     lib/transforms/dce.cpp
     lib/transforms/peepholes.cpp
@@ -97,6 +100,7 @@ add_library(bjac::transforms ALIAS bjac_transforms)
 target_link_libraries(bjac_transforms
 PRIVATE
     bjac::graphs
+    Boost::container
 PUBLIC
     bjac::defaults
     bjac::ir
@@ -107,8 +111,10 @@ FILE_SET
 BASE_DIRS
     include
 FILES
+    include/bjac/transforms/check_elimination.hpp
     include/bjac/transforms/constant_folding.hpp
     include/bjac/transforms/dce.hpp
+    include/bjac/transforms/pass.hpp
     include/bjac/transforms/peepholes.hpp
 )
 

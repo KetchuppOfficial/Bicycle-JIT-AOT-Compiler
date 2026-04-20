@@ -14,9 +14,13 @@
 
 #include "bjac/IR/function.hpp"
 
+inline auto get_void() { return std::make_unique<bjac::VoidType>(); }
 inline auto get_i1() { return std::make_unique<bjac::IntegralType>(bjac::Type::ID::kI1); }
 inline auto get_i64() { return std::make_unique<bjac::IntegralType>(bjac::Type::ID::kI64); }
 inline auto get_ptr(bjac::Type::ID id) { return std::make_unique<bjac::PointerType>(id); }
+inline auto get_array(bjac::Type::ID id, std::size_t size) {
+    return std::make_unique<bjac::ArrayType>(id, size);
+}
 
 inline auto get_func(std::string_view name, bjac::Type::ID ret,
                      std::initializer_list<bjac::Type::ID> params = {}) {
