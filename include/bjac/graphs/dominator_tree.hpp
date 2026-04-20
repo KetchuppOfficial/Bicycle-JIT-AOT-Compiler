@@ -97,8 +97,7 @@ class DominatorTree final {
 
     using VertexToSDomContainer = std::unordered_map<vertex_handler, SDom>;
 
-    static VertexToSDomContainer compute_semidominators(const graph_type &g,
-                                                        const DFS<Traits> &dfs) {
+    static VertexToSDomContainer compute_semidominators(graph_type &g, const DFS<Traits> &dfs) {
         auto discovery_time = [&dfs](vertex_handler v) { return dfs.info(v).get_discovery_time(); };
 
         VertexToSDomContainer v_to_sdom;
